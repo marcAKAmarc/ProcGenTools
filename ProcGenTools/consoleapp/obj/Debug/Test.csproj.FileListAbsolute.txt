@@ -1,0 +1,9 @@
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\bin\Debug\consoleapp.exe
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\obj\Debug\Test.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\obj\Debug\Test.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\obj\Debug\consoleapp.exe
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\obj\Debug\consoleapp.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\bin\Debug\consoleapp.exe.config
+D:\_Projects\ProcGenTools\ProcGenTools\consoleapp\bin\Debug\consoleapp.pdb

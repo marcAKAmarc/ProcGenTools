@@ -1,0 +1,6 @@
+D:\_Projects\ProcGenTools\ProcGenTools\ProcGenTools\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\ProcGenTools\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\ProcGenTools\obj\Debug\ProcGenTools.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\ProcGenTools\obj\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\ProcGenTools\obj\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\ProcGenTools\obj\Debug\ProcGenTools.csprojResolveAssemblyReference.cache
