@@ -82,7 +82,7 @@ namespace ProcGenTools.DataStructures
                 {
                     for(var z = 0; z < _depth; z++)
                     {
-                        SuperPositions[x, y, z] = new WcfSuperPosition(items,random,x,y,z);
+                        SuperPositions[x, y, z] = new WcfSuperPosition(items,random,x,y,z, this);
                         SuperPositionsFlat.Add(SuperPositions[x, y, z]);
                     }
                 }
@@ -115,6 +115,7 @@ namespace ProcGenTools.DataStructures
             /*PrintStatesToConsole2d();*/
             var updatedUpdateables = new List<WcfSuperPosition>();
             WcfSuperPosition forcedCollapse = null;
+
             //while some are not collapsed
             while (SuperPositionsFlat.Where(x => !x.hasCollapsed).Count() > 0)
             {
@@ -129,9 +130,6 @@ namespace ProcGenTools.DataStructures
                 //handle collapse random spot;
                 if (previouslyUpdatedSuperPositions.Count() == 0)
                 {
-                    /*PrintStatesToConsole2d();
-                    Console.WriteLine("Press key to collapse smallest entropy.");
-                    Console.ReadKey();*/
                     updatedUpdateables = new List<WcfSuperPosition>();
                     forcedCollapse = null;
 
@@ -143,10 +141,10 @@ namespace ProcGenTools.DataStructures
                     var minimumEntropy = unresolvedSuperPositions.FirstOrDefault().slots.Where(y => !y.Collapsed).Count();
                     var superPositionsWithMinimumEntropy = unresolvedSuperPositions.Where(x => x.slots.Where(y => !y.Collapsed).Count() == minimumEntropy).ToArray();
                     var toBeResolved = superPositionsWithMinimumEntropy[random.Next(superPositionsWithMinimumEntropy.Count())];
-                    //Console.WriteLine("Resolving (" + toBeResolved.x.ToString() + "," + toBeResolved.y.ToString() + "," + toBeResolved.z.ToString() + ")...");
+
                     toBeResolved.CollapseToRandomItem(random);
+                    //toBeResolved.applyRequirements();
                     forcedCollapse = toBeResolved;
-                    //Console.WriteLine("Collapsed to item " + toBeResolved.slots.Where(x => !x.Collapsed).First().item.GetItem().ToString());
 
                     //recalc this for propagation step
                     previouslyUpdatedSuperPositions = SuperPositionsFlat.Where(x => x.hasUpdated).ToList();
@@ -163,20 +161,14 @@ namespace ProcGenTools.DataStructures
                         superPosition.hasUpdated = false;
                     }
 
-                    /*PrintStatesToConsole2d();
-                    Console.WriteLine("There are items that were previously updated, so we propagate.");
-                    Console.ReadKey();*/
-
                     foreach (var updated in previouslyUpdatedSuperPositions)
                     {
                         
-                        //Console.WriteLine("Propagating from (" + updated.x.ToString() + ", " + updated.y.ToString() + ", " + updated.z.ToString() + ")...");
                         var neighbors = GetSuperPositionNeighbors(updated.x, updated.y, updated.z)
                             .Where(x=>!x.hasCollapsed && !x.hasUpdated);
 
                         foreach (var neighbor in neighbors)
                         {
-                            //Console.WriteLine(" ...to (" + neighbor.x.ToString() + ", " + neighbor.y.ToString() + ", " + neighbor.z.ToString() + ")...");
                             var resultCollapse = neighbor.Collapse(updated);
                             updatedUpdateables.Add(neighbor);
 
@@ -184,36 +176,33 @@ namespace ProcGenTools.DataStructures
                             {
                                 //Console.WriteLine("Failure.");
                                 handleCollapseFailure(neighbor, updatedUpdateables, forcedCollapse);
-                                abort = true;
-                                break;
+                                /*abort = true;
+                                break;*/
                             }
-                            /*PrintStatesToConsole2d();
-                            Console.WriteLine("Press other key go to next neighbor.");
-                            Console.ReadKey();*/
+                            else
+                            {
+                                //neighbor.applyRequirements();
+                            }
                         }
-
-                       /* PrintStatesToConsole2d();
-                        Console.WriteLine("Press other key go to next previously updated.");
-                        Console.ReadKey();
-                        */
                         if (abort == true)
                             break;
                     }
                     if (abort == true)
                         break;
 
+
+                    
                     //should we add updated to previously updated here?
                     previouslyUpdatedSuperPositions = SuperPositionsFlat.Where(x => x.hasUpdated).ToList();
+                    //PrintStatesToConsole2d();
+                }
+                //apply requirements of previously updated and 1 step propagated items
+                foreach (var superPosition in SuperPositionsFlat.Where(x => x.hasCollapsed))
+                {
+                    superPosition.applyRequirements();
                 }
 
-                PrintStatesToConsole2d();
-                /*Console.WriteLine("Press space key to print current grid. Press other key go to next iteration.");
-                var resultKey = Console.ReadKey();
-                if (resultKey.KeyChar == ' ')
-                    PrintValuesToConsole2d();*/
             }
-
-           
         }
         private void handleCollapseFailure(WcfSuperPosition failedSuperPosition, List<WcfSuperPosition> propagatedSuperPositions, WcfSuperPosition manuallyCollapsedSuperPosition)
         {
@@ -226,11 +215,6 @@ namespace ProcGenTools.DataStructures
             }
             manuallyCollapsedSuperPosition.hasCollapsed = false;
             failedSuperPosition.Uncollapse();
-            /*failedSuperPosition.RestorePreviousStates();
-            if(manuallyCollapsedSuperPosition != null)
-                manuallyCollapsedSuperPosition.RestorePreviousStates();
-            foreach (var propagatedSuperPosition in propagatedSuperPositions)
-                propagatedSuperPosition.RestorePreviousStates();*/
 
         }
         public List<WcfSuperPosition> GetSuperPositionNeighbors(int _x, int _y, int _z)
@@ -269,6 +253,8 @@ namespace ProcGenTools.DataStructures
                 }
                 Console.WriteLine("");
             }
+            Console.WriteLine("Press Enter to continue.");
+            Console.ReadLine();
         }
         public void PrintStatesToConsole2d()
         {
@@ -316,7 +302,9 @@ namespace ProcGenTools.DataStructures
                 }
                 Console.WriteLine("");
             }
-            
+            Console.WriteLine("Press Enter to continue.");
+            Console.ReadLine();
+
         }
 
     }
@@ -334,6 +322,7 @@ namespace ProcGenTools.DataStructures
         public int z { get; set; }
         public List<WcfCollapsableSlot> slots;
         private List<bool> previousStates;
+        internal WcfGrid parent;
 
         private void RecordPreviousStates()
         {
@@ -385,6 +374,7 @@ namespace ProcGenTools.DataStructures
                 //hasUpdated = true;
                 hasPropagated = true;
                 hasCollapsed = true;
+                //applyRequirements();
                 return true;
             }
 
@@ -402,6 +392,51 @@ namespace ProcGenTools.DataStructures
             return null; 
         } 
 
+        public void applyRequirements()
+        {
+            if (!hasCollapsed)
+                return;
+
+            var slot = slots.Where(x => !x.Collapsed).First();
+            var requirements = slot.item.requirements;
+            var neighbors = parent.GetSuperPositionNeighbors(x, y, z);
+            foreach (var requirement in requirements)
+            {
+                var neighborsWithOption = neighbors.Where(n => n.slots.Any(s => s.item.Id == requirement.Item2 && !s.Collapsed));
+                var collapsedNeighborsWithOption = neighborsWithOption.Where(n => n.hasCollapsed);
+                var notCollapsedNeighborsWithOption = neighborsWithOption.Where(x => !x.hasCollapsed);
+                if(notCollapsedNeighborsWithOption.Count() == 0)
+                    Console.WriteLine("Oh shit... all neighbors already spoken for.  Cant apply requirements.");
+                var goal = requirement.Item1;
+                switch (requirement.Item3)
+                {
+                    case RequirementComparison.EqualTo:
+                        while (collapsedNeighborsWithOption.Count() < goal  && notCollapsedNeighborsWithOption.Count() > 0)
+                        {
+                            var index = random.Next(notCollapsedNeighborsWithOption.Count());
+                            notCollapsedNeighborsWithOption.ToList()[index].CollapseToItem(requirement.Item2);
+                        }
+                        break;
+                }
+            }
+        }
+        public void CollapseToItem (Guid itemId)
+        {
+            for (var i = 0; i < slots.Count; i++)
+            {
+                if (slots[i].item.Id != itemId)
+                {
+                    slots[i].Collapse();
+                }
+                else
+                {
+                    slots[i].UnCollapse();
+                }
+            }
+            hasCollapsed = true;
+            hasUpdated = true;
+            hasPropagated = true;
+        }
         public void CollapseToItem(int index)
         {
             for(var i = 0; i < slots.Count; i++)
@@ -453,11 +488,12 @@ namespace ProcGenTools.DataStructures
             hasPropagated = false;
         }
 
-        public WcfSuperPosition(IEnumerable<IOpinionatedItem> items, Random _random, int _x, int _y, int _z)
+        public WcfSuperPosition(IEnumerable<IOpinionatedItem> items, Random _random, int _x, int _y, int _z, WcfGrid _parentGrid)
         {
             x = _x;
             y = _y;
             z = _z;
+            parent = _parentGrid;
             slots = new List<WcfCollapsableSlot>();
             foreach(var item in items)
             {
@@ -481,23 +517,116 @@ namespace ProcGenTools.DataStructures
         public bool TryCollapse(WcfSuperPosition _superPosition)
         {
             var relativex = _superPosition.x - superPosition.x;
-            var relativey = _superPosition.y - superPosition.y; 
+            var relativey = _superPosition.y - superPosition.y;
             var relativez = _superPosition.z - superPosition.z;
 
             var foundAcceptableItem = false;
-            foreach (var superPositionItem in _superPosition.slots.Where(x=>!x.Collapsed).Select(x => x.item))
+            foreach (var superPositionItem in _superPosition.slots.Where(x => !x.Collapsed).Select(x => x.item))
             {
                 var accepted = item.AcceptsInDirection(superPositionItem, relativex, relativey, relativez);
+
                 if (accepted)
                 {
                     foundAcceptableItem = true;
                     break;
                 }
             }
-            if (!foundAcceptableItem)
+            if (!foundAcceptableItem) { 
                 collapsed = true;
-            
+                return collapsed;
+            }
+            //check requirements are met
+            var requirementsMet = RequirementsMetExactly();
+
+            if (!requirementsMet)
+            {
+                collapsed = true;
+                return collapsed;
+            }
             return collapsed;
+        }
+
+        public bool RequirementsMetExactly()
+        {
+            var requirementsMet = true;
+            var neighbors = superPosition.parent.GetSuperPositionNeighbors(superPosition.x, superPosition.y, superPosition.z);
+            foreach (var requirement in item.requirements)
+            {
+                //this is a difficult problem.  this is used in propagation step, where all superpositions may have the required item available, but that doesn't mean
+                //that we should fail something that needs exactly one of that item - for that combination is still a potential future.  But how to know that for sure?
+                //For now I will simply check if they have goal number or greater of required item.
+                var countInNeighbors = neighbors.SelectMany(sp => sp.slots.Where(s => !s.collapsed && s.item.Id == requirement.Item2)).Count();
+                var pass = false;
+                var goal = requirement.Item1;
+                switch (requirement.Item3)
+                {
+                    case RequirementComparison.EqualTo:
+                        pass = countInNeighbors == goal;
+                        break;
+                    case RequirementComparison.GreaterThan:
+                        pass = countInNeighbors > goal;
+                        break;
+                    case RequirementComparison.GreaterThanOrEqualTo:
+                        pass = countInNeighbors >= goal;
+                        break;
+                    case RequirementComparison.LessThan:
+                        pass = countInNeighbors < goal;
+                        break;
+                    case RequirementComparison.LessThanOrEqualTo:
+                        pass = countInNeighbors <= goal;
+                        break;
+                    case RequirementComparison.NotEqualTo:
+                        pass = countInNeighbors != goal;
+                        break;
+                }
+                if (!pass)
+                {
+                    requirementsMet = false;
+                    break;
+                }
+            }
+            return requirementsMet;
+        }
+        public bool RequirementsMetPotentially()
+        {
+            var requirementsMet = true;
+            var neighbors = superPosition.parent.GetSuperPositionNeighbors(superPosition.x, superPosition.y, superPosition.z);
+            foreach (var requirement in item.requirements)
+            {
+                //this is a difficult problem.  this is used in propagation step, where all superpositions may have the required item available, but that doesn't mean
+                //that we should fail something that needs exactly one of that item - for that combination is still a potential future.  But how to know that for sure?
+                //For now I will simply check if they have goal number or greater of required item.
+                var countInNeighbors = neighbors.SelectMany(sp => sp.slots.Where(s => !s.collapsed && s.item.Id == requirement.Item2)).Count();
+                var pass = false;
+                var goal = requirement.Item1;
+                switch (requirement.Item3)
+                {
+                    case RequirementComparison.EqualTo:
+                        pass = countInNeighbors >= goal;
+                        break;
+                    case RequirementComparison.GreaterThan:
+                        pass = countInNeighbors > goal;
+                        break;
+                    case RequirementComparison.GreaterThanOrEqualTo:
+                        pass = countInNeighbors >= goal;
+                        break;
+                    case RequirementComparison.LessThan:
+                        pass = countInNeighbors >= goal-1;
+                        break;
+                    case RequirementComparison.LessThanOrEqualTo:
+                        pass = countInNeighbors >= goal;
+                        break;
+                    case RequirementComparison.NotEqualTo:
+                        pass = countInNeighbors > goal;
+                        break;
+                }
+                if (!pass)
+                {
+                    requirementsMet = false;
+                    break;
+                }
+            }
+            return requirementsMet;
         }
 
         public void Collapse()
@@ -517,10 +646,12 @@ namespace ProcGenTools.DataStructures
         }
     }
 
+    public enum RequirementComparison { LessThan, LessThanOrEqualTo, EqualTo, GreaterThan, GreaterThanOrEqualTo, NotEqualTo};
     public interface IOpinionatedItem
     {
         Guid Id { get; }
         List<List<List<List<IOpinionatedItem>>>> acceptableItems { get; set; }
+        List<Tuple<int, Guid, RequirementComparison>> requirements { get; set; }
         void SetAcceptableInDirection(IOpinionatedItem item, int x, int y, int z, bool mutual = true);
         List<IOpinionatedItem> GetAcceptableInDirection(int x, int y, int z);
         bool AcceptsInDirection(IOpinionatedItem item, int x, int y, int z);
@@ -529,7 +660,7 @@ namespace ProcGenTools.DataStructures
     public class OpinionatedItem<T> : IOpinionatedItem
     {
         public List<List<List<List<IOpinionatedItem>>>> acceptableItems { get; set; } //[x][y][z][i]
-        //x,y,z,i
+        public List<Tuple<int, Guid, RequirementComparison>> requirements { get; set; }
         public T actualItem;
         public string actualItemName;
         private Guid id;
@@ -543,6 +674,10 @@ namespace ProcGenTools.DataStructures
             actualItem = _actualItem;
             actualItemName = _actualItemName;
             Init();
+        }
+        public void AddRequirement(IOpinionatedItem item, RequirementComparison comparison, int amount)
+        {
+            requirements.Add(new Tuple<int, Guid, RequirementComparison>(amount, item.Id, comparison));
         }
         public void SetAcceptableInDirection(IOpinionatedItem item, int x, int y, int z, bool mutual = true)
         {
@@ -641,6 +776,7 @@ namespace ProcGenTools.DataStructures
         }
         private void Init()
         {
+            requirements = new List<Tuple<int, Guid, RequirementComparison>>();
             id = Guid.NewGuid();
             acceptableItems = new List<List<List<List<IOpinionatedItem>>>>();
             acceptableItems.Add(new List<List<List<IOpinionatedItem>>>());

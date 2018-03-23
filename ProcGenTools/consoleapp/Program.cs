@@ -14,14 +14,18 @@ namespace consoleapp
             var tr = new OpinionatedItem<String>("┐", "top-right");
             var bl = new OpinionatedItem<String>("└", "bot-left");
             var br = new OpinionatedItem<String>("┘", "bot-right");
-            var em = new OpinionatedItem<String>("O", "empty");
-            var all = new List<IOpinionatedItem> { tl, tr, br, bl};
-            /*
+            var h = new OpinionatedItem<String>("-", "horizontal");
+            var v = new OpinionatedItem<String>("|", "vertical");
+            var em = new OpinionatedItem<String>(" ", "empty");
+            var no = new OpinionatedItem<String>("X", "emptyNoFloor");
+            var ladder = new OpinionatedItem<String>("L", "ladder");
+            var all = new List<IOpinionatedItem> { tl, tr, br, bl, em, h, v, no, ladder};
+            
             em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, bl}, 1, 0, 0);
             em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tr,br }, -1, 0, 0);
             em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, tr }, 0, 1, 0);
             em.SetAcceptableInDirection(new List<IOpinionatedItem>() {bl, br }, 0, -1, 0);
-            */
+            
             tl.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br }, 1, 0, 0);
             tl.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br }, -1, 0, 0);
             tl.SetAcceptableInDirection(new List<IOpinionatedItem>() { bl, br }, 0, 1, 0);
@@ -41,6 +45,29 @@ namespace consoleapp
             br.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, bl }, -1, 0, 0);
             br.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, tr }, 0, 1, 0);
             br.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, tr }, 0, -1, 0);
+
+            h.SetAcceptableInDirection(new List<IOpinionatedItem>() {tr, br,h}, 1, 0, 0);
+            h.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, bl, h}, -1, 0, 0);
+            h.SetAcceptableInDirection(new List<IOpinionatedItem>() {em, tr, tl }, 0, 1, 0);
+            h.SetAcceptableInDirection(new List<IOpinionatedItem>() { em, br, bl }, 0, -1, 0);
+
+            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, bl, em }, 1, 0, 0);
+            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br, em }, -1, 0, 0);
+            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { br, bl, v }, 0, 1, 0);
+            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, tl, v }, 0, -1, 0);
+
+            no.SetAcceptableInAllDirection(new List<IOpinionatedItem>() { em });
+            no.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, bl, v }, 1, 0, 0);
+            no.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br ,v }, -1, 0, 0);
+            no.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, tr, h }, 0, 1, 0);
+            no.SetAcceptableInDirection(new List<IOpinionatedItem>() { bl, br, h }, 0, -1, 0);
+
+            ladder.SetAcceptableInAllDirection(new List<IOpinionatedItem>() { em });
+            ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, bl, v }, 1, 0, 0);
+            ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br, v }, -1, 0, 0);
+            ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, tr, v }, 0, 1, 0);
+            ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { bl, br, h }, 0, -1, 0);
+            ladder.requirements.Add(new Tuple<int, Guid, RequirementComparison>(1, h.Id, RequirementComparison.GreaterThanOrEqualTo));
 
             /*var tl = new OpinionatedItem<String>("_", "top-left");
             var tr = new OpinionatedItem<String>(" ", "top-right");
@@ -63,7 +90,7 @@ namespace consoleapp
             wcf.Init(10,10,1,new List<IOpinionatedItem>() { tl, tr, t });*/
 
             var keyVal = ' ';
-            var seed = 0;
+            var seed = 21;
             while (keyVal != 'Q' && keyVal != 'q')
             {
                 var wcf = new WcfGrid(seed++);
