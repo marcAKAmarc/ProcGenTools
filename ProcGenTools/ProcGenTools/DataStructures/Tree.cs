@@ -57,7 +57,7 @@ namespace ProcGenTools.DataStructures
             this.Traverse(this, postOrderDelegate, SearchOrder.PostOrder);
             foreach (var child in children)
                 child.UpdateCachedPostOrderLists();
-            }
+        }
 
         public TreeNode(T data, TreeNode<T> parent, Tree tree)
         {

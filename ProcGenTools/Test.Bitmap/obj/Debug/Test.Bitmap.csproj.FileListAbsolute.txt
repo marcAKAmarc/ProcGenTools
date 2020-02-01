@@ -1,0 +1,2 @@
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\obj\Debug\Test.Bitmap.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\obj\Debug\Test.Bitmap.csproj.CoreCompileInputs.cache

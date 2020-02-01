@@ -1,0 +1,9 @@
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\bin\Debug\Test.Bitmap.exe.config
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\bin\Debug\Test.Bitmap.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\bin\Debug\Test.Bitmap.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\obj\Debug\Test.BitmapSplit.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\obj\Debug\Test.BitmapSplit.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\obj\Debug\Test.Bitmap.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Bitmap\obj\Debug\Test.Bitmap.pdb

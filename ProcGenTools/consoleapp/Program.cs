@@ -10,21 +10,21 @@ namespace consoleapp
     {
         static void Main(string[] args)
         {
-            var tl = new OpinionatedItem<String>("┌", "top-left");
-            var tr = new OpinionatedItem<String>("┐", "top-right");
-            var bl = new OpinionatedItem<String>("└", "bot-left");
-            var br = new OpinionatedItem<String>("┘", "bot-right");
-            var h = new OpinionatedItem<String>("-", "horizontal");
-            var v = new OpinionatedItem<String>("|", "vertical");
-            var em = new OpinionatedItem<String>(" ", "empty");
-            var no = new OpinionatedItem<String>("X", "emptyNoFloor");
-            var ladder = new OpinionatedItem<String>("L", "ladder");
-            var all = new List<IOpinionatedItem> { tl, tr, br, bl, em, h, v, no, ladder};
+            var tl = new OpinionatedItem<String>("┌", "top-left", new List<WcfVector>().Cross3dShape());
+            var tr = new OpinionatedItem<String>("┐", "top-right", new List<WcfVector>().Cross3dShape());
+            var bl = new OpinionatedItem<String>("└", "bot-left", new List<WcfVector>().Cross3dShape());
+            var br = new OpinionatedItem<String>("┘", "bot-right", new List<WcfVector>().Cross3dShape());
+            var h = new OpinionatedItem<String>("-", "horizontal", new List<WcfVector>().Cross3dShape());
+            var v = new OpinionatedItem<String>("|", "vertical", new List<WcfVector>().Cross3dShape());
+            var em = new OpinionatedItem<String>(" ", "empty", new List<WcfVector>().Cross3dShape());
+            var no = new OpinionatedItem<String>("X", "emptyNoFloor", new List<WcfVector>().Cross3dShape());
+            var ladder = new OpinionatedItem<String>("L", "ladder", new List<WcfVector>().Cross3dShape());
+            var all = new List<IOpinionatedItem> { tl, tr, br, bl, em, h, v, no,ladder};
             
-            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, bl}, 1, 0, 0);
-            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tr,br }, -1, 0, 0);
-            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, tr }, 0, 1, 0);
-            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {bl, br }, 0, -1, 0);
+            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, bl, em, no, v}, 1, 0, 0);
+            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tr,br, em, no, v }, -1, 0, 0);
+            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, tr, em, no, h }, 0, 1, 0);
+            em.SetAcceptableInDirection(new List<IOpinionatedItem>() {bl, br, em, no, h }, 0, -1, 0);
             
             tl.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br }, 1, 0, 0);
             tl.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br }, -1, 0, 0);
@@ -51,8 +51,8 @@ namespace consoleapp
             h.SetAcceptableInDirection(new List<IOpinionatedItem>() {em, tr, tl }, 0, 1, 0);
             h.SetAcceptableInDirection(new List<IOpinionatedItem>() { em, br, bl }, 0, -1, 0);
 
-            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, bl, em }, 1, 0, 0);
-            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br, em }, -1, 0, 0);
+            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, bl, em, no, v }, 1, 0, 0);
+            v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br, em, no, v}, -1, 0, 0);
             v.SetAcceptableInDirection(new List<IOpinionatedItem>() { br, bl, v }, 0, 1, 0);
             v.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, tl, v }, 0, -1, 0);
 
@@ -65,7 +65,7 @@ namespace consoleapp
             ladder.SetAcceptableInAllDirection(new List<IOpinionatedItem>() { em });
             ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, bl, v }, 1, 0, 0);
             ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { tr, br, v }, -1, 0, 0);
-            ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, tr, v }, 0, 1, 0);
+            ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { tl, tr, h }, 0, 1, 0);
             ladder.SetAcceptableInDirection(new List<IOpinionatedItem>() { bl, br, h }, 0, -1, 0);
             ladder.requirements.Add(new Tuple<int, Guid, RequirementComparison>(1, h.Id, RequirementComparison.GreaterThanOrEqualTo));
 
@@ -98,7 +98,7 @@ namespace consoleapp
                 var shape = new List<WcfVector>().Cross3dShape();
                 wcf.SetInfluenceShape(shape);
 
-                wcf.CollapseAll();
+                wcf.CollapseAllRecursive();
 
                 wcf.PrintStatesToConsole2d();
                 Console.WriteLine("Press any key to quit.");

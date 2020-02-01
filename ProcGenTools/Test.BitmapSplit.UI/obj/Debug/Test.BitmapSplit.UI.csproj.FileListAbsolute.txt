@@ -1,0 +1,10 @@
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\bin\Debug\Test.BitmapSplit.UI.exe.config
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\bin\Debug\Test.BitmapSplit.UI.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\bin\Debug\Test.BitmapSplit.UI.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\obj\Debug\Test.BitmapSplit.UI.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\obj\Debug\Test.BitmapSplit.UI.Form1.resources
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\obj\Debug\Test.BitmapSplit.UI.Properties.Resources.resources
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\obj\Debug\Test.BitmapSplit.UI.csproj.GenerateResource.Cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\obj\Debug\Test.BitmapSplit.UI.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\obj\Debug\Test.BitmapSplit.UI.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.BitmapSplit.UI\obj\Debug\Test.BitmapSplit.UI.pdb

@@ -69,6 +69,11 @@ namespace ProcGenTools.DataStructures
             random = new Random(seed);
         }
 
+        public WcfGrid()
+        {
+            random = new Random();
+        }
+
         public void Init(int _width, int _height, int _depth, IEnumerable<IOpinionatedItem> items) 
         {
             width = _width;
@@ -103,107 +108,80 @@ namespace ProcGenTools.DataStructures
                 }
             }
             InfluenceShape = _influenceShape.ToArray();
+
+            SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
         }
 
         public void SetInfluenceShape(List<WcfVector> shape)
         {
             InfluenceShape = shape.ToArray();
-        } 
 
-        public void CollapseAll()
+        }
+        private WcfSuperPosition CollapseMinimumEntropyPosition()
         {
-            /*PrintStatesToConsole2d();*/
-            var updatedUpdateables = new List<WcfSuperPosition>();
-            WcfSuperPosition forcedCollapse = null;
+            //handle collapse random spot;
+            var entropyOrderedSuperPositions = SuperPositionsFlat.Where(x => !x.hasCollapsed).OrderBy(x => x.slots.Where(y => !y.Collapsed).Count()).ToArray();
+
+            var minimumEntropy = entropyOrderedSuperPositions.FirstOrDefault().slots.Where(y => !y.Collapsed).Count();
+            var superPositionsWithMinimumEntropy = entropyOrderedSuperPositions.Where(x => x.slots.Where(y => !y.Collapsed).Count() == minimumEntropy).ToArray();
+            var toBeResolved = superPositionsWithMinimumEntropy[random.Next(superPositionsWithMinimumEntropy.Count())];
+
+            toBeResolved.CollapseToRandomItem(random);
+
+            return toBeResolved;            
+        }
+
+        int failures = 0;
+        public bool CollapseAllRecursive()
+        {
+            failures = 0;
+            SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
 
             //while some are not collapsed
             while (SuperPositionsFlat.Where(x => !x.hasCollapsed).Count() > 0)
             {
-                var unresolvedSuperPositions = SuperPositionsFlat.Where(x => !x.hasCollapsed).OrderBy(x=>x.slots.Where(y=>!y.Collapsed).Count()).ToArray();
-                var previouslyUpdatedSuperPositions = SuperPositionsFlat.Where(x => x.hasUpdated).ToList();
-
-                foreach (var superPosition in SuperPositionsFlat)
-                {
-                    superPosition.hasUpdated = false;
-                }
-
-                //handle collapse random spot;
-                if (previouslyUpdatedSuperPositions.Count() == 0)
-                {
-                    updatedUpdateables = new List<WcfSuperPosition>();
-                    forcedCollapse = null;
-
-                    foreach (var superPosition in SuperPositionsFlat)
-                    {
-                        superPosition.hasPropagated = false;
-                    }
-
-                    var minimumEntropy = unresolvedSuperPositions.FirstOrDefault().slots.Where(y => !y.Collapsed).Count();
-                    var superPositionsWithMinimumEntropy = unresolvedSuperPositions.Where(x => x.slots.Where(y => !y.Collapsed).Count() == minimumEntropy).ToArray();
-                    var toBeResolved = superPositionsWithMinimumEntropy[random.Next(superPositionsWithMinimumEntropy.Count())];
-
-                    toBeResolved.CollapseToRandomItem(random);
-                    //toBeResolved.applyRequirements();
-                    forcedCollapse = toBeResolved;
-
-                    //recalc this for propagation step
-                    previouslyUpdatedSuperPositions = SuperPositionsFlat.Where(x => x.hasUpdated).ToList();
-                }
-
-
-                //handle propagation
-                
-                while (previouslyUpdatedSuperPositions.Count() > 0)
-                {
-                    var abort = false;
-                    foreach (var superPosition in SuperPositionsFlat)
-                    {
-                        superPosition.hasUpdated = false;
-                    }
-
-                    foreach (var updated in previouslyUpdatedSuperPositions)
-                    {
-                        
-                        var neighbors = GetSuperPositionNeighbors(updated.x, updated.y, updated.z)
-                            .Where(x=>!x.hasCollapsed && !x.hasUpdated);
-
-                        foreach (var neighbor in neighbors)
-                        {
-                            var resultCollapse = neighbor.Collapse(updated);
-                            updatedUpdateables.Add(neighbor);
-
-                            if (resultCollapse == null)
-                            {
-                                //Console.WriteLine("Failure.");
-                                handleCollapseFailure(neighbor, updatedUpdateables, forcedCollapse);
-                                /*abort = true;
-                                break;*/
-                            }
-                            else
-                            {
-                                //neighbor.applyRequirements();
-                            }
-                        }
-                        if (abort == true)
-                            break;
-                    }
-                    if (abort == true)
-                        break;
-
-
-                    
-                    //should we add updated to previously updated here?
-                    previouslyUpdatedSuperPositions = SuperPositionsFlat.Where(x => x.hasUpdated).ToList();
-                    //PrintStatesToConsole2d();
-                }
-                //apply requirements of previously updated and 1 step propagated items
-                foreach (var superPosition in SuperPositionsFlat.Where(x => x.hasCollapsed))
-                {
-                    superPosition.applyRequirements();
-                }
-
+                var collapsed = CollapseMinimumEntropyPosition();
+                var propagationResult = handlePropagation(collapsed);
+                if (propagationResult == false)
+                    return false;
+                //var propagationResult = collapsed.Propagate();
+                //if(propagationResult == false)
+                //{
+                //    SuperPositionsFlat.ForEach(sp => sp.RestorePreviousStates());
+                //    failures++;
+                //    if (failures > 100)
+                //        return false;
+                //}
+                //else
+                //{
+                //    failures = 0;
+                //}
+                //SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
+               // PrintStatesToConsole2d();
             }
+            PrintStatesToConsole2d();
+            return true;
+            
         }
+
+        public bool handlePropagation(WcfSuperPosition previouslyCollapsed)
+        {
+            var propagationResult = previouslyCollapsed.Propagate();
+            if (propagationResult == false)
+            {
+                SuperPositionsFlat.ForEach(sp => sp.RestorePreviousStates());
+                failures++;
+                if (failures > 100)
+                    return false;
+            }
+            else
+            {
+                failures = 0;
+            }
+            SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
+            return true;
+        }
+
         private void handleCollapseFailure(WcfSuperPosition failedSuperPosition, List<WcfSuperPosition> propagatedSuperPositions, WcfSuperPosition manuallyCollapsedSuperPosition)
         {
             failedSuperPosition.hasCollapsed = false;
@@ -247,7 +225,7 @@ namespace ProcGenTools.DataStructures
                 {
                     var resolutions = SuperPositions[x, y, 0].slots.Where(o => !o.Collapsed);
                     if (resolutions.Count() == 1)
-                        Console.Write(resolutions.FirstOrDefault().item.GetItem().ToString());
+                        Console.Write(resolutions.FirstOrDefault().item.Name);
                     else
                         Console.Write(" ");
                 }
@@ -270,11 +248,11 @@ namespace ProcGenTools.DataStructures
                     var firstOpenSlot = thisSuperPosition.slots.Where(s => !s.Collapsed).FirstOrDefault();
 
                     var color = ConsoleColor.White;
-                    if (thisSuperPosition.hasPropagated && thisSuperPosition.hasUpdated)
+                    if ( thisSuperPosition.hasUpdated)
                         color = ConsoleColor.Cyan;
-                    if (!thisSuperPosition.hasPropagated && thisSuperPosition.hasUpdated)
+                    if ( thisSuperPosition.hasUpdated)
                         color = ConsoleColor.DarkMagenta; //should never happen?
-                    if (thisSuperPosition.hasPropagated && !thisSuperPosition.hasUpdated)
+                    if ( !thisSuperPosition.hasUpdated)
                         color = ConsoleColor.Yellow;
                     
 
@@ -290,7 +268,7 @@ namespace ProcGenTools.DataStructures
                     {
                         Console.BackgroundColor = ConsoleColor.DarkGreen;
                         Console.ForegroundColor = color;
-                        Console.Write(thisSuperPosition.slots.Where(_x=>!_x.Collapsed).First().item.GetItem().ToString());
+                        Console.Write(thisSuperPosition.slots.Where(_x=>!_x.Collapsed).First().item.Name);
                         Console.ResetColor();
                         continue;
                     }
@@ -311,10 +289,8 @@ namespace ProcGenTools.DataStructures
     public class WcfSuperPosition
     {
         private Random random;
-        public bool hasPropagated = false;
         public bool hasUpdated = false;
         public bool hasCollapsed = false;
-        private bool hasPropagatedPrevious = false;
         private bool hasUpdatedPrevious = false;
         private bool hasCollapsedPrevious = false;
         public int x { get; set; }
@@ -322,16 +298,61 @@ namespace ProcGenTools.DataStructures
         public int z { get; set; }
         public List<WcfCollapsableSlot> slots;
         private List<bool> previousStates;
+        private List<bool> previousStatesTemp;
         internal WcfGrid parent;
 
-        private void RecordPreviousStates()
+        public bool Propagate()
+        {
+            //parent.PrintValuesToConsole2d();
+            //true = OK!
+            //false = failure, revert!
+            var neighbors = parent.GetSuperPositionNeighbors(x, y, z);
+            foreach(var neighbor in neighbors)
+            {
+                var resultCollapse = neighbor.Collapse(this);
+                
+                if(resultCollapse == null)
+                {
+                    //failure
+                    Console.WriteLine("Couldn't Collapse neighbor");
+                    return false;
+                }
+
+                if(resultCollapse == true)
+                {
+                    //neighbor updated because of this, we then propagate onto them.
+                    var propagationResult = neighbor.Propagate();
+                    //parent.PrintStatesToConsole2d();
+                    if (propagationResult == false)
+                    {
+                        Console.WriteLine("Propagation failed");
+                        //failure
+                        return false;
+                    }
+                }
+
+                if(resultCollapse == false)
+                {
+                    //No change was made to them, do nothing!
+                }
+            }
+
+            return true;
+        }
+
+        public void RecordPreviousStates()
         {
             previousStates = new List<bool>();
             foreach (var slot in slots)
                 previousStates.Add(slot.Collapsed);
-            hasPropagatedPrevious = hasPropagated;
             hasUpdatedPrevious = hasUpdated;
             hasCollapsedPrevious = hasCollapsed;
+        }
+        public void RecordPreviousStatesTemp()
+        {
+            previousStatesTemp = new List<bool>();
+            foreach (var slot in slots)
+                previousStatesTemp.Add(slot.Collapsed);
         }
         public void RestorePreviousStates()
         {
@@ -344,16 +365,16 @@ namespace ProcGenTools.DataStructures
             }
             hasCollapsed = hasCollapsedPrevious;
             hasUpdated = hasUpdatedPrevious;
-            hasPropagated = hasPropagatedPrevious;
 
         }
         public bool? Collapse(WcfSuperPosition context) {
-            //if (!hasUpdated)
-                RecordPreviousStates();
+
+            RecordPreviousStatesTemp();
 
             var remaining = slots.Select(x => x.TryCollapse(context)).Where(x=>x==false).Count();
 
-            //determine if updated
+
+            //determine if updated since previous state (not needed)
             var foundDifference = false;
             for (var i = 0; i < slots.Count(); i++)
             {
@@ -369,57 +390,29 @@ namespace ProcGenTools.DataStructures
             }
             hasUpdated = foundDifference;
 
-            if (remaining == 1)
+            var justChanged = false;
+            for (var i = 0; i < slots.Count(); i++)
             {
-                //hasUpdated = true;
-                hasPropagated = true;
-                hasCollapsed = true;
-                //applyRequirements();
-                return true;
+
+                if (previousStatesTemp[i] != slots[i].Collapsed)
+                {
+                    justChanged = true;
+                    break;
+                }
+
+                if (justChanged)
+                    break;
             }
 
-            if (remaining > 1)
-            {
-                hasCollapsed = false;
-                //hasUpdated = true;
-                hasPropagated = true;
-                return false;
-            }
+            if (remaining > 0)
+                return justChanged;
             //undefined, we have no options left!
             hasCollapsed = true;
-            //hasUpdated = true;
-            hasPropagated = true;
+
+
             return null; 
         } 
 
-        public void applyRequirements()
-        {
-            if (!hasCollapsed)
-                return;
-
-            var slot = slots.Where(x => !x.Collapsed).First();
-            var requirements = slot.item.requirements;
-            var neighbors = parent.GetSuperPositionNeighbors(x, y, z);
-            foreach (var requirement in requirements)
-            {
-                var neighborsWithOption = neighbors.Where(n => n.slots.Any(s => s.item.Id == requirement.Item2 && !s.Collapsed));
-                var collapsedNeighborsWithOption = neighborsWithOption.Where(n => n.hasCollapsed);
-                var notCollapsedNeighborsWithOption = neighborsWithOption.Where(x => !x.hasCollapsed);
-                if(notCollapsedNeighborsWithOption.Count() == 0)
-                    Console.WriteLine("Oh shit... all neighbors already spoken for.  Cant apply requirements.");
-                var goal = requirement.Item1;
-                switch (requirement.Item3)
-                {
-                    case RequirementComparison.EqualTo:
-                        while (collapsedNeighborsWithOption.Count() < goal  && notCollapsedNeighborsWithOption.Count() > 0)
-                        {
-                            var index = random.Next(notCollapsedNeighborsWithOption.Count());
-                            notCollapsedNeighborsWithOption.ToList()[index].CollapseToItem(requirement.Item2);
-                        }
-                        break;
-                }
-            }
-        }
         public void CollapseToItem (Guid itemId)
         {
             for (var i = 0; i < slots.Count; i++)
@@ -435,7 +428,6 @@ namespace ProcGenTools.DataStructures
             }
             hasCollapsed = true;
             hasUpdated = true;
-            hasPropagated = true;
         }
         public void CollapseToItem(int index)
         {
@@ -452,7 +444,23 @@ namespace ProcGenTools.DataStructures
             }
             hasCollapsed = true;
             hasUpdated = true;
-            hasPropagated = true;
+        }
+
+        public void CollapseToItems(List<Guid> itemIds, bool doNotUncollapse = false)
+        {
+            for (var i = 0; i < slots.Count; i++)
+            {
+                if (!itemIds.Any(x=>x == slots[i].item.Id))
+                {
+                    slots[i].Collapse();
+                }
+                else if(!doNotUncollapse)
+                {
+                    slots[i].UnCollapse();
+                }
+            }
+            hasCollapsed = true;
+            hasUpdated = true;
         }
         public void CollapseToRandomItem(Random random)
         {
@@ -472,22 +480,18 @@ namespace ProcGenTools.DataStructures
             }
             hasCollapsed = true;
             hasUpdated = true;
-            hasPropagated = true;
         }
         public void Uncollapse()
         {
             for (var i = 0; i < slots.Count; i++)
                 slots[i].UnCollapse();
         }
-        //true = has completely collapsed and is resolved
-        //false = has options left
-        //null = no options left
-        //looks out to neighbors
-        public void IterationFailedReset()
+        public T FirstRemainingPayload<T>() where T : class
         {
-            hasPropagated = false;
+            if (slots.Where(_x => !_x.Collapsed).FirstOrDefault() == null)
+                return slots.First().item.GetItem() as T;
+            return slots.Where(_x => !_x.Collapsed).First().item.GetItem() as T;
         }
-
         public WcfSuperPosition(IEnumerable<IOpinionatedItem> items, Random _random, int _x, int _y, int _z, WcfGrid _parentGrid)
         {
             x = _x;
@@ -502,6 +506,8 @@ namespace ProcGenTools.DataStructures
 
             random = _random;
         }
+
+        
     }
 
 
@@ -536,7 +542,7 @@ namespace ProcGenTools.DataStructures
                 return collapsed;
             }
             //check requirements are met
-            var requirementsMet = RequirementsMetExactly();
+            var requirementsMet = RequirementsMet();
 
             if (!requirementsMet)
             {
@@ -546,22 +552,23 @@ namespace ProcGenTools.DataStructures
             return collapsed;
         }
 
-        public bool RequirementsMetExactly()
+        
+        public bool RequirementsMet()
         {
             var requirementsMet = true;
             var neighbors = superPosition.parent.GetSuperPositionNeighbors(superPosition.x, superPosition.y, superPosition.z);
             foreach (var requirement in item.requirements)
             {
-                //this is a difficult problem.  this is used in propagation step, where all superpositions may have the required item available, but that doesn't mean
-                //that we should fail something that needs exactly one of that item - for that combination is still a potential future.  But how to know that for sure?
-                //For now I will simply check if they have goal number or greater of required item.
                 var countInNeighbors = neighbors.SelectMany(sp => sp.slots.Where(s => !s.collapsed && s.item.Id == requirement.Item2)).Count();
+                var countInNeighborsCollapsed = neighbors.SelectMany(sp => sp.slots.Where(s => !s.collapsed && s.item.Id == requirement.Item2)).Where(sp=>sp.collapsed).Count();
+                var countInNeighborsNotCollapsed = neighbors.SelectMany(sp => sp.slots.Where(s => !s.collapsed && s.item.Id == requirement.Item2)).Where(sp => !sp.collapsed).Count();
+
                 var pass = false;
                 var goal = requirement.Item1;
                 switch (requirement.Item3)
                 {
                     case RequirementComparison.EqualTo:
-                        pass = countInNeighbors == goal;
+                        pass = countInNeighbors >= goal  && countInNeighborsCollapsed <= goal;
                         break;
                     case RequirementComparison.GreaterThan:
                         pass = countInNeighbors > goal;
@@ -570,54 +577,13 @@ namespace ProcGenTools.DataStructures
                         pass = countInNeighbors >= goal;
                         break;
                     case RequirementComparison.LessThan:
-                        pass = countInNeighbors < goal;
+                        pass = countInNeighborsCollapsed < goal;
                         break;
                     case RequirementComparison.LessThanOrEqualTo:
-                        pass = countInNeighbors <= goal;
+                        pass = countInNeighborsCollapsed <= goal;
                         break;
                     case RequirementComparison.NotEqualTo:
-                        pass = countInNeighbors != goal;
-                        break;
-                }
-                if (!pass)
-                {
-                    requirementsMet = false;
-                    break;
-                }
-            }
-            return requirementsMet;
-        }
-        public bool RequirementsMetPotentially()
-        {
-            var requirementsMet = true;
-            var neighbors = superPosition.parent.GetSuperPositionNeighbors(superPosition.x, superPosition.y, superPosition.z);
-            foreach (var requirement in item.requirements)
-            {
-                //this is a difficult problem.  this is used in propagation step, where all superpositions may have the required item available, but that doesn't mean
-                //that we should fail something that needs exactly one of that item - for that combination is still a potential future.  But how to know that for sure?
-                //For now I will simply check if they have goal number or greater of required item.
-                var countInNeighbors = neighbors.SelectMany(sp => sp.slots.Where(s => !s.collapsed && s.item.Id == requirement.Item2)).Count();
-                var pass = false;
-                var goal = requirement.Item1;
-                switch (requirement.Item3)
-                {
-                    case RequirementComparison.EqualTo:
-                        pass = countInNeighbors >= goal;
-                        break;
-                    case RequirementComparison.GreaterThan:
-                        pass = countInNeighbors > goal;
-                        break;
-                    case RequirementComparison.GreaterThanOrEqualTo:
-                        pass = countInNeighbors >= goal;
-                        break;
-                    case RequirementComparison.LessThan:
-                        pass = countInNeighbors >= goal-1;
-                        break;
-                    case RequirementComparison.LessThanOrEqualTo:
-                        pass = countInNeighbors >= goal;
-                        break;
-                    case RequirementComparison.NotEqualTo:
-                        pass = countInNeighbors > goal;
+                        pass = countInNeighbors != 0 || countInNeighborsCollapsed != goal;
                         break;
                 }
                 if (!pass)
@@ -651,29 +617,36 @@ namespace ProcGenTools.DataStructures
     {
         Guid Id { get; }
         List<List<List<List<IOpinionatedItem>>>> acceptableItems { get; set; }
+        List<IOpinionatedItem>[,,] acceptableItemsArray { get; set; }
         List<Tuple<int, Guid, RequirementComparison>> requirements { get; set; }
         void SetAcceptableInDirection(IOpinionatedItem item, int x, int y, int z, bool mutual = true);
         List<IOpinionatedItem> GetAcceptableInDirection(int x, int y, int z);
         bool AcceptsInDirection(IOpinionatedItem item, int x, int y, int z);
+        string Name { get; }
         object GetItem();
     }
     public class OpinionatedItem<T> : IOpinionatedItem
     {
+        public List<IOpinionatedItem>[,,] acceptableItemsArray { get; set; }
         public List<List<List<List<IOpinionatedItem>>>> acceptableItems { get; set; } //[x][y][z][i]
         public List<Tuple<int, Guid, RequirementComparison>> requirements { get; set; }
         public T actualItem;
         public string actualItemName;
+        public string Name {
+            get{ return actualItemName; } }
         private Guid id;
+        private int offsetX, offsetY, offsetZ;
+
         public Guid Id { get { return id; } }
 
         public object GetItem()
         {
             return actualItem;
         }
-        public OpinionatedItem(T _actualItem, string _actualItemName){
+        public OpinionatedItem(T _actualItem, string _actualItemName, List<WcfVector> neighborhoodShape ){
             actualItem = _actualItem;
             actualItemName = _actualItemName;
-            Init();
+            Init(neighborhoodShape);
         }
         public void AddRequirement(IOpinionatedItem item, RequirementComparison comparison, int amount)
         {
@@ -697,6 +670,7 @@ namespace ProcGenTools.DataStructures
         }
         public void SetAcceptableInAllDirection(List<IOpinionatedItem> items, bool mutual = true)
         {
+            //TODO: MAKE THIS DYNAMIC
             for(var x = -1; x < 2; x++)
                 for(var y = -1; y < 2; y++)
                     for(var z = -1; z < 2; z++)
@@ -736,45 +710,54 @@ namespace ProcGenTools.DataStructures
         }
         public bool AcceptsInDirection(IOpinionatedItem item, int x, int y, int z)
         {
-            return acceptableItems[x+1][y+1][z+1].Any(i => i.Id == item.Id);
+            return acceptableItemsArray[x+offsetX,y+offsetY,z+offsetZ].Any(i => i.Id == item.Id);
         }
         public List<IOpinionatedItem> GetAcceptableInDirection(int x, int y, int z)
         {
-            return acceptableItems[x+1][y+1][z+1];
+            return acceptableItemsArray[x+offsetX,y+offsetY,z+offsetZ];
         }
-
 
         public void AddMutualAcceptionInDirection(IOpinionatedItem item, int x, int y, int z)
         {
-            acceptableItems[x + 1][y + 1][z + 1].Add(item);
-            item.acceptableItems[(x *-1) + 1][(y * -1) + 1][(z * -1) + 1].Add(this);
+            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ].Add(item);
+            item.acceptableItemsArray[(x *-1) + offsetX,(y * -1) + offsetY,(z * -1) + offsetZ].Add(this);
         }
         public void AddExclusiveAcceptionInDirection(IOpinionatedItem item, int x, int y, int z)
         {
-            acceptableItems[x + 1][y + 1][z + 1].Add(item);
+            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ].Add(item);
         }
         public void RemoveMutualAcceptionInDirection(IOpinionatedItem item, int x, int y, int z)
         {
-            acceptableItems[x + 1][y + 1][z + 1] = acceptableItems[x + 1][y + 1][z + 1].Where(_x => _x.Id != item.Id).ToList();
-            item.acceptableItems[(x * -1) + 1][(y * -1) + 1][(z * -1) + 1] = item.acceptableItems[(x * -1) + 1][(y * -1) + 1][(z * -1) + 1].Where(_x => _x.Id == item.Id).ToList();
+            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ] = acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ].Where(_x => _x.Id != item.Id).ToList();
+            item.acceptableItemsArray[(x * -1) + offsetX,(y * -1) + offsetY,(z * -1) + offsetZ] = item.acceptableItemsArray[(x * -1) + offsetX,(y * -1) + offsetY,(z * -1) + offsetZ].Where(_x => _x.Id == item.Id).ToList();
         }
         public void RemoveExclusiveAcceptionInDirection(IOpinionatedItem item, int x, int y, int z)
         {
-            acceptableItems[x + 1][y + 1][z + 1] = acceptableItems[x + 1][y + 1][z + 1].Where(_x => _x.Id != item.Id).ToList();
+            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ] = acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ].Where(_x => _x.Id != item.Id).ToList();
         }
         public void ClearMutualAcceptionInDirection(int x, int y, int z)
         {
-            foreach(var item in acceptableItems[x + 1][y + 1][z + 1])
+            foreach(var item in acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ])
             {
-                item.acceptableItems[(x * -1) + 1][(y * -1) + 1][(z * -1) + 1] = item.acceptableItems[(x * -1) + 1][(y * -1) + 1][(z * -1) + 1].Where(_x => _x.Id == item.Id).ToList();
+                item.acceptableItemsArray[(x * -1) + offsetX,(y * -1) + offsetY,(z * -1) + offsetZ] = item.acceptableItemsArray[(x * -1) + offsetX,(y * -1) + offsetY,(z * -1) + offsetZ].Where(_x => _x.Id == item.Id).ToList();
             }
-            acceptableItems[x + 1][y + 1][z + 1] = new List<IOpinionatedItem>();
+            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ] = new List<IOpinionatedItem>();
         }
         public void ClearExclusiveAcceptionInDirection(int x, int y, int z)
         {
-            acceptableItems[x + 1][y + 1][z + 1] = new List<IOpinionatedItem>();
+            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ] = new List<IOpinionatedItem>();
         }
-        private void Init()
+        private bool AcceptItemIndexExists(int x, int y, int z)
+        {
+            var indexX = x + offsetX;
+            var indexY = y + offsetY;
+            var indexZ = z + offsetZ;
+
+            return (indexX > 0 && acceptableItems.Count() > indexX)
+                && (indexY > 0 && acceptableItems[indexX].Count() > indexY)
+                && (indexZ > 0 && acceptableItems[indexX][indexY].Count() > indexZ);
+        }
+        private void Init( List<WcfVector> neighborhoodShape)
         {
             requirements = new List<Tuple<int, Guid, RequirementComparison>>();
             id = Guid.NewGuid();
@@ -818,6 +801,54 @@ namespace ProcGenTools.DataStructures
             acceptableItems[2][2].Add(new List<IOpinionatedItem>());
             acceptableItems[2][2].Add(new List<IOpinionatedItem>());
             acceptableItems[2][2].Add(new List<IOpinionatedItem>());
+
+            int minx, miny, minz, maxx, maxy, maxz;
+            minx = 0; miny = 0; minz = 0;
+            maxx = 0; maxy = 0; maxz = 0;
+            foreach(var shapeNode in neighborhoodShape)
+            {
+                if (shapeNode.x < minx)
+                    minx = shapeNode.x;
+                if (shapeNode.y < miny)
+                    miny = shapeNode.y;
+                if (shapeNode.z < minz)
+                    minz = shapeNode.z;
+
+                if (shapeNode.x > maxx)
+                    maxx = shapeNode.x;
+                if (shapeNode.y > maxy)
+                    maxy = shapeNode.y;
+                if (shapeNode.z > maxz)
+                    maxz = shapeNode.z;
+            }
+
+            int lengthX, lengthY, lengthZ;
+            lengthX = (maxx - minx)+1;
+            lengthY = (maxy - miny)+1;
+            lengthZ = (maxz - minz)+1;
+
+            //int offsetX, offsetY, offsetZ;
+            offsetX = minx * -1;
+            offsetY = miny * -1;
+            offsetZ = minz * -1;
+
+            acceptableItemsArray = new List<IOpinionatedItem>[lengthX, lengthY, lengthZ];
+
+            acceptableItems = new List<List<List<List<IOpinionatedItem>>>>();
+            for(var _x = 0; _x < lengthX; _x++)
+            {
+                acceptableItems.Add(new List<List<List<IOpinionatedItem>>>());
+                for( var _y = 0; _y < lengthY; _y++)
+                {
+                    acceptableItems[_x].Add(new List<List<IOpinionatedItem>>());
+                    for( var _z = 0; _z < lengthZ; _z++)
+                    {
+                        acceptableItems[_x][_y].Add(new List<IOpinionatedItem>());
+                        acceptableItemsArray[_x, _y, _z] = new List<IOpinionatedItem>();
+                    }
+                }
+            }
+
         }
     }
 }
