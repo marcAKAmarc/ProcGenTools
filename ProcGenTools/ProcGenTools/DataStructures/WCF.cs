@@ -68,7 +68,10 @@ namespace ProcGenTools.DataStructures
         {
             random = new Random(seed);
         }
-
+        public WcfGrid(Random _random)
+        {
+            random = _random;
+        }
         public WcfGrid()
         {
             random = new Random();
@@ -179,7 +182,7 @@ namespace ProcGenTools.DataStructures
                 failures = 0;
             }
             SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
-            return true;
+            return propagationResult;
         }
 
         private void handleCollapseFailure(WcfSuperPosition failedSuperPosition, List<WcfSuperPosition> propagatedSuperPositions, WcfSuperPosition manuallyCollapsedSuperPosition)
@@ -280,8 +283,8 @@ namespace ProcGenTools.DataStructures
                 }
                 Console.WriteLine("");
             }
-            Console.WriteLine("Press Enter to continue.");
-            Console.ReadLine();
+            //Console.WriteLine("Press Enter to continue.");
+            //Console.ReadLine();
 
         }
 
@@ -491,6 +494,27 @@ namespace ProcGenTools.DataStructures
             if (slots.Where(_x => !_x.Collapsed).FirstOrDefault() == null)
                 return slots.First().item.GetItem() as T;
             return slots.Where(_x => !_x.Collapsed).First().item.GetItem() as T;
+        }
+        public T FinalPayloadIfExists<T>() where T : class
+        {
+            if (slots.Count(_x=> !_x.Collapsed) != 1)
+            {
+                return null as T;
+            }
+
+            return slots.First(x => !x.Collapsed).item.GetItem() as T;
+        }
+        public T FinalPayloadIfExists<T>(T ifTooMany, T ifNone) where T : class
+        {
+            if (slots.Count(_x => !_x.Collapsed) > 1)
+            {
+                return ifTooMany;
+            }
+            if (slots.Count(_x => !_x.Collapsed) == 0)
+            {
+                return ifNone;
+            }
+            return slots.First(x => !x.Collapsed).item.GetItem() as T;
         }
         public WcfSuperPosition(IEnumerable<IOpinionatedItem> items, Random _random, int _x, int _y, int _z, WcfGrid _parentGrid)
         {

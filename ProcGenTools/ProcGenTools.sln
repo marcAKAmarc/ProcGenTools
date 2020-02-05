@@ -11,6 +11,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.BitmapSplit", "Test.Bi
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.BitmapSplit.UI", "Test.BitmapSplit.UI\Test.BitmapSplit.UI.csproj", "{DD50CC90-291B-4C49-9542-224310562F9A}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.LevelEditor", "Test.LevelGeneration\Test.LevelEditor.csproj", "{E3DC10C4-2909-47F9-9DAC-AE85D49F931D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Path", "Test.Path\Test.Path.csproj", "{57AF11C7-1E54-4AB9-A88B-3553F74177E2}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +37,14 @@ Global
 		{DD50CC90-291B-4C49-9542-224310562F9A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DD50CC90-291B-4C49-9542-224310562F9A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DD50CC90-291B-4C49-9542-224310562F9A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E3DC10C4-2909-47F9-9DAC-AE85D49F931D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3DC10C4-2909-47F9-9DAC-AE85D49F931D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3DC10C4-2909-47F9-9DAC-AE85D49F931D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3DC10C4-2909-47F9-9DAC-AE85D49F931D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{57AF11C7-1E54-4AB9-A88B-3553F74177E2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57AF11C7-1E54-4AB9-A88B-3553F74177E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57AF11C7-1E54-4AB9-A88B-3553F74177E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57AF11C7-1E54-4AB9-A88B-3553F74177E2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

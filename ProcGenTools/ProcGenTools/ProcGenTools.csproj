@@ -43,6 +43,7 @@
   <ItemGroup>
     <Compile Include="DataProcessing\BitmapOperations.cs" />
     <Compile Include="DataStructures\ConnectedGraph.cs" />
+    <Compile Include="DataStructures\Path.cs" />
     <Compile Include="DataStructures\WCF.cs" />
     <Compile Include="DataStructures\Tree.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

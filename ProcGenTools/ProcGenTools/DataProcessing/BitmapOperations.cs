@@ -51,6 +51,8 @@ namespace ProcGenTools.DataProcessing
             {
                 foreach (var yBitmap in xRow)
                 {
+                    if (yBitmap == null)
+                        continue;
                     g.DrawImage(yBitmap, new Point(xpos, ypos));
                     ypos += tileHeight;
                     if (createSpacing)
