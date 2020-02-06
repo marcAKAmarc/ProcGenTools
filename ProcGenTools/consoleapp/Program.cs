@@ -10,15 +10,15 @@ namespace consoleapp
     {
         static void Main(string[] args)
         {
-            var tl = new OpinionatedItem<String>("┌", "top-left", new List<WcfVector>().Cross3dShape());
-            var tr = new OpinionatedItem<String>("┐", "top-right", new List<WcfVector>().Cross3dShape());
-            var bl = new OpinionatedItem<String>("└", "bot-left", new List<WcfVector>().Cross3dShape());
-            var br = new OpinionatedItem<String>("┘", "bot-right", new List<WcfVector>().Cross3dShape());
-            var h = new OpinionatedItem<String>("-", "horizontal", new List<WcfVector>().Cross3dShape());
-            var v = new OpinionatedItem<String>("|", "vertical", new List<WcfVector>().Cross3dShape());
-            var em = new OpinionatedItem<String>(" ", "empty", new List<WcfVector>().Cross3dShape());
-            var no = new OpinionatedItem<String>("X", "emptyNoFloor", new List<WcfVector>().Cross3dShape());
-            var ladder = new OpinionatedItem<String>("L", "ladder", new List<WcfVector>().Cross3dShape());
+            var tl = new OpinionatedItem<String>("┌", "┌", new List<WcfVector>().Cross3dShape());
+            var tr = new OpinionatedItem<String>("┐", "┐", new List<WcfVector>().Cross3dShape());
+            var bl = new OpinionatedItem<String>("└", "└", new List<WcfVector>().Cross3dShape());
+            var br = new OpinionatedItem<String>("┘", "┘", new List<WcfVector>().Cross3dShape());
+            var h = new OpinionatedItem<String>("-", "-", new List<WcfVector>().Cross3dShape());
+            var v = new OpinionatedItem<String>("|", "|", new List<WcfVector>().Cross3dShape());
+            var em = new OpinionatedItem<String>(" ", " ", new List<WcfVector>().Cross3dShape());
+            var no = new OpinionatedItem<String>("X", "X", new List<WcfVector>().Cross3dShape());
+            var ladder = new OpinionatedItem<String>("L", "L", new List<WcfVector>().Cross3dShape());
             var all = new List<IOpinionatedItem> { tl, tr, br, bl, em, h, v, no,ladder};
             
             em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, bl, em, no, v}, 1, 0, 0);

@@ -112,7 +112,7 @@ namespace ProcGenTools.DataStructures
             }
             InfluenceShape = _influenceShape.ToArray();
 
-            SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
+            //SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
         }
 
         public void SetInfluenceShape(List<WcfVector> shape)
@@ -138,12 +138,22 @@ namespace ProcGenTools.DataStructures
         public bool CollapseAllRecursive()
         {
             failures = 0;
-            SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
+            //SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
 
             //while some are not collapsed
-            while (SuperPositionsFlat.Where(x => !x.hasCollapsed).Count() > 0)
+            var dbCount = 0;
+            while (SuperPositionsFlat.Any(x => !x.hasCollapsed))
             {
+                dbCount += 1;
+                if(dbCount == 17)
+                {
+                    var breaka = "here";
+                }
                 var collapsed = CollapseMinimumEntropyPosition();
+                if (!SuperPositionsFlat.Any(x => !x.hasCollapsed))
+                {
+                    var breaka = "here";
+                }
                 var propagationResult = handlePropagation(collapsed);
                 if (propagationResult == false)
                     return false;
@@ -170,34 +180,34 @@ namespace ProcGenTools.DataStructures
         public bool handlePropagation(WcfSuperPosition previouslyCollapsed)
         {
             var propagationResult = previouslyCollapsed.Propagate();
-            if (propagationResult == false)
-            {
-                SuperPositionsFlat.ForEach(sp => sp.RestorePreviousStates());
-                failures++;
-                if (failures > 100)
-                    return false;
-            }
-            else
-            {
-                failures = 0;
-            }
-            SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
+            //if (propagationResult == false)
+            //{
+            //    SuperPositionsFlat.ForEach(sp => sp.RestorePreviousStates());
+            //    failures++;
+            //    if (failures > 100)
+            //        return false;
+            //}
+            //else
+            //{
+            //    failures = 0;
+            //}
+            //SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
             return propagationResult;
         }
 
-        private void handleCollapseFailure(WcfSuperPosition failedSuperPosition, List<WcfSuperPosition> propagatedSuperPositions, WcfSuperPosition manuallyCollapsedSuperPosition)
-        {
-            failedSuperPosition.hasCollapsed = false;
-            failedSuperPosition.Uncollapse();
-            foreach(var item in propagatedSuperPositions)
-            {
-                item.hasCollapsed = false;
-                item.Uncollapse();
-            }
-            manuallyCollapsedSuperPosition.hasCollapsed = false;
-            failedSuperPosition.Uncollapse();
+        //private void handleCollapseFailure(WcfSuperPosition failedSuperPosition, List<WcfSuperPosition> propagatedSuperPositions, WcfSuperPosition manuallyCollapsedSuperPosition)
+        //{
+        //    failedSuperPosition.hasCollapsed = false;
+        //    failedSuperPosition.Uncollapse();
+        //    foreach(var item in propagatedSuperPositions)
+        //    {
+        //        item.hasCollapsed = false;
+        //        item.Uncollapse();
+        //    }
+        //    manuallyCollapsedSuperPosition.hasCollapsed = false;
+        //    failedSuperPosition.Uncollapse();
 
-        }
+        //}
         public List<WcfSuperPosition> GetSuperPositionNeighbors(int _x, int _y, int _z)
         {
             var neighbors = new List<WcfSuperPosition>();
@@ -239,24 +249,24 @@ namespace ProcGenTools.DataStructures
         }
         public void PrintStatesToConsole2d()
         {
-            var updatedSuperPosition = SuperPositionsFlat.Where(x => x.hasUpdated);
+            //var updatedSuperPosition = SuperPositionsFlat.Where(x => x.hasUpdated);
             Console.WriteLine("");
             for (var y = 0; y < height; y++)
             {
                 for(var x = 0; x < width; x++)
                 {
                     var thisSuperPosition = SuperPositions[x, y, 0];
-                    var isUpdated = updatedSuperPosition.Any(usp => usp.x == thisSuperPosition.x && usp.y == thisSuperPosition.y && thisSuperPosition.z == 0);
+                    //var isUpdated = updatedSuperPosition.Any(usp => usp.x == thisSuperPosition.x && usp.y == thisSuperPosition.y && thisSuperPosition.z == 0);
                     var numberOfPossibilities = thisSuperPosition.slots.Where(s => !s.Collapsed).Count();
                     var firstOpenSlot = thisSuperPosition.slots.Where(s => !s.Collapsed).FirstOrDefault();
 
                     var color = ConsoleColor.White;
-                    if ( thisSuperPosition.hasUpdated)
-                        color = ConsoleColor.Cyan;
-                    if ( thisSuperPosition.hasUpdated)
-                        color = ConsoleColor.DarkMagenta; //should never happen?
-                    if ( !thisSuperPosition.hasUpdated)
-                        color = ConsoleColor.Yellow;
+                    //if ( thisSuperPosition.hasUpdated)
+                    //    color = ConsoleColor.Cyan;
+                    //if ( thisSuperPosition.hasUpdated)
+                    //    color = ConsoleColor.DarkMagenta; //should never happen?
+                    //if ( !thisSuperPosition.hasUpdated)
+                    //    color = ConsoleColor.Yellow;
                     
 
                     if (numberOfPossibilities == 0)
@@ -293,7 +303,7 @@ namespace ProcGenTools.DataStructures
     {
         private Random random;
         public bool hasUpdated = false;
-        public bool hasCollapsed = false;
+        public bool hasCollapsed { get{return HasCollapsed(); } }
         private bool hasUpdatedPrevious = false;
         private bool hasCollapsedPrevious = false;
         public int x { get; set; }
@@ -348,8 +358,8 @@ namespace ProcGenTools.DataStructures
             previousStates = new List<bool>();
             foreach (var slot in slots)
                 previousStates.Add(slot.Collapsed);
-            hasUpdatedPrevious = hasUpdated;
-            hasCollapsedPrevious = hasCollapsed;
+            //hasUpdatedPrevious = hasUpdated;
+            //hasCollapsedPrevious = hasCollapsed;
         }
         public void RecordPreviousStatesTemp()
         {
@@ -366,9 +376,18 @@ namespace ProcGenTools.DataStructures
                 else
                     slots[i].UnCollapse();
             }
-            hasCollapsed = hasCollapsedPrevious;
-            hasUpdated = hasUpdatedPrevious;
+            //hasCollapsed = hasCollapsedPrevious;
+            //hasUpdated = hasUpdatedPrevious;
 
+        }
+        private bool HasCollapsed()
+        {
+            var result = slots.Count(x => !x.Collapsed) <= 1;
+            if(result == true)
+            {
+                var breka = "asdf";
+            }
+            return slots.Count(x => !x.Collapsed) <= 1;
         }
         public bool? Collapse(WcfSuperPosition context) {
 
@@ -376,25 +395,8 @@ namespace ProcGenTools.DataStructures
 
             var remaining = slots.Select(x => x.TryCollapse(context)).Where(x=>x==false).Count();
 
-
-            //determine if updated since previous state (not needed)
-            var foundDifference = false;
-            for (var i = 0; i < slots.Count(); i++)
-            {
-                
-                    if (previousStates[i] != slots[i].Collapsed)
-                    {
-                        foundDifference = true;
-                        break;
-                    }
-                
-                if (foundDifference)
-                    break;
-            }
-            hasUpdated = foundDifference;
-
             var justChanged = false;
-            for (var i = 0; i < slots.Count(); i++)
+            for (var i = 0; i < slots.Count; i++)
             {
 
                 if (previousStatesTemp[i] != slots[i].Collapsed)
@@ -402,17 +404,11 @@ namespace ProcGenTools.DataStructures
                     justChanged = true;
                     break;
                 }
-
-                if (justChanged)
-                    break;
             }
 
             if (remaining > 0)
                 return justChanged;
             //undefined, we have no options left!
-            hasCollapsed = true;
-
-
             return null; 
         } 
 
@@ -429,8 +425,8 @@ namespace ProcGenTools.DataStructures
                     slots[i].UnCollapse();
                 }
             }
-            hasCollapsed = true;
-            hasUpdated = true;
+            //hasCollapsed = true;
+            //hasUpdated = true;
         }
         public void CollapseToItem(int index)
         {
@@ -445,8 +441,8 @@ namespace ProcGenTools.DataStructures
                     slots[i].UnCollapse();
                 }
             }
-            hasCollapsed = true;
-            hasUpdated = true;
+            //hasCollapsed = true;
+            //hasUpdated = true;
         }
 
         public void CollapseToItems(List<Guid> itemIds, bool doNotUncollapse = false)
@@ -462,15 +458,15 @@ namespace ProcGenTools.DataStructures
                     slots[i].UnCollapse();
                 }
             }
-            hasCollapsed = true;
-            hasUpdated = true;
+            //hasCollapsed = true;
+            //hasUpdated = true;
         }
         public void CollapseToRandomItem(Random random)
         {
             var available = slots.Where(x => !x.Collapsed).ToList();
             if (available.Count() == 1)
             {
-                hasCollapsed = true;
+                //hasCollapsed = true;
                 return;
             }
             var keepIndex = random.Next(available.Count());
@@ -481,8 +477,8 @@ namespace ProcGenTools.DataStructures
                     available[i].Collapse();
                 }
             }
-            hasCollapsed = true;
-            hasUpdated = true;
+            //hasCollapsed = true;
+            //hasUpdated = true;
         }
         public void Uncollapse()
         {
@@ -546,6 +542,9 @@ namespace ProcGenTools.DataStructures
 
         public bool TryCollapse(WcfSuperPosition _superPosition)
         {
+            //returns true if collapsed to 1 or less...
+            //returns false if more options left
+
             var relativex = _superPosition.x - superPosition.x;
             var relativey = _superPosition.y - superPosition.y;
             var relativez = _superPosition.z - superPosition.z;

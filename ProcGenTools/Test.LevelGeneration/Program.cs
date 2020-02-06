@@ -29,13 +29,13 @@ namespace Test.LevelGeneration
                 ConfigurationManager.AppSettings["hTraverseInput"],
                 ConfigurationManager.AppSettings["vTraverseInput"]
             );
-            for (var i = 0; i < 1; i++)
+            for (var i = 0; i < 10; i++)
             {
-                editor.InitWcfGrid(0);
-                editor.ManualChanges(4, 3);
-                var result = editor.GetWcfResult(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp",i.ToString()+".bmp"));
-                if (result == false)
-                    i -= 1;
+                editor.InitWcfGrid(i);
+                var manualChangesWorked = editor.ManualChanges(4, 3);
+                var collapseWorked = editor.CollapseWcf();
+                var result = editor.OutputWfc(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp",i.ToString()+".bmp"));
+                
             }
         }
     }

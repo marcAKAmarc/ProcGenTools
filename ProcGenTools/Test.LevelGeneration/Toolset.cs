@@ -103,29 +103,30 @@ namespace Test.LevelGeneration
             var shape = new List<WcfVector>().Cross3dShape();
             _grid.SetInfluenceShape(shape);
         }
-        public void ManualChanges(int entranceY, int exitY)
+        public bool ManualChanges(int entranceY, int exitY)
         {
+            bool result = true;
             if(_entranceTiles.Count != 0)
             {
-                AddDoor(entranceY, exitY);
+                result = result && AddDoor(entranceY, exitY);
             }
             if(_borderTiles.Count != 0)
             {
-                AddBorder(entranceY, exitY);
+                result = result && AddBorder(entranceY, exitY);
             }
             if(_hTraverseWcfTiles.Count != 0 && _vTraverseWfcTiles.Count != 0)
             {
-                AddPath(entranceY, exitY);
+                result = result && AddPath(entranceY, exitY,2);
             }
+            return result;
         }
-        public bool GetWcfResult(string outPath)
+        public bool CollapseWcf()
         {
-            var result = _grid.CollapseAllRecursive();
-            if (result == false)
-              return false;
-
+            return _grid.CollapseAllRecursive();
+        }
+        public bool OutputWfc(string outPath)
+        {
             var collapsedTiles = ToTilesList(_grid);
-            //wcf.PrintStatesToConsole2d();
 
             Bitmap tilesetRedux = BitmapOperations.CreateBitmapFromTiles(collapsedTiles);
             BitmapOperations.SaveBitmapToFile(outPath,tilesetRedux);
@@ -250,8 +251,9 @@ namespace Test.LevelGeneration
         }
 
 
-        private void AddBorder(int entranceY, int exitY)
+        private bool AddBorder(int entranceY, int exitY)
         {
+            bool result;
             for (var x = 0; x < _grid.Width; x++)
             {
                 for (var y = 0; y < _grid.Height; y++)
@@ -261,23 +263,31 @@ namespace Test.LevelGeneration
                     if ((y == entranceY && x == 0) || (y == exitY && x == _grid.Width - 1))
                         continue;
                     _grid.SuperPositions[x, y, 0].CollapseToItems(_borderTiles.Select(i=>i.Id).ToList(), true);
-                    var result = _grid.handlePropagation(_grid.SuperPositions[x, y, 0]);
+                    result = _grid.handlePropagation(_grid.SuperPositions[x, y, 0]);
+                    if (!result)
+                        return false;
                 }
             }
+            return true;
         }
-        private void AddDoor(int entranceY, int exitY)
+        private bool AddDoor(int entranceY, int exitY)
         {
             //grid.SuperPositions[0, 5, 0].Uncollapse();
             //grid.SuperPositions[grid.Width-1, 5, 0].Uncollapse();
             _grid.SuperPositions[0, entranceY, 0].CollapseToItems(_entranceTiles.Select(i=>i.Id).ToList(), true);
-            _grid.handlePropagation(_grid.SuperPositions[0, entranceY, 0]);
+            var result1 = _grid.handlePropagation(_grid.SuperPositions[0, entranceY, 0]);
             _grid.SuperPositions[_grid.Width - 1, exitY, 0].CollapseToItems(_entranceTiles.Select(i=>i.Id).ToList(), true);
-            _grid.handlePropagation(_grid.SuperPositions[_grid.Width - 1, exitY, 0]);
+            var result2 = _grid.handlePropagation(_grid.SuperPositions[_grid.Width - 1, exitY, 0]);
+            return result1 && result2;
         }
 
-        private void AddPath(int entranceY, int exitY)
+        private bool AddPath(int entranceY, int exitY, int borderPadding)
         {
-            Path path = new Path(new Point(0, entranceY-1), new Point(_levelWidth - 2, exitY-1), _levelWidth - 2, _levelHeight - 2, null, _random);
+            bool result;
+            Path path = new Path(
+                new Point(0, entranceY-borderPadding), 
+                new Point(_levelWidth-(1 + (borderPadding*2)), exitY-borderPadding), 
+                _levelWidth-(borderPadding*2), _levelHeight - borderPadding, null, _random);
             path.printToConsole();
             for(var i = 0; i < path._pathPoints.Count; i++)
             {
@@ -294,21 +304,43 @@ namespace Test.LevelGeneration
                 if (previousDir != path._pathPoints[i].direction)
                 {
                     //corners and intersections
-                    _grid.SuperPositions[path._pathPoints[i].point.X + 1, path._pathPoints[i].point.Y + 1, 0].CollapseToItems(_cornerIntersectionTiles.Select(tile => tile.Id).ToList(), true); 
+                    _grid.SuperPositions[
+                        path._pathPoints[i].point.X + borderPadding, 
+                        path._pathPoints[i].point.Y + borderPadding, 
+                        0
+                    ].CollapseToItems(_cornerIntersectionTiles.Select(tile => tile.Id).ToList(), true); 
                 }
                 else if (path._pathPoints[i].direction == null || path._pathPoints[i].direction.Value.Y == 0)
                 {
                     //horizontal
-                    _grid.SuperPositions[path._pathPoints[i].point.X + 1, path._pathPoints[i].point.Y + 1, 0].CollapseToItems(_hTraverseWcfTiles.Select(tile => tile.Id).ToList(), true);
+                    _grid.SuperPositions[
+                        path._pathPoints[i].point.X + borderPadding, 
+                        path._pathPoints[i].point.Y + borderPadding, 
+                        0
+                    ].CollapseToItems(_hTraverseWcfTiles.Select(tile => tile.Id).ToList(), true);
                 }
                 else
                 {
                     //vertical
-                    _grid.SuperPositions[path._pathPoints[i].point.X + 1, path._pathPoints[i].point.Y + 1, 0].CollapseToItems(_vTraverseWfcTiles.Select(tile => tile.Id).ToList(), true);
+                    _grid.SuperPositions[
+                        path._pathPoints[i].point.X + borderPadding, 
+                        path._pathPoints[i].point.Y + borderPadding, 
+                        0
+                    ].CollapseToItems(_vTraverseWfcTiles.Select(tile => tile.Id).ToList(), true);
                 }
-                _grid.handlePropagation(_grid.SuperPositions[path._pathPoints[i].point.X + 1, path._pathPoints[i].point.Y + 1, 0]);
-
+                result =_grid.handlePropagation(
+                    _grid.SuperPositions[
+                        path._pathPoints[i].point.X + borderPadding, 
+                        path._pathPoints[i].point.Y + borderPadding, 
+                        0
+                    ]
+                );
+                if(result == false)
+                {
+                    return result;
+                }
             }
+            return true;
             //for (var x = 2; x < _grid.Width - 2; x++)
             //{
             //    _grid.SuperPositions[x, doorwayY, 0].CollapseToItems(_hTraverseWfcTiles.Select(i => i.Id).ToList(), true);
