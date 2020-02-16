@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Drawing;
 using ProcGenTools.DataProcessing;
 using ProcGenTools.DataStructures;
+using Test.LevelGeneration.Models;
 
 namespace Test.LevelGeneration
 {
@@ -21,7 +22,8 @@ namespace Test.LevelGeneration
         private List<OpinionatedItem<Bitmap>> _wfcTiles;
         private List<OpinionatedItem<Bitmap>> _vTraverseWfcTiles;
         private List<OpinionatedItem<Bitmap>> _hTraverseWcfTiles;
-        private List<OpinionatedItem<Bitmap>> _entranceTiles;
+        private List<OpinionatedItem<Bitmap>> _hEntranceTiles;
+        private List<OpinionatedItem<Bitmap>> _vEntranceTiles;
         private List<OpinionatedItem<Bitmap>> _borderTiles;
         private List<OpinionatedItem<Bitmap>> _cornerIntersectionTiles;
         private WcfGrid _grid;
@@ -61,9 +63,13 @@ namespace Test.LevelGeneration
             _hTraverseWcfTiles = getWcfTilesInBmp(hPath);
         }
 
-        public void SetupDoorTiles(string path)
+        public void SetupHEntranceTiles(string path)
         {
-            _entranceTiles = getWcfTilesInBmp(path);
+            _hEntranceTiles = getWcfTilesInBmp(path);
+        }
+        public void SetupVEntranceTiles(string path)
+        {
+            _vEntranceTiles = getWcfTilesInBmp(path);
         }
         public void SetupBorderTiles(string path)
         {
@@ -103,23 +109,7 @@ namespace Test.LevelGeneration
             var shape = new List<WcfVector>().Cross3dShape();
             _grid.SetInfluenceShape(shape);
         }
-        public bool ManualChanges(int entranceY, int exitY)
-        {
-            bool result = true;
-            if(_entranceTiles.Count != 0)
-            {
-                result = result && AddDoor(entranceY, exitY);
-            }
-            if(_borderTiles.Count != 0)
-            {
-                result = result && AddBorder(entranceY, exitY);
-            }
-            if(_hTraverseWcfTiles.Count != 0 && _vTraverseWfcTiles.Count != 0)
-            {
-                result = result && AddPath(entranceY, exitY,2);
-            }
-            return result;
-        }
+
         public bool CollapseWcf()
         {
             return _grid.CollapseAllRecursive();
@@ -250,19 +240,22 @@ namespace Test.LevelGeneration
             return Tiles;
         }
 
-
-        private bool AddBorder(int entranceY, int exitY)
+        public bool AddBorder(Room room)
         {
             bool result;
             for (var x = 0; x < _grid.Width; x++)
             {
                 for (var y = 0; y < _grid.Height; y++)
                 {
-                    if (x > 0 && x < _grid.Width - 1 && y > 0 && y < _grid.Height - 1)
+                    
+                    if (!(x == 0 || y == 0 || x == _grid.Width-1 || y == _grid.Height-1))
                         continue;
-                    if ((y == entranceY && x == 0) || (y == exitY && x == _grid.Width - 1))
+                    var thisPoint = new Point(x, y);
+                    if (room.portals.Any(p=>p.point == thisPoint))
                         continue;
-                    _grid.SuperPositions[x, y, 0].CollapseToItems(_borderTiles.Select(i=>i.Id).ToList(), true);
+                    
+
+                    _grid.SuperPositions[x, y, 0].CollapseToItems(_borderTiles.Select(i => i.Id).ToList(), true);
                     result = _grid.handlePropagation(_grid.SuperPositions[x, y, 0]);
                     if (!result)
                         return false;
@@ -270,29 +263,96 @@ namespace Test.LevelGeneration
             }
             return true;
         }
-        private bool AddDoor(int entranceY, int exitY)
+
+        public bool AddPortal(Portal portal)
         {
-            //grid.SuperPositions[0, 5, 0].Uncollapse();
-            //grid.SuperPositions[grid.Width-1, 5, 0].Uncollapse();
-            _grid.SuperPositions[0, entranceY, 0].CollapseToItems(_entranceTiles.Select(i=>i.Id).ToList(), true);
-            var result1 = _grid.handlePropagation(_grid.SuperPositions[0, entranceY, 0]);
-            _grid.SuperPositions[_grid.Width - 1, exitY, 0].CollapseToItems(_entranceTiles.Select(i=>i.Id).ToList(), true);
-            var result2 = _grid.handlePropagation(_grid.SuperPositions[_grid.Width - 1, exitY, 0]);
-            return result1 && result2;
+            List<OpinionatedItem<Bitmap>> tiles = _hEntranceTiles;
+            if (portal.direction.Y != 0)
+                tiles = _vEntranceTiles;
+
+            _grid.SuperPositions[portal.point.X, portal.point.Y, 0].CollapseToItems(tiles.Select(i => i.Id).ToList(), true);
+            return _grid.handlePropagation(_grid.SuperPositions[portal.point.X, portal.point.Y, 0]);
         }
 
-        private bool AddPath(int entranceY, int exitY, int borderPadding)
+        public bool AddPaths(Room room)
+        {
+            bool result = true;
+            foreach(var entrance in room.portals.Where(x => x.IsEntrance(room)))
+            {
+                //shift points into box of borderwidth
+                Point entrancePoint, exitPoint, exitDirection;
+                entrancePoint = entrance.point;
+                if(entrance.point.X < room.BorderWidth)
+                {
+                    entrancePoint.X = room.BorderWidth;
+                }
+                if(entrance.point.X > (room.Width - 1) - (room.BorderWidth))
+                {
+                    entrancePoint.X = (room.Width - 1) - (room.BorderWidth);
+                }
+
+                if (entrance.point.Y < room.BorderWidth)
+                {
+                    entrancePoint.Y = room.BorderWidth;
+                }
+                if (entrance.point.Y > (room.Height - 1) - (room.BorderWidth))
+                {
+                    entrancePoint.Y = (room.Height - 1) - (room.BorderWidth);
+                }
+                var exits = room.portals.Where(x=>!x.IsEntrance(room)).ToList();
+                if(exits.Count == 0)
+                {
+                    exitPoint = entrancePoint;
+                    exitDirection = new Point();
+                }
+                else
+                {
+                    exitPoint = exits.First().point;
+                    exitDirection = exits.First().direction;
+                }
+
+                if (exitPoint.X < room.BorderWidth)
+                {
+                    exitPoint.X = room.BorderWidth;
+                }
+                if (exitPoint.X > (room.Width - 1) - (room.BorderWidth))
+                {
+                    exitPoint.X = (room.Width - 1) - (room.BorderWidth);
+                }
+
+                if (exitPoint.Y < room.BorderWidth)
+                {
+                    exitPoint.Y = room.BorderWidth;
+                }
+                if (exitPoint.Y > (room.Height - 1) - (room.BorderWidth))
+                {
+                    exitPoint.Y = (room.Height - 1) - (room.BorderWidth);
+                }
+                //shift to 0
+                exitPoint.X = exitPoint.X - room.BorderWidth;
+                exitPoint.Y = exitPoint.Y - room.BorderWidth;
+                entrancePoint.X -= room.BorderWidth;
+                entrancePoint.Y -= room.BorderWidth;
+
+                result = result && AddPath(entrancePoint, entrance.direction, exitPoint, exitDirection, room.Width - (room.BorderWidth*2), room.Height - (room.BorderWidth*2), room.BorderWidth);
+            }
+
+            return true;
+        }
+        private bool AddPath(Point start, Point startDirection, Point end, Point endDirection, int pathWidth, int pathHeight, int borderPadding)
         {
             bool result;
             Path path = new Path(
-                new Point(0, entranceY-borderPadding), 
-                new Point(_levelWidth-(1 + (borderPadding*2)), exitY-borderPadding), 
-                _levelWidth-(borderPadding*2), _levelHeight - borderPadding, null, _random);
+                new PathPoint(new Point(start.X, start.Y), startDirection),
+                new PathPoint(new Point(end.X, end.Y), endDirection),
+                pathWidth, pathHeight, 
+                null, _random
+            );
             path.printToConsole();
-            for(var i = 0; i < path._pathPoints.Count; i++)
+            for (var i = 0; i < path._pathPoints.Count; i++)
             {
                 Point? previousDir = new Point(1, 0);
-                if(i == 0)
+                if (i == 0)
                 {
                     previousDir = new Point(1, 0);
                 }
@@ -305,17 +365,17 @@ namespace Test.LevelGeneration
                 {
                     //corners and intersections
                     _grid.SuperPositions[
-                        path._pathPoints[i].point.X + borderPadding, 
-                        path._pathPoints[i].point.Y + borderPadding, 
+                        path._pathPoints[i].point.X + borderPadding,
+                        path._pathPoints[i].point.Y + borderPadding,
                         0
-                    ].CollapseToItems(_cornerIntersectionTiles.Select(tile => tile.Id).ToList(), true); 
+                    ].CollapseToItems(_cornerIntersectionTiles.Select(tile => tile.Id).ToList(), true);
                 }
-                else if (path._pathPoints[i].direction == null || path._pathPoints[i].direction.Value.Y == 0)
+                else if (path._pathPoints[i].direction == null || path._pathPoints[i].direction.Y == 0)
                 {
                     //horizontal
                     _grid.SuperPositions[
-                        path._pathPoints[i].point.X + borderPadding, 
-                        path._pathPoints[i].point.Y + borderPadding, 
+                        path._pathPoints[i].point.X + borderPadding,
+                        path._pathPoints[i].point.Y + borderPadding,
                         0
                     ].CollapseToItems(_hTraverseWcfTiles.Select(tile => tile.Id).ToList(), true);
                 }
@@ -323,30 +383,24 @@ namespace Test.LevelGeneration
                 {
                     //vertical
                     _grid.SuperPositions[
-                        path._pathPoints[i].point.X + borderPadding, 
-                        path._pathPoints[i].point.Y + borderPadding, 
+                        path._pathPoints[i].point.X + borderPadding,
+                        path._pathPoints[i].point.Y + borderPadding,
                         0
                     ].CollapseToItems(_vTraverseWfcTiles.Select(tile => tile.Id).ToList(), true);
                 }
-                result =_grid.handlePropagation(
+                result = _grid.handlePropagation(
                     _grid.SuperPositions[
-                        path._pathPoints[i].point.X + borderPadding, 
-                        path._pathPoints[i].point.Y + borderPadding, 
+                        path._pathPoints[i].point.X + borderPadding,
+                        path._pathPoints[i].point.Y + borderPadding,
                         0
                     ]
                 );
-                if(result == false)
+                if (result == false)
                 {
                     return result;
                 }
             }
             return true;
-            //for (var x = 2; x < _grid.Width - 2; x++)
-            //{
-            //    _grid.SuperPositions[x, doorwayY, 0].CollapseToItems(_hTraverseWfcTiles.Select(i => i.Id).ToList(), true);
-            //    _grid.handlePropagation(_grid.SuperPositions[x, doorwayY, 0]);
-            //}
         }
-
     }
 }

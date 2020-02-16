@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.LevelEditor", "Test.Le
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Path", "Test.Path\Test.Path.csproj", "{57AF11C7-1E54-4AB9-A88B-3553F74177E2}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.HierarchicalMap", "Test.HierarchicalMap\Test.HierarchicalMap.csproj", "{D88019DD-693D-40B4-8373-FC4C8251792C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{57AF11C7-1E54-4AB9-A88B-3553F74177E2}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{57AF11C7-1E54-4AB9-A88B-3553F74177E2}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{57AF11C7-1E54-4AB9-A88B-3553F74177E2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D88019DD-693D-40B4-8373-FC4C8251792C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D88019DD-693D-40B4-8373-FC4C8251792C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D88019DD-693D-40B4-8373-FC4C8251792C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D88019DD-693D-40B4-8373-FC4C8251792C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
