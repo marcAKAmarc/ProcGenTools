@@ -69,8 +69,85 @@ namespace ProcGenTools.DataStructures
             }
             SubMap.CreatePaths();
             SubMap.CoverPathsWithZones(3, 2);
-
+            if (SubMap.flatZones.Any(x => !touchesAnotherZone()))
+                throw new Exception("failed - zone does not touch another zone");
+            var randomZone = SubMap.flatZones[random.Next(SubMap.flatZones.Count)];
+            SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
+            if (SubMap.flatZones.Any(x => !touchesAnotherZone()))
+                throw new Exception("failed - zone does not touch another zone");
+            SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
+            if (SubMap.flatZones.Any(x => !touchesAnotherZone()))
+                throw new Exception("failed - zone does not touch another zone");
+            //SubMap.SpawnZone(3, 2, new Point(randomZone.X, randomZone.Y));
             SubMap.CreateSubMaps();
+        }
+
+        public bool touchesAnotherZone()
+        {
+            //check if touches another item
+            var touchesAnother = false;
+            var _Grid = FromMap._Grid;
+            for (var tx = 0; tx < Width; tx++)
+            {
+
+                if (
+                     tx + X < _Grid.GetLength(0)
+                     && Y - 1 > 0
+                     && _Grid[tx + X, Y - 1] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            for (var tx = 0; tx < Width; tx++)
+            {
+
+                if (
+                     tx + X < _Grid.GetLength(0)
+                     && Y + Height < _Grid.GetLength(1)
+                     && _Grid[tx + X, Y + Height] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            for (var ty = 0; ty < Height; ty++)
+            {
+                if (
+
+                     ty + Y < _Grid.GetLength(1)
+                     && X - 1 > 0
+                     && _Grid[X - 1, ty + Y] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            for (var ty = 0; ty < Height; ty++)
+            {
+
+                if (
+                     ty + Y < _Grid.GetLength(1)
+                     && X + Width < _Grid.GetLength(0)
+                     && _Grid[X + Width, ty + Y] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            return false;
         }
     }
     public class ZonePortal
@@ -148,15 +225,25 @@ namespace ProcGenTools.DataStructures
             consoleColorIndex += 1;
             consoleColorIndex = consoleColorIndex % Enum.GetValues(typeof(ConsoleColor)).Length;
 
-            dbColor = Color.FromArgb(_Random.Next(255), _Random.Next(255), _Random.Next(255));
+            var colorMode = _Random.Next(3);
+            if(colorMode == 2)
+                dbColor = Color.FromArgb(_Random.Next(128)+128, _Random.Next(128)+128, 0);
+            if(colorMode == 1)
+                dbColor = Color.FromArgb(_Random.Next(128)+128, 0, _Random.Next(128)+128);
+            if(colorMode == 1)
+                dbColor = Color.FromArgb(0, _Random.Next(128)+128, _Random.Next(128)+128);
         }
 
-        public List<HierarchicalMap>[,] GetMasterMap(List<HierarchicalMap>[,] _masterMap = null, int depth = 0)
+        public List<HierarchicalMap>[,] GetMasterMap(List<HierarchicalMap>[,] _masterMap = null, int originalLevel = -1, int depth = 0)
         {
+
             if(depth == 3)
             {
                 var breaka = "here";
             }
+
+            if(originalLevel == -1)
+                originalLevel = this._Level;
             var scaleAtLevel = HierarchicalMap.ScaleAtLevel(_Level);
 
             if (_masterMap == null)
@@ -169,7 +256,7 @@ namespace ProcGenTools.DataStructures
             var currentZone = this.fromZone;
             int absX = 0;
             int absY = 0;
-            while (currentZone != null)
+            while (currentZone != null && currentZone.Level >= originalLevel)
             {
                 absX += currentZone.X * ScaleAtLevel(currentZone.Level);
                 absY += currentZone.Y * ScaleAtLevel(currentZone.Level);
@@ -189,7 +276,7 @@ namespace ProcGenTools.DataStructures
             foreach(var zone in flatZones)
             {
                 if(zone.SubMap != null)
-                    zone.SubMap.GetMasterMap(_masterMap, depth + 1);
+                    zone.SubMap.GetMasterMap(_masterMap, originalLevel, depth + 1);
             }
 
             return _masterMap;
@@ -253,25 +340,27 @@ namespace ProcGenTools.DataStructures
                 (portal.point.Y + portal.direction.Y > 0 && portal.point.Y + portal.direction.Y < _MapHeight);
         }
 
-        public bool SpawnZone(int maxSide, int minSide)
+        public bool SpawnZoneAtSearchPosition(int maxSide, int minSide, Point? searchStartPoint = null, bool mustTouchAnother = false)
         {
             int SideX_o = _Random.Next(minSide, maxSide+1);
             int SideY_o = _Random.Next(minSide, maxSide+1);
             int SideX = SideX_o;
             int SideY = SideY_o;
-            SearchCache search = SearchForFreePosition();
+            SearchCache search = SearchForFreePosition(null, searchStartPoint);
             if (search.result == null)
                 return false;
 
             var foundPosition = false;
             Point? adjustedOrigin = null;
-            while(search.result != null)
+
+            var failures = 0;
+            while(search.result != null && failures < 10)
             {
                 //int currentGoalSideX = SideX;
                 //int currentGoalSideY = SideY;
 
                 var failedToFindFit = false;
-                adjustedOrigin = CanFitZoneOverPoint(new Point(SideX, SideY), search.result.Value);
+                adjustedOrigin = CanFitZoneOverPoint(new Point(SideX, SideY), search.result.Value, mustTouchAnother);
                 while (adjustedOrigin == null)
                 {
                     if (SideY < SideX)
@@ -287,6 +376,7 @@ namespace ProcGenTools.DataStructures
                 }
                 if (failedToFindFit)
                 {
+                    failures += 1;
                     SearchForFreePosition(search);
                     SideX = SideX_o;
                     SideY = SideY_o;
@@ -313,17 +403,17 @@ namespace ProcGenTools.DataStructures
 
             AssignZoneToGrid(zone);
             AssignPortalsToZone(zone);
-            PrintToConsole();
+            //PrintToConsole();
             return true;
         }
 
-        public bool SpawnZone(int maxSide, int minSide, Point position)
+        public bool SpawnZoneAtPosition(int maxSide, int minSide, Point position)
         {
             int SideX_o = _Random.Next(minSide, maxSide + 1);
             int SideY_o = _Random.Next(minSide, maxSide + 1);
             int SideX = SideX_o;
             int SideY = SideY_o;
-            var adjustedOrigin = CanFitZoneOverPoint(new Point(SideX, SideY), position);
+            var adjustedOrigin = CanFitZoneOverPoint(new Point(SideX, SideY), position, true);
             while (adjustedOrigin == null)
             {
                 if (SideY < SideX)
@@ -350,7 +440,7 @@ namespace ProcGenTools.DataStructures
 
             AssignZoneToGrid(zone);
             AssignPortalsToZone(zone);
-            PrintToConsole();
+            //PrintToConsole();
             return true;
         }
 
@@ -360,10 +450,11 @@ namespace ProcGenTools.DataStructures
             var failures = 0;
             while (true)
             {
-                Console.WriteLine("Failures: " + failures.ToString());
+                //Console.WriteLine("Failures: " + failures.ToString());
 
                 if(failures >= 10)
                 {
+                    //Console.ReadLine();
                     failures = 0;
 
                     //reset grid completely
@@ -388,7 +479,7 @@ namespace ProcGenTools.DataStructures
                     var deletable = createdZones.LastOrDefault();
                     if (deletable != null)
                     {
-                        createdZones.RemoveAt(createdZones.Count - 1);
+                        createdZones = createdZones.Where(cz => cz.id != deletable.id).ToList();
                         flatZones = flatZones.Where(fz => fz.id != deletable.id).ToList();
                         for (var x = 0; x < _MapWidth; x++)
                         {
@@ -401,6 +492,8 @@ namespace ProcGenTools.DataStructures
                             }
                         }
                     }
+
+                   
                 }
 
                 var succeeded = true;
@@ -410,7 +503,7 @@ namespace ProcGenTools.DataStructures
                     {
                         if (_Grid[pathpoint.point.X, pathpoint.point.Y] == null)
                         {
-                            var result = SpawnZone(maxSide, minSide, pathpoint.point);
+                            var result = SpawnZoneAtPosition(maxSide, minSide, pathpoint.point);
                             if (result)
                                 createdZones.Add(_Grid[pathpoint.point.X, pathpoint.point.Y]);
                             else
@@ -427,6 +520,21 @@ namespace ProcGenTools.DataStructures
                 if (succeeded)
                     break;
                 failures += 1;
+            }
+
+            //Persist portals from parent
+            foreach(var portal in _Portals)
+            {
+                var zone = _Grid[portal.point.X, portal.point.Y];
+                zone.ZonePortals.Add(
+                    new ZonePortal
+                    {
+                        Destination = null,
+                        MapRelativePosition = portal.point,
+                        ZoneRelativePosition = new Point(portal.point.X - zone.X, portal.point.Y - zone.Y),
+                        direction = ZonePortalDirection.Bidirectional
+                    }
+                );
             }
 
             return true;
@@ -460,7 +568,7 @@ namespace ProcGenTools.DataStructures
                 if (!(x >= 0 && x < _MapWidth && y >= 0 && y < _MapHeight))
                     continue;
                 var potentialNeighbor = _Grid[x, y];
-                PrintToConsole(new Point(x, y));
+                //PrintToConsole(new Point(x, y));
                 if (potentialNeighbor != null && zone.id != potentialNeighbor.id)
                 {
                     neighborZones.Add(new NeighborZone()
@@ -478,7 +586,7 @@ namespace ProcGenTools.DataStructures
                 if (!(x >= 0 && x < _MapWidth && y >= 0 && y < _MapHeight))
                     continue;
                 var potentialNeighbor = _Grid[x, y];
-                PrintToConsole(new Point(x, y));
+                //PrintToConsole(new Point(x, y));
                 if (potentialNeighbor != null && zone.id != potentialNeighbor.id)
                 {
                     neighborZones.Add(new NeighborZone()
@@ -496,7 +604,7 @@ namespace ProcGenTools.DataStructures
                 if (!(x >= 0 && x < _MapWidth && y >= 0 && y < _MapHeight))
                     continue;
                 var potentialNeighbor = _Grid[x, y];
-                PrintToConsole(new Point(x, y));
+                //PrintToConsole(new Point(x, y));
                 if (potentialNeighbor != null && zone.id != potentialNeighbor.id)
                 {
                     neighborZones.Add(new NeighborZone()
@@ -514,7 +622,7 @@ namespace ProcGenTools.DataStructures
                 if (!(x >= 0 && x < _MapWidth && y >= 0 && y < _MapHeight))
                     continue;
                 var potentialNeighbor = _Grid[x, y];
-                PrintToConsole(new Point(x, y));
+                //PrintToConsole(new Point(x, y));
                 if (potentialNeighbor != null && zone.id != potentialNeighbor.id)
                 {
                     neighborZones.Add(new NeighborZone()
@@ -591,7 +699,7 @@ namespace ProcGenTools.DataStructures
                             _Random
                         )
                     );
-                    PrintToConsole();
+                    //PrintToConsole();
                 }
                 connected.Add(portal);
             }
@@ -606,7 +714,7 @@ namespace ProcGenTools.DataStructures
             public bool minnedY = false;
             public bool horizTravel = true;
         }
-        private SearchCache SearchForFreePosition(SearchCache searchCache = null)
+        private SearchCache SearchForFreePosition(SearchCache searchCache = null, Point? startPosition = null)
         {
             Point center = new Point(
                 (int)Math.Floor(((decimal)_MapWidth) / 2),
@@ -615,7 +723,10 @@ namespace ProcGenTools.DataStructures
             if (searchCache == null)
             {
                 searchCache = new SearchCache();
-                searchCache.position = center;
+                if (startPosition.HasValue)
+                    searchCache.position = startPosition.Value;
+                else
+                    searchCache.position = center;
             }
 
             searchCache.result = null;
@@ -678,32 +789,55 @@ namespace ProcGenTools.DataStructures
                     searchCache.result = null;
                     return searchCache;
                 }
-                PrintToConsole(searchCache.position);
+                //PrintToConsole(searchCache.position);
             }
             searchCache.result = searchCache.position;
             return searchCache;
         }
 
-        public Point? CanFitZoneOverPoint(Point zoneDim, Point point)
+        public Point? CanFitZoneOverPoint(Point zoneDim, Point point, bool mustTouchAnother = false)
         {
             Point checkPoint = new Point();
-            //var checkPoint = new Point(
-            //    point.X - (zoneDim.X -1),
-            //    point.Y - (zoneDim.Y -1)
-            //);
-
-            for(var y = 0; y < zoneDim.Y; y++)
+            
+            //we have to randomize this so that things get solved when attempted again maybe.
+            int yStart, yLimit, yDirection, xStart, xLimit, xDirection;
+            yStart = 0;
+            xStart = 0;
+            yLimit = zoneDim.Y;
+            xLimit = zoneDim.X;
+            if(_Random.Next(2) == 0)
             {
-                for(var x = 0; x < zoneDim.X; x++)
+                var temp = xStart;
+                xStart = xLimit-1;
+                xLimit = temp-1;
+            }
+            if (_Random.Next(2) == 0)
+            {
+                var temp = yStart;
+                yStart = yLimit-1;
+                yLimit = temp-1;
+            }
+            yDirection = (yLimit - yStart) / Math.Abs(yLimit - yStart);
+            xDirection = (xLimit - xStart) / Math.Abs(xLimit - xStart);
+            
+
+            for (var y = yStart; y != yLimit; y+=yDirection)
+            {
+                for(var x = xStart; x != xLimit; x+=xDirection)
                 {
                     checkPoint.X = (point.X - (zoneDim.X -1)) + x;
                     checkPoint.Y = (point.Y - (zoneDim.Y - 1)) + y;
 
                     var spaceFree = true;
+
                     for(var suby = 0; suby < zoneDim.Y; suby++)
                     {
                         for(var subx = 0; subx < zoneDim.X; subx++)
                         {
+                            //Console.WriteLine();
+                            //Console.WriteLine(xDirection.ToString() +", " + yDirection.ToString());
+                            //PrintToConsole(new Point(subx, suby));
+                            //Console.ReadKey();
                             if (checkPoint.X + subx >= _MapWidth || checkPoint.Y + suby >= _MapHeight || checkPoint.X + subx < 0 || checkPoint.Y + suby < 0 )
                             {
                                 spaceFree = false;
@@ -719,12 +853,82 @@ namespace ProcGenTools.DataStructures
                         if (spaceFree == false)
                             break;
                     }
-                    if (spaceFree)
+
+                    
+                    if (spaceFree && (!mustTouchAnother || ZoneDimensionsAdjacentToAnother(checkPoint.X,checkPoint.Y,zoneDim.X, zoneDim.Y)))
                         return checkPoint;
                 }
             }
             return null;
         }
+
+        public bool ZoneDimensionsAdjacentToAnother(int x, int y, int width, int height)
+        {
+            //check if touches another item
+            var touchesAnother = false;
+            for (var tx = 0; tx < width; tx++)
+            {
+                
+                if (
+                     tx + x < _Grid.GetLength(0)
+                     && y - 1 > 0
+                     && _Grid[tx + x, y - 1] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            for (var tx = 0; tx < width; tx++)
+            {
+
+                if (
+                     tx + x < _Grid.GetLength(0)
+                     && y + height < _Grid.GetLength(1)
+                     && _Grid[tx + x, y + height] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            for (var ty = 0; ty < height; ty++)
+            {
+                if (
+                     
+                     ty + y < _Grid.GetLength(1)
+                     && x - 1 > 0
+                     && _Grid[x-1, ty + y] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            for (var ty = 0; ty < height; ty++)
+            {
+
+                if (
+                     ty + y < _Grid.GetLength(1)
+                     && x + width < _Grid.GetLength(0)
+                     && _Grid[x + width, ty + y] != null
+                )
+                {
+                    touchesAnother = true;
+                    break;
+                }
+            }
+            if (touchesAnother)
+                return true;
+            return false;
+        }
+
         public void PrintToConsoleRecursive(Point? cursorPosition = null)
         {
             for (var y = 0; y < _MapHeight; y++)
@@ -772,7 +976,8 @@ namespace ProcGenTools.DataStructures
             }
             Console.Write(Environment.NewLine);
             Console.Write(Environment.NewLine);
-            //Console.ReadKey();
+            /*if(this.dbColorConsole == ConsoleColor.DarkCyan)
+                Console.ReadKey();*/
         }
 
 
@@ -789,7 +994,7 @@ namespace ProcGenTools.DataStructures
                 }
                 Console.WriteLine();
             }
-            Console.ReadKey();
+            //Console.ReadKey();
         }
 
         public void PrintMasterToBitmap(string filepath)
@@ -808,7 +1013,7 @@ namespace ProcGenTools.DataStructures
                 }
                 Console.WriteLine();
             }
-            Console.ReadKey();
+            //Console.ReadKey();
 
             BitmapOperations.SaveBitmapToFile(filepath, bmp);
         }
@@ -830,6 +1035,34 @@ namespace ProcGenTools.DataStructures
                 g / maps.Count,
                 b / maps.Count
             );
+
+            var last = maps.OrderBy(x => x._Level).LastOrDefault();
+            if(last != null)
+            {
+                color = Color.FromArgb(
+                    (color.R + last.dbColor.R) / 2,
+                    (color.G + last.dbColor.G) / 2,
+                    (color.B + last.dbColor.B) / 2
+                );
+            }
+
+            if (last.flatZones.Count == 0)
+            {
+                color = Color.FromArgb(
+                    (color.R) / 4,
+                    (color.G) / 4,
+                    (color.B) / 4
+                );
+            }
+            else
+            {
+                color = Color.FromArgb(
+                    color.R + ((255-color.R)/2),
+                    color.G + ((255 - color.G) / 2),
+                    color.B + ((255 - color.B) / 2)
+                );
+            }
+
 
             return color;
         }

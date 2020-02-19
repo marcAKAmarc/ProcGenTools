@@ -13,18 +13,23 @@ namespace Test.HierarchicalMaps
         {
             Console.WriteLine("Presse Enter");
             Console.ReadKey();
-            HierarchicalMap.RelativeScales = new int[] { 4,4 };
-            var map = new HierarchicalMap(10, 10, new Random(4));
+            HierarchicalMap.RelativeScales = new int[] { 3,4 };
+            var map = new HierarchicalMap(10, 10, new Random());
             //map.SetTestPortals();
             //map.CreatePaths();
             //map.CoverPathsWithZones(3,2);
-            map.SpawnZone(3,2);
-            map.SpawnZone(3, 2);
-            map.SpawnZone(3, 2);
-            map.SpawnZone(3, 2);
+            map.SpawnZoneAtSearchPosition(3,2);
+            map.SpawnZoneAtSearchPosition(3, 2, null, true);
+            map.SpawnZoneAtSearchPosition(3, 2, null, true);
+            map.SpawnZoneAtSearchPosition(3, 2, null, true);
             map.CreateSubMaps();
             map.PrintMasterToConsole();
             map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);
+            for(var i = 0; i < map.flatZones.Count(); i++)
+            {
+                var submap = map.flatZones[i].SubMap;
+                submap.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", i.ToString() + ".bmp"));
+            }
         }
     }
 }
