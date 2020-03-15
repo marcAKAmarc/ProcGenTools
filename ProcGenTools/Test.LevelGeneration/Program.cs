@@ -40,6 +40,7 @@ namespace Test.LevelGeneration
                 var room = Rooms[i];
                 var result = true;
                 seed += 1;
+                editor.SetDimensions(room.Width, room.Height);
                 editor.InitWcfGrid(seed);
                 foreach(var portal in room.portals)
                 {

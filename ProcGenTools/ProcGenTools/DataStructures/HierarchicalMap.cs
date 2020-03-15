@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 using ProcGenTools.DataProcessing;
+using ProcGenTools.Helper;
 namespace ProcGenTools.DataStructures
 {
     public class Zone
@@ -20,6 +21,7 @@ namespace ProcGenTools.DataStructures
         public int AbsoluteY;
         public HierarchicalMap SubMap;
         public HierarchicalMap FromMap;
+
         public List<ZonePortal> ZonePortals;
         public Zone()
         {
@@ -39,44 +41,63 @@ namespace ProcGenTools.DataStructures
             SubMap = new HierarchicalMap(Width * scale, Height * scale, random, Level + 1);
             SubMap.fromZone = this;
 
-            if (HierarchicalMap.RelativeScales.Count() - 1 < Level)
-                return;
+           
 
             foreach (var portal in ZonePortals)
             {
-                var newX = 0;
-                var newY = 0;
-                if (portal.ZoneRelativePosition.X + 1 == Width)
-                    newX = (Width * scale) - 1;
-                else if (portal.ZoneRelativePosition.X == 0)
+                //TODO: THIS IS THE REASON THAT SOME DO NOT CONNECT!
+                var newX = portal.ZoneRelativePosition.X * scale;
+                var newY = portal.ZoneRelativePosition.Y * scale;
+                if(portal.direction.X == 1)
+                    newX = (Width * scale) -1;
+                if (portal.direction.X == -1)
                     newX = 0;
-                else
-                    newX = portal.ZoneRelativePosition.X * scale;
-                if (portal.ZoneRelativePosition.Y + 1 == Height)
+                if (portal.direction.Y == 1)
                     newY = (Height * scale) - 1;
-                else if (portal.ZoneRelativePosition.Y == 0)
+                if (portal.direction.Y == -1)
                     newY = 0;
-                else
-                    newY = portal.ZoneRelativePosition.Y * scale;
-
-                SubMap.AddPortal(new HierarchicalMapPortal() {
-                    direction = new Point(1, 0),
+                var subportal = new HierarchicalMapPortal()
+                {
+                    direction = portal.direction,
                     point = new Point(
                        newX,
                        newY
-                    )
-                });
+                    ),
+                    ParentPortal = portal,
+                    directionOfPassage = portal.directionOfPassage,
+                    Map = SubMap
+                };
+
+                portal.SubPortal = subportal;
+
+                if(portal.DestinationPortal != null && portal.DestinationPortal.SubPortal != null)
+                {
+                    subportal.DestinationPortal = portal.DestinationPortal.SubPortal;
+                    subportal.destination = ((HierarchicalMapPortal)portal.DestinationPortal.SubPortal).Map;
+
+                    //reflexive
+                    portal.DestinationPortal.SubPortal.DestinationPortal = subportal;
+                    ((HierarchicalMapPortal)portal.DestinationPortal.SubPortal).destination = SubMap;
+                }
+                
+                SubMap.AddPortal(subportal);
             }
+
+            if (HierarchicalMap.RelativeScales.Count() - 1 < Level)
+                return;
+
             SubMap.CreatePaths();
-            SubMap.CoverPathsWithZones(3, 2);
-            if (SubMap.flatZones.Any(x => !touchesAnotherZone()))
+            var result = SubMap.CoverPathsWithZones(3, 2);
+            if(result == false)
+                throw new Exception("failed to create path");
+            if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
                 throw new Exception("failed - zone does not touch another zone");
             var randomZone = SubMap.flatZones[random.Next(SubMap.flatZones.Count)];
-            SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
-            if (SubMap.flatZones.Any(x => !touchesAnotherZone()))
+           // SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
+            if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
                 throw new Exception("failed - zone does not touch another zone");
-            SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
-            if (SubMap.flatZones.Any(x => !touchesAnotherZone()))
+            //SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
+            if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
                 throw new Exception("failed - zone does not touch another zone");
             //SubMap.SpawnZone(3, 2, new Point(randomZone.X, randomZone.Y));
             SubMap.CreateSubMaps();
@@ -150,19 +171,36 @@ namespace ProcGenTools.DataStructures
             return false;
         }
     }
-    public class ZonePortal
+    public interface NestedPortal
+    {
+        NestedPortal SubPortal { get; set; }
+        NestedPortal ParentPortal { get; set; }
+        NestedPortal DestinationPortal { get; set; }
+    }
+    public class ZonePortal : NestedPortal
     {
         public Point ZoneRelativePosition;
         public Point MapRelativePosition;
+        public Point direction;
         public Zone Destination;
-        public ZonePortalDirection direction;
+        public NestedPortal SubPortal { get; set; }
+        public NestedPortal ParentPortal { get; set; }
+        public ZonePortalDirection directionOfPassage;
+        public NestedPortal DestinationPortal { get; set; }
+        public Zone zone;
     }
     public enum ZonePortalDirection { In, Out, Bidirectional};
-    public class HierarchicalMapPortal
+    public class HierarchicalMapPortal:NestedPortal
     {
         public Guid id;
         public Point point;
-        public Point direction;
+        public HierarchicalMap destination;
+        public Point direction; //pass through
+        public NestedPortal SubPortal { get; set; }
+        public NestedPortal ParentPortal { get; set; }
+        public ZonePortalDirection directionOfPassage;
+        public NestedPortal DestinationPortal { get; set; }
+        public HierarchicalMap Map;
 
         public HierarchicalMapPortal()
         {
@@ -185,12 +223,14 @@ namespace ProcGenTools.DataStructures
         public List<Path> _Paths;
         public Random _Random;
         public Zone fromZone = null;
+        public Bitmap contents = null;
         public static int[] RelativeScales;
 
         private ConsoleColor dbColorConsole;
         private Color dbColor;
 
         private static int consoleColorIndex = 0;
+        private static DifferentColors differentColors;
 
 
         public static int ScaleAtLevel(int level)
@@ -225,13 +265,17 @@ namespace ProcGenTools.DataStructures
             consoleColorIndex += 1;
             consoleColorIndex = consoleColorIndex % Enum.GetValues(typeof(ConsoleColor)).Length;
 
-            var colorMode = _Random.Next(3);
-            if(colorMode == 2)
-                dbColor = Color.FromArgb(_Random.Next(128)+128, _Random.Next(128)+128, 0);
-            if(colorMode == 1)
-                dbColor = Color.FromArgb(_Random.Next(128)+128, 0, _Random.Next(128)+128);
-            if(colorMode == 1)
-                dbColor = Color.FromArgb(0, _Random.Next(128)+128, _Random.Next(128)+128);
+            if (differentColors == null)
+                differentColors = new DifferentColors();
+            dbColor = differentColors.GetVeryDifferentColor();
+
+            //var colorMode = _Random.Next(3);
+            //if (colorMode == 2)
+            //    dbColor = Color.FromArgb(_Random.Next(128) + 128, _Random.Next(128) + 128, 0);
+            //if (colorMode == 1)
+            //    dbColor = Color.FromArgb(_Random.Next(128) + 128, 0, _Random.Next(128) + 128);
+            //if (colorMode == 0)
+            //    dbColor = Color.FromArgb(0, _Random.Next(128) + 128, _Random.Next(128) + 128);
         }
 
         public List<HierarchicalMap>[,] GetMasterMap(List<HierarchicalMap>[,] _masterMap = null, int originalLevel = -1, int depth = 0)
@@ -298,6 +342,82 @@ namespace ProcGenTools.DataStructures
                 }
             }   
         }
+
+        public List<HierarchicalMapPortal>[,] GetMasterPortal(List<HierarchicalMapPortal>[,] _masterMap = null, int originalLevel = -1, int depth = 0)
+        {
+
+            if (depth == 3)
+            {
+                var breaka = "here";
+            }
+
+            if (originalLevel == -1)
+                originalLevel = this._Level;
+            var scaleAtLevel = HierarchicalMap.ScaleAtLevel(_Level);
+
+            if (_masterMap == null)
+                _masterMap = new List<HierarchicalMapPortal>[scaleAtLevel * _MapWidth, scaleAtLevel * _MapHeight];
+
+            var myWidth = scaleAtLevel * _MapWidth;
+            var myHeight = scaleAtLevel * _MapHeight;
+
+
+            var currentZone = this.fromZone;
+            int absX = 0;
+            int absY = 0;
+            while (currentZone != null && currentZone.Level >= originalLevel)
+            {
+                absX += currentZone.X * ScaleAtLevel(currentZone.Level);
+                absY += currentZone.Y * ScaleAtLevel(currentZone.Level);
+                currentZone = currentZone.FromMap.fromZone;
+            }
+
+
+            //
+            // foreach(var portal in _Portals)
+            //{
+            for (var y = absY; y < absY + myHeight; y++)
+            {
+                for (var x = absX; x < absX + myWidth; x++)
+                {
+                    
+                    if (_masterMap[x, y] == null)
+                        _masterMap[x, y] = new List<HierarchicalMapPortal>();
+                    foreach(var portal in _Portals.Where(p=>p.point.X == x - absX && p.point.Y == y - absY))
+                        _masterMap[absX + portal.point.X, absY + portal.point.Y].Add(portal);
+                }
+            }
+            //for (var y = absY; y < absY + myHeight; y++)
+            //{
+            //    for (var x = absX; x < absX + myWidth; x++)
+            //    {
+            //        if (_masterMap[x, y] == null)
+            //            _masterMap[x, y] = new List<HierarchicalMapPortal>();
+            //        _masterMap[x, y].Add(this);
+            //    }
+            //}
+
+            foreach (var zone in flatZones)
+            {
+                if (zone.SubMap != null)
+                    zone.SubMap.GetMasterPortal(_masterMap, originalLevel, depth + 1);
+            }
+
+            return _masterMap;
+        }
+
+        public List<HierarchicalMapPortal> GetFlatPortals()
+        {
+            var result = new List<HierarchicalMapPortal>();
+            result.AddRange(_Portals);
+            foreach(var subHierarchicalMap in flatZones.Where(fz=>fz.SubMap != null).Select(fz=>fz.SubMap))
+            {
+                result.AddRange(subHierarchicalMap.GetFlatPortals());
+            }
+            return result;
+        }
+
+
         public void AddPortal(HierarchicalMapPortal portal)
         {
             _Portals.Add(portal);
@@ -331,13 +451,6 @@ namespace ProcGenTools.DataStructures
                     )
                 },
             });
-        }
-
-        internal bool IsPortalEntrance(HierarchicalMapPortal portal)
-        {
-            return (portal.point.X + portal.direction.X > 0 && portal.point.X + portal.direction.X < _MapWidth)
-                &&
-                (portal.point.Y + portal.direction.Y > 0 && portal.point.Y + portal.direction.Y < _MapHeight);
         }
 
         public bool SpawnZoneAtSearchPosition(int maxSide, int minSide, Point? searchStartPoint = null, bool mustTouchAnother = false)
@@ -492,8 +605,6 @@ namespace ProcGenTools.DataStructures
                             }
                         }
                     }
-
-                   
                 }
 
                 var succeeded = true;
@@ -532,10 +643,23 @@ namespace ProcGenTools.DataStructures
                         Destination = null,
                         MapRelativePosition = portal.point,
                         ZoneRelativePosition = new Point(portal.point.X - zone.X, portal.point.Y - zone.Y),
-                        direction = ZonePortalDirection.Bidirectional
+                        directionOfPassage = ZonePortalDirection.Bidirectional,
+                        ParentPortal = portal,
+                        zone = zone,
+                        direction = portal.direction
                     }
                 );
+                portal.SubPortal = zone.ZonePortals.Last();
+                if(portal.DestinationPortal != null && portal.DestinationPortal.SubPortal != null)
+                {
+                    zone.ZonePortals.Last().Destination = ((ZonePortal)portal.DestinationPortal.SubPortal).zone;
+                    zone.ZonePortals.Last().DestinationPortal = portal.DestinationPortal.SubPortal;
+                }
             }
+
+            PrintToConsole();
+            if (flatZones.Any(x => !x.touchesAnotherZone()) && flatZones.Count() > 1)
+                throw new Exception("failed - zone does not touch another zone");
 
             return true;
         }
@@ -644,14 +768,32 @@ namespace ProcGenTools.DataStructures
                 {
                     Destination = chosen.Neighbor,
                     MapRelativePosition = chosen.MyAbsPoint,
-                    ZoneRelativePosition = new Point(chosen.MyAbsPoint.X - zone.X, chosen.MyAbsPoint.Y - zone.Y)
+                    ZoneRelativePosition = new Point(chosen.MyAbsPoint.X - zone.X, chosen.MyAbsPoint.Y - zone.Y),
+                    directionOfPassage = ZonePortalDirection.Bidirectional,
+                    direction = new Point()
+                    {
+                        X = Math.Sign(chosen.NeighborAbsPoint.X - chosen.MyAbsPoint.X),
+                        Y = Math.Sign(chosen.NeighborAbsPoint.Y - chosen.MyAbsPoint.Y)
+                    },
+                    zone = zone
+
                 });
                 chosen.Neighbor.ZonePortals.Add(new ZonePortal()
                 {
                     Destination = zone,
                     MapRelativePosition = chosen.NeighborAbsPoint,
-                    ZoneRelativePosition = new Point(chosen.NeighborAbsPoint.X - chosen.Neighbor.X, chosen.NeighborAbsPoint.Y - chosen.Neighbor.Y)
+                    ZoneRelativePosition = new Point(chosen.NeighborAbsPoint.X - chosen.Neighbor.X, chosen.NeighborAbsPoint.Y - chosen.Neighbor.Y),
+                    directionOfPassage = ZonePortalDirection.Bidirectional,
+                    direction = new Point()
+                    {
+                        X = Math.Sign(chosen.MyAbsPoint.X - chosen.NeighborAbsPoint.X),
+                        Y = Math.Sign(chosen.MyAbsPoint.Y - chosen.NeighborAbsPoint.Y)
+                    },
+                    zone = chosen.Neighbor
+
                 });
+                zone.ZonePortals.Last().DestinationPortal = chosen.Neighbor.ZonePortals.Last();
+                chosen.Neighbor.ZonePortals.Last().DestinationPortal = zone.ZonePortals.Last();
             }
         }
 
@@ -666,20 +808,20 @@ namespace ProcGenTools.DataStructures
                         (int)Math.Floor((double)_MapWidth / 2),
                         (int)Math.Floor((double)_MapHeight / 2)
                     );
-                Point newDirection;
-                if(newPoint.X >= portals[0].point.X)
-                {
-                    newDirection = new Point(1, 0);
-                }
-                else
-                {
-                    newDirection = new Point(-1, 0);
-                }
-                
+                //Point newDirection;
+                //if(newPoint.X >= portals[0].point.X)
+                //{
+                //    newDirection = new Point(1, 0);
+                //}
+                //else
+                //{
+                //    newDirection = new Point(-1, 0);
+                //}
+
                 portals.Add(new HierarchicalMapPortal()
                 {
                     point = newPoint,
-                    direction = newDirection
+                    direction = new Point(0, 0)
                 });
             }
 
@@ -1000,6 +1142,9 @@ namespace ProcGenTools.DataStructures
         public void PrintMasterToBitmap(string filepath)
         {
             var _masterMap = GetMasterMap();
+            var _masterPortal = GetMasterPortal();
+
+            var _flatPortals = GetFlatPortals();
 
             Bitmap bmp = new Bitmap(_masterMap.GetLength(0), _masterMap.GetLength(1));
             
@@ -1007,8 +1152,20 @@ namespace ProcGenTools.DataStructures
             {
                 for (var x = 0; x < _masterMap.GetLength(0); x++)
                 {
+                    //colors
                     var color = GetAvgColor(_masterMap[x, y]);
                     bmp.SetPixel(x, y, color);
+
+                    //portal
+                    var terminalPortals = _masterPortal[x, y].Where(p => p.SubPortal == null).ToList();
+                    foreach(var terminalPortal in terminalPortals)
+                    {
+                        var startPoint = new Point(x, y);
+                        var endPoint = new Point(x + terminalPortal.direction.X, y + terminalPortal.direction.Y);
+                        bmp.SetPixel(startPoint.X, startPoint.Y, Color.White);
+                        if(endPoint.X < bmp.Width && endPoint.X > 0 && endPoint.Y < bmp.Height && endPoint.Y > 0)
+                            bmp.SetPixel(endPoint.X, endPoint.Y, Color.White);
+                    }
                     
                 }
                 Console.WriteLine();

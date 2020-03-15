@@ -1,9 +1,9 @@
-D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\obj\Debug\Test.LevelEditor.csprojResolveAssemblyReference.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\obj\Debug\Test.LevelEditor.csproj.CoreCompileInputs.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\bin\Debug\Test.LevelGeneration.exe.config
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\bin\Debug\Test.LevelGeneration.exe
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\bin\Debug\Test.LevelGeneration.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\bin\Debug\ProcGenTools.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\obj\Debug\Test.LevelEditor.csprojResolveAssemblyReference.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\obj\Debug\Test.LevelGeneration.exe
 D:\_Projects\ProcGenTools\ProcGenTools\Test.LevelGeneration\obj\Debug\Test.LevelGeneration.pdb

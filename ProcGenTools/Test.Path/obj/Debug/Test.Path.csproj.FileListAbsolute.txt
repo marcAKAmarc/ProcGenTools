@@ -1,9 +1,2 @@
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\bin\Debug\Test.Path.exe.config
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\bin\Debug\Test.Path.exe
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\bin\Debug\Test.Path.pdb
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\bin\Debug\ProcGenTools.dll
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\bin\Debug\ProcGenTools.pdb
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\obj\Debug\Test.Path.csprojResolveAssemblyReference.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\obj\Debug\Test.Path.csproj.CoreCompileInputs.cache
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\obj\Debug\Test.Path.exe
-D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\obj\Debug\Test.Path.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Path\obj\Debug\Test.Path.csprojResolveAssemblyReference.cache

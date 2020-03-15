@@ -1,0 +1,11 @@
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\bin\Debug\Test.World.exe.config
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\bin\Debug\Test.World.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\bin\Debug\Test.World.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\bin\Debug\RoomEditor.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\bin\Debug\RoomEditor.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\obj\Debug\Test.World.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\obj\Debug\Test.World.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\obj\Debug\Test.World.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World\obj\Debug\Test.World.pdb

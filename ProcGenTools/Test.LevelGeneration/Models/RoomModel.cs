@@ -4,7 +4,9 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+/// <summary>
+/// THIS HAS BEEN MIGRATED TO ROOM EDITOR PROJECT
+/// </summary>
 namespace Test.LevelGeneration.Models
 {
     public class Room

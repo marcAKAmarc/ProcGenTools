@@ -189,6 +189,7 @@ namespace ProcGenTools.DataStructures
 
         public void printToConsole()
         {
+            Console.Write(Environment.NewLine);
             for (var y = 0; y < _pathHeight; y++)
             {
                 for (var x = 0; x < _pathWidth; x++)

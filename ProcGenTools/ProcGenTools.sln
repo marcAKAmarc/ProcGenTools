@@ -17,6 +17,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Path", "Test.Path\Test
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.HierarchicalMap", "Test.HierarchicalMap\Test.HierarchicalMap.csproj", "{D88019DD-693D-40B4-8373-FC4C8251792C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoomEditor", "RoomEditor\RoomEditor.csproj", "{1EB1E729-B6C3-490B-A271-A7AEE69A6D6F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.World", "Test.World\Test.World.csproj", "{0FAA1A08-F191-43F5-A098-F9F1048232D7}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -51,6 +55,14 @@ Global
 		{D88019DD-693D-40B4-8373-FC4C8251792C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D88019DD-693D-40B4-8373-FC4C8251792C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D88019DD-693D-40B4-8373-FC4C8251792C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EB1E729-B6C3-490B-A271-A7AEE69A6D6F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EB1E729-B6C3-490B-A271-A7AEE69A6D6F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EB1E729-B6C3-490B-A271-A7AEE69A6D6F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EB1E729-B6C3-490B-A271-A7AEE69A6D6F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0FAA1A08-F191-43F5-A098-F9F1048232D7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0FAA1A08-F191-43F5-A098-F9F1048232D7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0FAA1A08-F191-43F5-A098-F9F1048232D7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0FAA1A08-F191-43F5-A098-F9F1048232D7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

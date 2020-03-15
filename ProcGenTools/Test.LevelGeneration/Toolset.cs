@@ -7,7 +7,9 @@ using System.Drawing;
 using ProcGenTools.DataProcessing;
 using ProcGenTools.DataStructures;
 using Test.LevelGeneration.Models;
-
+/// <summary>
+/// THIS HAS BEEN MIGRATED TO THE ROOM EDITOR PROJECT
+/// </summary>
 namespace Test.LevelGeneration
 {
     public class LevelEditor
@@ -38,6 +40,12 @@ namespace Test.LevelGeneration
 
             _errorTile = Image.FromFile(errorTilePath) as Bitmap;
             _cautionTile = Image.FromFile(cautionTilePath) as Bitmap;
+        }
+
+        public void SetDimensions(int levelWidth, int levelHeight)
+        {
+            _levelHeight = levelHeight;
+            _levelWidth = levelWidth;
         }
 
         public void LoadTileset(string path, bool horizontalMirror = true)
@@ -122,6 +130,11 @@ namespace Test.LevelGeneration
             BitmapOperations.SaveBitmapToFile(outPath,tilesetRedux);
 
             return true;
+        }
+        public Bitmap GetBitmap()
+        {
+            var collapsedTiles = ToTilesList(_grid);
+            return BitmapOperations.CreateBitmapFromTiles(collapsedTiles);
         }
         private static void SetAcceptableItems(List<OpinionatedItem<Bitmap>> Elements, List<List<Bitmap>> Tilemap)
         {

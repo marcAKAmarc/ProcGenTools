@@ -1,0 +1,8 @@
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\bin\Debug\RoomEditor.dll
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\bin\Debug\RoomEditor.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\obj\Debug\RoomEditor.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\obj\Debug\RoomEditor.dll
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\obj\Debug\RoomEditor.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\RoomEditor\obj\Debug\RoomEditor.csprojResolveAssemblyReference.cache
