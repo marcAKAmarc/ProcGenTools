@@ -16,7 +16,7 @@ namespace Test.World
         static void Main(string[] args)
         {
             //setup hierarchical map
-            var Random = new Random(0);
+            var Random = new Random();
             HierarchicalMap.RelativeScales = new int[] { 2, 2 };
             var map = new HierarchicalMap(10, 10, Random);
             map.SpawnZoneAtSearchPosition(3, 2);
@@ -34,14 +34,15 @@ namespace Test.World
             var mastermap = map.GetMasterMap();
 
             var editor = new LevelEditor(5, 5, 12, 12, ConfigurationManager.AppSettings["errorTile"], ConfigurationManager.AppSettings["cautionTile"]);
-            editor.LoadTileset(ConfigurationManager.AppSettings["TilesetInput"]);
+            editor.LoadTileset(ConfigurationManager.AppSettings["TilesetInput"], true, "..//..//Output//mainTileset.bmp",true);
             editor.SetupBorderTiles(ConfigurationManager.AppSettings["borderInput"]);
             editor.SetupHEntranceTiles(ConfigurationManager.AppSettings["hEntranceInput"]);
             editor.SetupVEntranceTiles(ConfigurationManager.AppSettings["vEntranceInput"]);
-            editor.SetupCornersAndIntersectionTiles(ConfigurationManager.AppSettings["cornerTraverseInput"]);
+            editor.SetupCornersAndIntersectionTiles(ConfigurationManager.AppSettings["cornerTraverseInput"], true);
             editor.SetupTraversableTiles(
                 ConfigurationManager.AppSettings["hTraverseInput"],
-                ConfigurationManager.AppSettings["vTraverseInput"]
+                ConfigurationManager.AppSettings["vTraverseInput"],
+                true
             );
 
             var scale = 5;
@@ -66,12 +67,35 @@ namespace Test.World
                             
                             var result = true;
                             result = result && editor.AddBorder(room);
-                            result = result && editor.AddPaths(room);
-                            result = result && editor.CollapseWcf();
-                            if (result)
-                                break;
+                            if (!result)
+                            {
+                                Console.WriteLine("Failed Add Border");
+                            }
                             else
+                            {
+                                result = result && editor.AddPaths(room);
+                            }
+                            if (!result)
+                            {
+                                Console.WriteLine("Failed Add Paths");
+                            }
+                            else
+                            {
+                                result = result && editor.CollapseWcf();
+                            }
+                            if (!result)
+                            {
+                                Console.WriteLine("Failed Collapse");
+                            }
+                            if(!result)
+                            {
+                                BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", editor.GetBitmap());
                                 Console.WriteLine("Failed Manual Changes: " + attempt.ToString());
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
 
                         roomLevelMap.contents = editor.GetBitmap();

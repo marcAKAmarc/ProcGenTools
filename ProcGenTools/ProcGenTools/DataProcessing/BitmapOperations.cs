@@ -10,7 +10,7 @@ namespace ProcGenTools.DataProcessing
 {
     public static class BitmapOperations
     {
-        public static List<List<Bitmap>> GetBitmapTiles(Bitmap originMap, int TileWidth, int TileHeight)
+        public static List<List<Bitmap>> GetBitmapTiles(Bitmap originMap, int TileWidth, int TileHeight, bool hasSpacing = false)
         {
             List<List<Bitmap>> results = new List<List<Bitmap>>();
             for (var x = 0; x < originMap.Width; x += TileWidth)
@@ -27,7 +27,12 @@ namespace ProcGenTools.DataProcessing
                     g.DrawImage(originMap, new Point(-x, -y));
                     results.Last().Add(nb);
 
+                    if (hasSpacing)
+                        y += 1;
+
                 }
+                if (hasSpacing)
+                    x += 1;
             }
             return results;
         }
@@ -100,7 +105,7 @@ namespace ProcGenTools.DataProcessing
             return true;         
         }
 
-        public static Bitmap AddHorizontalMirror(this Bitmap bmp)
+        public static Bitmap AddHorizontalMirror(this Bitmap bmp, bool hasSpacing = false)
         {
             Bitmap mirror = new Bitmap(bmp);
             mirror.RotateFlip(RotateFlipType.RotateNoneFlipX);
@@ -108,7 +113,10 @@ namespace ProcGenTools.DataProcessing
             Bitmap result = new Bitmap(bmp.Width * 2, bmp.Height);
             Graphics g = Graphics.FromImage(result);
             g.DrawImage(bmp, new Point(0, 0));
-            g.DrawImage(mirror, new Point(bmp.Width, 0));
+            if(!hasSpacing)
+                g.DrawImage(mirror, new Point(bmp.Width, 0));
+            else
+                g.DrawImage(mirror, new Point(bmp.Width-1, 0));
 
             return result;
         }

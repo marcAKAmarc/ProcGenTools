@@ -120,10 +120,18 @@ namespace ProcGenTools.DataStructures
             InfluenceShape = shape.ToArray();
 
         }
+        
+        private int GetNeighborhoodEntropy(WcfSuperPosition superposition)
+        {
+            var neighborhood = GetSuperPositionNeighbors(superposition.x, superposition.y, superposition.z);
+            neighborhood.Add(superposition);
+            return neighborhood.Sum(x => x.slots.Where(y => !y.Collapsed).Count());
+        }
+
         private WcfSuperPosition CollapseMinimumEntropyPosition()
         {
             //handle collapse random spot;
-            var entropyOrderedSuperPositions = SuperPositionsFlat.Where(x => !x.hasCollapsed).OrderBy(x => x.slots.Where(y => !y.Collapsed).Count()).ToArray();
+            var entropyOrderedSuperPositions = SuperPositionsFlat.Where(x => !x.hasCollapsed).OrderBy(x => GetNeighborhoodEntropy(x)).ToArray();//.OrderBy(x => x.slots.Where(y => !y.Collapsed).Count()).ToArray();
 
             var minimumEntropy = entropyOrderedSuperPositions.FirstOrDefault().slots.Where(y => !y.Collapsed).Count();
             var superPositionsWithMinimumEntropy = entropyOrderedSuperPositions.Where(x => x.slots.Where(y => !y.Collapsed).Count() == minimumEntropy).ToArray();
@@ -526,6 +534,8 @@ namespace ProcGenTools.DataStructures
 
             random = _random;
         }
+
+
 
         
     }

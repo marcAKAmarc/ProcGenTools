@@ -49,13 +49,19 @@ namespace RoomEditor
             _levelWidth = levelWidth;
         }
 
-        public void LoadTileset(string path, bool horizontalMirror = true)
+        public void LoadTileset(string path, bool horizontalMirror = true, string debugFilePath = null, bool hasSpacing = false)
         {
             //Chop up tileset
             Bitmap tilesetImg = Image.FromFile(path) as Bitmap;
             if (horizontalMirror)
-                tilesetImg = tilesetImg.AddHorizontalMirror();
-            _tileset = BitmapOperations.GetBitmapTiles(tilesetImg, _tileWidth, _tileHeight);
+                tilesetImg = tilesetImg.AddHorizontalMirror(hasSpacing);
+            _tileset = BitmapOperations.GetBitmapTiles(tilesetImg, _tileWidth, _tileHeight, hasSpacing);
+
+            if (debugFilePath!=null)
+            {
+                Bitmap quickcheck = BitmapOperations.CreateBitmapFromTiles(_tileset, true);
+                BitmapOperations.SaveBitmapToFile(debugFilePath, quickcheck);
+            }
 
 
             //setup wfcTiles (and neighbors)
@@ -66,32 +72,32 @@ namespace RoomEditor
             SetAcceptableItems(_wfcTiles, _tileset);
         }
 
-        public void SetupTraversableTiles(string hPath, string vPath)
+        public void SetupTraversableTiles(string hPath, string vPath, bool hasSpacing = false)
         {
-            _vTraverseWfcTiles = getWcfTilesInBmp(vPath);
-            _hTraverseWcfTiles = getWcfTilesInBmp(hPath);
+            _vTraverseWfcTiles = getWcfTilesInBmp(vPath, hasSpacing);
+            _hTraverseWcfTiles = getWcfTilesInBmp(hPath, hasSpacing);
         }
 
-        public void SetupHEntranceTiles(string path)
+        public void SetupHEntranceTiles(string path, bool hasSpacing = false)
         {
-            _hEntranceTiles = getWcfTilesInBmp(path);
+            _hEntranceTiles = getWcfTilesInBmp(path, hasSpacing);
         }
-        public void SetupVEntranceTiles(string path)
+        public void SetupVEntranceTiles(string path, bool hasSpacing = false)
         {
-            _vEntranceTiles = getWcfTilesInBmp(path);
+            _vEntranceTiles = getWcfTilesInBmp(path, hasSpacing);
         }
         public void SetupBorderTiles(string path)
         {
             _borderTiles = getWcfTilesInBmp(path);
         }
-        public void SetupCornersAndIntersectionTiles(string path)
+        public void SetupCornersAndIntersectionTiles(string path, bool hasSpacing = false)
         {
-            _cornerIntersectionTiles = getWcfTilesInBmp(path);
+            _cornerIntersectionTiles = getWcfTilesInBmp(path, hasSpacing);
         }
-        private List<OpinionatedItem<Bitmap>> getWcfTilesInBmp(string path)
+        private List<OpinionatedItem<Bitmap>> getWcfTilesInBmp(string path, bool hasSpacing = false)
         {
             Bitmap bmp = Image.FromFile(path) as Bitmap;
-            List<List<Bitmap>> tileset = BitmapOperations.GetBitmapTiles(bmp, _tileWidth, _tileHeight);
+            List<List<Bitmap>> tileset = BitmapOperations.GetBitmapTiles(bmp, _tileWidth, _tileHeight, hasSpacing);
             List<Bitmap> tiles = new List<Bitmap>();
             foreach (var list in tileset)
             {
@@ -117,6 +123,7 @@ namespace RoomEditor
             _grid.Init(_levelWidth, _levelHeight, 1, _wfcTiles);
             var shape = new List<WcfVector>().Cross3dShape();
             _grid.SetInfluenceShape(shape);
+            _grid.handlePropagation(_grid.SuperPositions[_grid.Width / 2, _grid.Height / 2, 0]);
         }
 
         public bool CollapseWcf()
@@ -175,7 +182,7 @@ namespace RoomEditor
                                 var elementPoint = new Point(x, y);
                                 var relativePoint = new Point(neighborPoint.X - elementPoint.X, neighborPoint.Y - elementPoint.Y);
 
-                                //if neighbor in element has neighbor at pos, bail
+                                
                                 OpinionatedItem<Bitmap> neighborElement = null;
                                 foreach (var elementN in Elements)
                                 {
@@ -186,6 +193,10 @@ namespace RoomEditor
                                     }
                                 }
 
+                                //if neighbor in element has neighbor at pos, bail
+                                if (element.GetAcceptableInDirection(relativePoint.X, relativePoint.Y, 0).Any(acc => acc.Id == neighborElement.Id))
+                                    continue;
+                            
                                 if (neighborElement == null)
                                 {
                                     throw new Exception("Couldn't find neighbor in distinct elements!");
@@ -407,6 +418,7 @@ namespace RoomEditor
                 result = result && AddPath(entrancePoint, entranceDirection, exitPoint, exitDirection, room.Width - (room.DistanceBetweenPathAndEdge * 2), room.Height - (room.DistanceBetweenPathAndEdge * 2), room.DistanceBetweenPathAndEdge);
                 if(result == false)
                 {
+                    BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", GetBitmap());
                     return false;
                 }
             }
@@ -425,17 +437,19 @@ namespace RoomEditor
             path.printToConsole();
             for (var i = 0; i < path._pathPoints.Count; i++)
             {
-                Point? previousDir = new Point(1, 0);
-                if (i == 0)
+                Point? NextDir = new Point(1, 0);
+                if (i+1 >= path._pathPoints.Count)
                 {
-                    previousDir = new Point(1, 0);
+                    NextDir = path._pathPoints[i].toDirection;
+                    if (i > 0)
+                        NextDir = path._pathPoints[i - 1].toDirection;
                 }
                 else
                 {
-                    previousDir = path._pathPoints[i - 1].direction;
+                    NextDir = path._pathPoints[i + 1].toDirection;
                 }
 
-                if (previousDir != path._pathPoints[i].direction)
+                if (path._pathPoints[i].toDirection != path._pathPoints[i].fromDirection)
                 {
                     //corners and intersections
                     _grid.SuperPositions[
@@ -444,7 +458,7 @@ namespace RoomEditor
                         0
                     ].CollapseToItems(_cornerIntersectionTiles.Select(tile => tile.Id).ToList(), true);
                 }
-                else if (path._pathPoints[i].direction == null || path._pathPoints[i].direction.Y == 0)
+                else if (path._pathPoints[i].toDirection == null || path._pathPoints[i].toDirection.Y == 0)
                 {
                     //horizontal
                     _grid.SuperPositions[
@@ -462,6 +476,11 @@ namespace RoomEditor
                         0
                     ].CollapseToItems(_vTraverseWfcTiles.Select(tile => tile.Id).ToList(), true);
                 }
+                var previousOne = _grid.SuperPositions[
+                        path._pathPoints[i].point.X + borderPadding,
+                        path._pathPoints[i].point.Y + borderPadding,
+                        0
+                    ].slots.FirstOrDefault(s => s.Collapsed == false);
                 result = _grid.handlePropagation(
                     _grid.SuperPositions[
                         path._pathPoints[i].point.X + borderPadding,

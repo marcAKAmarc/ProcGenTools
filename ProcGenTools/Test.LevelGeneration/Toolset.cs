@@ -371,10 +371,10 @@ namespace Test.LevelGeneration
                 }
                 else
                 {
-                    previousDir = path._pathPoints[i - 1].direction;
+                    previousDir = path._pathPoints[i - 1].toDirection;
                 }
 
-                if (previousDir != path._pathPoints[i].direction)
+                if (previousDir != path._pathPoints[i].toDirection)
                 {
                     //corners and intersections
                     _grid.SuperPositions[
@@ -383,7 +383,7 @@ namespace Test.LevelGeneration
                         0
                     ].CollapseToItems(_cornerIntersectionTiles.Select(tile => tile.Id).ToList(), true);
                 }
-                else if (path._pathPoints[i].direction == null || path._pathPoints[i].direction.Y == 0)
+                else if (path._pathPoints[i].toDirection == null || path._pathPoints[i].toDirection.Y == 0)
                 {
                     //horizontal
                     _grid.SuperPositions[

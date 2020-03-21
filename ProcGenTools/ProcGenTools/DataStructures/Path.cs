@@ -11,17 +11,24 @@ namespace ProcGenTools.DataStructures
     public class PathPoint
     {
         private readonly Point Point;
-        private Point Direction;
+        private Point ToDirection;
+        private Point FromDirection;
 
         public Point point { get { return Point; } }
-        public Point direction { get { return Direction; } set { Direction = value; } }
+        public Point toDirection { get { return ToDirection; } set { ToDirection = value; } }
+        public Point fromDirection { get { return FromDirection; } set { FromDirection = value; } }
 
-        public PathPoint(Point _point, Point? _direction)
+        public PathPoint(Point _point, Point? _toDirection, Point? _fromDirection = null)
         {
-            this.Direction = new Point();
-            if (_direction != null)
+            this.ToDirection = new Point();
+            if (_toDirection != null)
             {
-                this.Direction = _direction.Value;
+                this.ToDirection = _toDirection.Value;
+            }
+            this.FromDirection = new Point();
+            if (_fromDirection != null)
+            {
+                this.FromDirection = _fromDirection.Value;
             }
             this.Point = _point;
         }
@@ -87,17 +94,29 @@ namespace ProcGenTools.DataStructures
                     SearchNode next = null;
                     var current = checkNode;
                     var prev = current.previous;
-                    result.Insert(0, new PathPoint(checkNode.point, _exit.direction));
-                    while (prev != null)
+
+                    result.Insert(0, new PathPoint(checkNode.point, _exit.toDirection));
+
+                    //build path list
+                    while (true)
                     {
-                        if(result[0].direction == new Point())
-                            result[0].direction = new Point(result[0].point.X - prev.point.X, result[0].point.Y - prev.point.Y);
+                        if (next != null && result[0].toDirection == new Point())
+                            result[0].toDirection = new Point(next.point.X - result[0].point.X, next.point.Y - result[0].point.Y);
+                        if(prev != null)
+                            result[0].fromDirection = new Point(result[0].point.X - prev.point.X, result[0].point.Y - prev.point.Y);
+                        else
+                            result[0].fromDirection = _entrance.toDirection;
+
+                        if (prev == null)
+                            break;
+
                         next = current;
                         current = prev;
                         prev = current.previous;
                         result.Insert(0, new PathPoint(current.point, null));
                     }
-                    result[0].direction = _entrance.direction;
+                    //result[0].toDirection = new Point(next.point.X - result[0].point.X, next.point.Y - result[0].point.Y);
+                    
                     _pathPoints = result;
                     return;
                 }
@@ -196,7 +215,28 @@ namespace ProcGenTools.DataStructures
                 {
                     if (_pathPoints.Any(pp => pp.point == new Point(x, y)))
                     {
-                        Console.Write('X');
+                        var pp = _pathPoints.FirstOrDefault(pathp => pathp.point == new Point(x, y));
+                        var idex = -1;
+                        for(var i = 0; i < _pathPoints.Count; i++)
+                        {
+                            idex += 1;
+                            if (_pathPoints[i].point == new Point(x, y))
+                                break;
+                        }
+                        if (idex == 0)
+                            Console.ForegroundColor = ConsoleColor.Green;
+                        else
+                            Console.ResetColor();
+
+
+                        if (pp.toDirection.Y > 0)
+                            Console.Write('D');
+                        else if (pp.toDirection.Y < 0)
+                            Console.Write('U');
+                        else if (pp.toDirection.X > 0)
+                            Console.Write('R');
+                        else if (pp.toDirection.X < 0)
+                            Console.Write('L');
                     }
                     else
                     {
