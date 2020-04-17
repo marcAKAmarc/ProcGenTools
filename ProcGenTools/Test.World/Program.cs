@@ -16,13 +16,14 @@ namespace Test.World
         static void Main(string[] args)
         {
             //setup hierarchical map
-            var Random = new Random();
-            HierarchicalMap.RelativeScales = new int[] { 2, 2 };
+            var Random = new Random(0);
+            HierarchicalMap.RelativeScales = new int[] { 2 };
             var map = new HierarchicalMap(10, 10, Random);
-            map.SpawnZoneAtSearchPosition(3, 2);
-            map.SpawnZoneAtSearchPosition(3, 2, null, true);
-            map.SpawnZoneAtSearchPosition(3, 2, null, true);
-            map.SpawnZoneAtSearchPosition(3, 2, null, true);
+            map.SpawnZoneAtClusterPosition(3, 2);
+            map.SpawnZoneAtClusterPosition(3, 2, null, true);
+            map.SpawnZoneAtClusterPosition(3, 2, null, true);
+            map.SpawnZoneAtClusterPosition(3, 2, null, true);
+            map.MarkExitOnlyPortals();
             map.CreateSubMaps();
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);
             //for (var i = 0; i < map.flatZones.Count(); i++)
@@ -32,8 +33,15 @@ namespace Test.World
 
             //}
             var mastermap = map.GetMasterMap();
+            var masterPortals = map.GetMasterPortal();
 
-            var editor = new LevelEditor(5, 5, 12, 12, ConfigurationManager.AppSettings["errorTile"], ConfigurationManager.AppSettings["cautionTile"]);
+
+            map.PrintMasterOrderingToBitmap(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "main_map.bmp"));
+            map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "main__map.bmp"));
+
+            var tileSize = 5;
+
+            var editor = new LevelEditor(tileSize, tileSize, 12, 12, ConfigurationManager.AppSettings["errorTile"], ConfigurationManager.AppSettings["cautionTile"]);
             editor.LoadTileset(ConfigurationManager.AppSettings["TilesetInput"], true, "..//..//Output//mainTileset.bmp",true);
             editor.SetupBorderTiles(ConfigurationManager.AppSettings["borderInput"]);
             editor.SetupHEntranceTiles(ConfigurationManager.AppSettings["hEntranceInput"]);
@@ -45,8 +53,11 @@ namespace Test.World
                 true
             );
 
-            var scale = 5;
-            var finalBitmap = new Bitmap(mastermap.GetLength(0) * scale * 5, mastermap.GetLength(1) * scale * 5);
+
+            //must be divisible by 3 for paths?!
+            var scale = 12;
+            
+            var finalBitmap = new Bitmap(mastermap.GetLength(0) * scale * tileSize, mastermap.GetLength(1) * scale * tileSize);
 
             int bmpIndex = 0;
             for (var y = 0; y < mastermap.GetLength(1); y++)
@@ -70,56 +81,150 @@ namespace Test.World
                             if (!result)
                             {
                                 Console.WriteLine("Failed Add Border");
+                                //BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", editor.GetBitmap());
+                                Console.WriteLine("Failed Manual Changes: " + attempt.ToString());
+                                continue;
                             }
-                            else
-                            {
-                                result = result && editor.AddPaths(room);
-                            }
+                            
+                            result = result && editor.AddPaths(room);
                             if (!result)
                             {
                                 Console.WriteLine("Failed Add Paths");
+                                //BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", editor.GetBitmap());
+                                Console.WriteLine("Failed Manual Changes: " + attempt.ToString());
+                                continue;
                             }
-                            else
+
+                            if (Random.NextDouble() < .25)
                             {
-                                result = result && editor.CollapseWcf();
+                                result = result && editor.MakeSpacesIntraversable();
+                                if (!result)
+                                {
+                                    Console.WriteLine("Failed Intraversable");
+                                    //BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", editor.GetBitmap());
+                                    Console.WriteLine("Failed Manual Changes: " + attempt.ToString());
+                                    continue;
+                                }
                             }
+
+                            result = result && editor.CollapseWcf();
                             if (!result)
                             {
                                 Console.WriteLine("Failed Collapse");
-                            }
-                            if(!result)
-                            {
-                                BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", editor.GetBitmap());
+                                //BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", editor.GetBitmap());
                                 Console.WriteLine("Failed Manual Changes: " + attempt.ToString());
+                                continue;
                             }
-                            else
-                            {
-                                break;
-                            }
+                            
+                            //if we made it here, we have succeeded
+                            break;
+                            
                         }
 
                         roomLevelMap.contents = editor.GetBitmap();
 
                         //draw to larger bitmap
                         Graphics g = Graphics.FromImage(finalBitmap);
-                        g.DrawImage(roomLevelMap.contents, new Point(x * scale * 5, y * scale * 5));
+                        g.DrawImage(roomLevelMap.contents, new Point(x * scale * tileSize, y * scale * tileSize));
 
-                        BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "_wcf_" + bmpIndex.ToString() + ".bmp"), roomLevelMap.contents);
+                        //draw portals
+                        var portals = roomLevelMap._Portals;//.Where(p=>/*p.DestinationPortal!= null &&*/ p.id.CompareTo(((HierarchicalMapPortal)p.DestinationPortal).id) == -1).ToList();
+                        foreach (var portal in portals)
+                        {
+                            if(portal.direction == new Point())
+                            {
+                                var breaka = "here";
+                            }
+                            var startPos = new Point(
+                                    (x * scale * tileSize) + (portal.portalOffsetFromRoom.X * tileSize),
+                                    (y * scale * tileSize) + (portal.portalOffsetFromRoom.Y * tileSize )
+                                );
+                            var endPos = new Point(
+                                    startPos.X + portal.direction.X * tileSize/2,
+                                    startPos.Y + portal.direction.Y * tileSize/2
+                                );
+                            var xDir = Math.Sign(endPos.X - startPos.X);
+                            var yDir = Math.Sign(endPos.Y - startPos.Y);
+                            var drawPos = startPos;
+                            if(drawPos == endPos)
+                            {
+                                var breka = "here";
+                            }
+                            while (true)
+                            {
+                                var color = finalBitmap.GetPixel(drawPos.X, drawPos.Y);
+                                color = Color.FromArgb(255 - (int)color.R, 255 - (int)color.G, 255 - (int)color.B);
+
+                                if (portal.directionOfPassage == ZonePortalDirection.In)
+                                    color = Color.Red;
+                                else if (portal.directionOfPassage == ZonePortalDirection.Out)
+                                    color = Color.Green;
+
+                                finalBitmap.SetPixel(drawPos.X, drawPos.Y, color);
+
+                                if (drawPos == endPos)
+                                    break;
+
+                               
+
+                                //getNewPos
+                                drawPos.X += xDir;
+                                drawPos.Y += yDir;
+                            }
+                        }
+
+                        //BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "_wcf_" + bmpIndex.ToString() + ".bmp"), roomLevelMap.contents);
                         
                     }
                 }
             }
 
+            //draw portals
+            //for (var y = 0; y < masterPortals.GetLength(1); y++)
+            //{
+            //    for (var x = 0; x < masterPortals.GetLength(0); x++)
+            //    {
+            //        var portals = masterPortals[x, y].Where(p => p.SubPortal == null && p.DestinationPortal != null && ((HierarchicalMapPortal)p.DestinationPortal).id.CompareTo(p.id) == -1);
+            //        foreach(var portal in portals)
+            //        {
+            //            var startPos = new Point(
+            //                    (x * scale * tileSize) + (tileSize*2),
+            //                    (y * scale * tileSize) + (tileSize*2)
+            //                );
+            //            var endPos = new Point(
+            //                    startPos.X + portal.direction.X * tileSize,
+            //                    startPos.Y + portal.direction.Y * tileSize
+            //                );
+            //            var xDir = Math.Sign(endPos.X - startPos.X);
+            //            var yDir = Math.Sign(endPos.Y - startPos.Y);
+            //            var drawPos = startPos;
+            //            while (true)
+            //            {
+            //                var color = finalBitmap.GetPixel(drawPos.X, drawPos.Y);
+            //                color = Color.FromArgb(255 - (int)color.R, 255 - (int)color.G, 255 - (int)color.B);
+            //                finalBitmap.SetPixel(drawPos.X, drawPos.Y, color);
+
+            //                if (drawPos == endPos)
+            //                    break;
+
+            //                //getNewPos
+            //                drawPos.X += xDir;
+            //                drawPos.Y += yDir;
+            //            }
+            //        }
+            //    }
+            //}
+
             BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"], finalBitmap);
 
 
-            map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "main_map.bmp"));
-            for (var i = 0; i < map.flatZones.Count(); i++)
-            {
-                var submap = map.flatZones[i].SubMap;
-                submap.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", i.ToString() + ".bmp"));
+            //map.PrintMasterOrderingToBitmap(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "main_map.bmp"));
+            //for (var i = 0; i < map.flatZones.Count(); i++)
+            //{
+            //    var submap = map.flatZones[i].SubMap;
+            //    submap.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", i.ToString() + ".bmp"));
 
-            }
+            //}
         }
     }
 }

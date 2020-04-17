@@ -1,4 +1,5 @@
-﻿using System;
+﻿using ProcGenTools.DataStructures;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -13,6 +14,7 @@ namespace RoomEditor.Models
         public int Width;
         public int Height;
         public int DistanceBetweenPathAndEdge;
+        public HierarchicalMap FromMap;
         public static List<Room> GetTestRooms()
         {
             return new List<Room>
@@ -115,7 +117,7 @@ namespace RoomEditor.Models
     {
         public Point point;
         public Point direction;
-
+        public HierarchicalMapPortal fromPortal;
         public bool IsEntrance(Room room)
         {
             return (point.X + direction.X > 0 && point.X + direction.X < room.Width)

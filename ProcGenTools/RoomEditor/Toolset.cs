@@ -66,10 +66,31 @@ namespace RoomEditor
 
             //setup wfcTiles (and neighbors)
             var distinctTiles = GetDistinctBitmaps(_tileset);
+
+            //why does this mess things up
+            //distinctTiles.AddRange(GetWeightedTiles(_tileWidth, _tileHeight, hasSpacing));
+
             //List<List<Bitmap>> distinctElements = new List<List<Bitmap>>();
             //distinctElements.Add(distinctTiles);
+            
             _wfcTiles = ToOpinionatedList(distinctTiles);
             SetAcceptableItems(_wfcTiles, _tileset);
+        }
+
+        public List<Bitmap> GetWeightedTiles(int _tileWidth, int _tileHeight, bool hasSpacing = false)
+        {
+            List<Bitmap> result = new List<Bitmap>();
+            var weight = 10;
+            Bitmap tilesetIMg = Image.FromFile(ConfigurationManager.AppSettings["TenXWeightedTiles"].ToString()) as Bitmap;
+            _tileset = BitmapOperations.GetBitmapTiles(tilesetIMg, _tileWidth, _tileHeight, hasSpacing);
+            for(var i = 0; i < weight; i++)
+            {
+                foreach(var verticalRow in _tileset)
+                {
+                    result.AddRange(verticalRow);
+                }
+            }
+            return result;
         }
 
         public void SetupTraversableTiles(string hPath, string vPath, bool hasSpacing = false)
@@ -193,7 +214,7 @@ namespace RoomEditor
                                     }
                                 }
 
-                                //if neighbor in element has neighbor at pos, bail
+                                //if neighbor in element has neighbor at pos, bail (make distinct - makes faster in long run.. no natural weight though
                                 if (element.GetAcceptableInDirection(relativePoint.X, relativePoint.Y, 0).Any(acc => acc.Id == neighborElement.Id))
                                     continue;
                             
@@ -235,6 +256,19 @@ namespace RoomEditor
             return DistinctTiles;
         }
 
+        private static List<Bitmap> GetAllBitmaps(List<List<Bitmap>> grid)
+        {
+            List<Bitmap> AllTiles = new List<Bitmap>();
+            foreach(var verticalRow in grid)
+            {
+                foreach(var tile in verticalRow)
+                {
+                    AllTiles.Add(tile);
+                }
+            }
+            return AllTiles;
+        }
+
         private static List<OpinionatedItem<T>> ToOpinionatedList<T>(List<T> list)
         {
             List<OpinionatedItem<T>> items = new List<OpinionatedItem<T>>();
@@ -273,11 +307,7 @@ namespace RoomEditor
             {
                 for (var y = 0; y < _grid.Height; y++)
                 {
-                    if(x==13 && y == 0)
-                    {
-                        //bad form... just temporary
-                        BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"], GetBitmap());
-                    }
+
                     if (!(x == 0 || y == 0 || x == _grid.Width - 1 || y == _grid.Height - 1))
                         continue;
                     var thisPoint = new Point(x, y);
@@ -307,18 +337,18 @@ namespace RoomEditor
                         }
                         continue;
                     }
-                    if (x == 13 && y == 0)
-                    {
-                        //bad form... just temporary
-                        BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"], GetBitmap());
-                    }
+
+                    //skip ones next to entrances...
+                    if (room.portals.Any(p =>
+                         p.point == new Point(thisPoint.X + 1, thisPoint.Y) ||
+                         p.point == new Point(thisPoint.X - 1, thisPoint.Y) ||
+                         p.point == new Point(thisPoint.X, thisPoint.Y + 1) ||
+                         p.point == new Point(thisPoint.X, thisPoint.Y + 2)
+                    ))
+                        continue;
 
                     _grid.SuperPositions[x, y, 0].CollapseToItems(_borderTiles.Select(i => i.Id).ToList(), true);
-                    if (x == 13 && y == 0)
-                    {
-                        //bad form... just temporary
-                        BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"], GetBitmap());
-                    }
+                    
                     result = _grid.handlePropagation(_grid.SuperPositions[x, y, 0]);
                     if (!result)
                         return false;
@@ -418,13 +448,15 @@ namespace RoomEditor
                 result = result && AddPath(entrancePoint, entranceDirection, exitPoint, exitDirection, room.Width - (room.DistanceBetweenPathAndEdge * 2), room.Height - (room.DistanceBetweenPathAndEdge * 2), room.DistanceBetweenPathAndEdge);
                 if(result == false)
                 {
-                    BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", GetBitmap());
+                    //BitmapOperations.SaveBitmapToFile("../../Output/MostRecentError.bmp", GetBitmap());
                     return false;
                 }
             }
 
             return true;
         }
+
+        
         private bool AddPath(Point start, Point startDirection, Point end, Point endDirection, int pathWidth, int pathHeight, int borderPadding)
         {
             bool result;
@@ -432,7 +464,7 @@ namespace RoomEditor
                 new PathPoint(new Point(start.X, start.Y), startDirection),
                 new PathPoint(new Point(end.X, end.Y), endDirection),
                 pathWidth, pathHeight,
-                null, _random
+                null, _random, true
             );
             path.printToConsole();
             for (var i = 0; i < path._pathPoints.Count; i++)
@@ -494,6 +526,23 @@ namespace RoomEditor
                 }
             }
             return true;
+        }
+
+        public bool MakeSpacesIntraversable()
+        {
+            var result = true;
+            for(var y = 0; y < _grid.Height; y++)
+            {
+                for(var x = 0; x < _grid.Width; x++)
+                {
+                    _grid.SuperPositions[x, y, 0].PreventItems(_cornerIntersectionTiles.Select(t => t.Id).ToList());
+                    _grid.SuperPositions[x, y, 0].PreventItems(_hTraverseWcfTiles.Select(t => t.Id).ToList());
+                    _grid.SuperPositions[x, y, 0].PreventItems(_vTraverseWfcTiles.Select(t => t.Id).ToList());
+
+                    result = result && _grid.handlePropagation(_grid.SuperPositions[x, y, 0]);
+                }
+            }
+            return result;
         }
     }
 }

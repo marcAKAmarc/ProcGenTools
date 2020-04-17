@@ -8,6 +8,7 @@ using ProcGenTools.DataProcessing;
 using ProcGenTools.Helper;
 namespace ProcGenTools.DataStructures
 {
+    public enum CreationMethod { Cluster, PathCover};
     public class Zone
     {
         public Guid id;
@@ -21,6 +22,8 @@ namespace ProcGenTools.DataStructures
         public int AbsoluteY;
         public HierarchicalMap SubMap;
         public HierarchicalMap FromMap;
+
+        public CreationMethod CreationMethod;
 
         public List<ZonePortal> ZonePortals;
         public Zone()
@@ -40,12 +43,11 @@ namespace ProcGenTools.DataStructures
                 scale = HierarchicalMap.RelativeScales[Level];
             SubMap = new HierarchicalMap(Width * scale, Height * scale, random, Level + 1);
             SubMap.fromZone = this;
-
+            SubMap.CreationMethod = CreationMethod;
            
 
             foreach (var portal in ZonePortals)
             {
-                //TODO: THIS IS THE REASON THAT SOME DO NOT CONNECT!
                 var newX = portal.ZoneRelativePosition.X * scale;
                 var newY = portal.ZoneRelativePosition.Y * scale;
                 if(portal.direction.X == 1)
@@ -83,6 +85,17 @@ namespace ProcGenTools.DataStructures
                 SubMap.AddPortal(subportal);
             }
 
+            HierarchicalMap parent = FromMap;
+            while (parent != null)
+            {
+                parent._AllSubChildren.Add(SubMap);
+                if (parent.fromZone == null || parent.fromZone.FromMap == null)
+                    parent = null;
+                else
+                    parent = parent.fromZone.FromMap;
+            }
+
+            //generative stuff after here   
             if (HierarchicalMap.RelativeScales.Count() - 1 < Level)
                 return;
 
@@ -100,6 +113,16 @@ namespace ProcGenTools.DataStructures
             if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
                 throw new Exception("failed - zone does not touch another zone");
             //SubMap.SpawnZone(3, 2, new Point(randomZone.X, randomZone.Y));
+
+            //create extraneous zones?
+            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            //SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            //SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+
+            SubMap.MarkExitOnlyPortals();
+
+
+
             SubMap.CreateSubMaps();
         }
 
@@ -201,7 +224,7 @@ namespace ProcGenTools.DataStructures
         public ZonePortalDirection directionOfPassage;
         public NestedPortal DestinationPortal { get; set; }
         public HierarchicalMap Map;
-
+        public Point portalOffsetFromRoom;
         public HierarchicalMapPortal()
         {
             id = Guid.NewGuid();
@@ -210,6 +233,7 @@ namespace ProcGenTools.DataStructures
 
     public class HierarchicalMap
     {
+        public Guid _Id;
         public int _Level = 0;
         public static int _TotalLevels = 0;
         public int _MapWidth;
@@ -220,9 +244,11 @@ namespace ProcGenTools.DataStructures
         public Zone[,] _Grid;
         public List<Zone> flatZones;
         public List<HierarchicalMapPortal> _Portals;
+        public List<HierarchicalMap> _AllSubChildren;
         public List<Path> _Paths;
         public Random _Random;
         public Zone fromZone = null;
+        public CreationMethod CreationMethod;
         public Bitmap contents = null;
         public static int[] RelativeScales;
 
@@ -245,6 +271,8 @@ namespace ProcGenTools.DataStructures
 
         public HierarchicalMap(int width, int height, Random random, int Level = 0)
         {
+            _Id = Guid.NewGuid();
+            _AllSubChildren = new List<HierarchicalMap>();
             _MapHeight = height;
             _MapWidth = width;
             
@@ -277,7 +305,36 @@ namespace ProcGenTools.DataStructures
             //if (colorMode == 0)
             //    dbColor = Color.FromArgb(0, _Random.Next(128) + 128, _Random.Next(128) + 128);
         }
+        public void MarkExitOnlyPortals()
+        {
+            List<Zone> lowerNumberedExtraneousZones = new List<Zone>();
+            for(var i = 0; i < flatZones.Count; i++)
+            {
+                
 
+                if (flatZones[i].CreationMethod != CreationMethod.Cluster)
+                    continue;
+
+                lowerNumberedExtraneousZones.Add(flatZones[i]);
+                //filtered to cluster only
+
+                //debugging
+                //var connectedIds = flatZones[i].ZonePortals.Select(zp => zp.Destination.id).ToList();
+                //var lowerIds = lowerNumberedExtraneousZones.Select(x => x.id).ToList();
+
+                //continue if there are not any portals that connect to a lower indexed extraneous zone
+                if (!flatZones[i].ZonePortals.Any(zp => lowerNumberedExtraneousZones.Any(ln => ln.id == zp.Destination.id)))
+                    continue;
+
+                foreach(var portalToEssential in flatZones[i].ZonePortals.Where(zp=>zp.Destination.CreationMethod == CreationMethod.PathCover))
+                {
+                    portalToEssential.directionOfPassage = ZonePortalDirection.Out;
+                    ((ZonePortal)portalToEssential.DestinationPortal).directionOfPassage = ZonePortalDirection.In;
+                }
+
+                
+            }
+        }
         public List<HierarchicalMap>[,] GetMasterMap(List<HierarchicalMap>[,] _masterMap = null, int originalLevel = -1, int depth = 0)
         {
 
@@ -453,7 +510,7 @@ namespace ProcGenTools.DataStructures
             });
         }
 
-        public bool SpawnZoneAtSearchPosition(int maxSide, int minSide, Point? searchStartPoint = null, bool mustTouchAnother = false)
+        public bool SpawnZoneAtClusterPosition(int maxSide, int minSide, Point? searchStartPoint = null, bool mustTouchAnother = false)
         {
             int SideX_o = _Random.Next(minSide, maxSide+1);
             int SideY_o = _Random.Next(minSide, maxSide+1);
@@ -511,7 +568,8 @@ namespace ProcGenTools.DataStructures
                 Width = SideX,
                 X = adjustedOrigin.Value.X,
                 Y = adjustedOrigin.Value.Y,
-                FromMap = this
+                FromMap = this,
+                CreationMethod = CreationMethod.Cluster
             };
 
             AssignZoneToGrid(zone);
@@ -548,7 +606,8 @@ namespace ProcGenTools.DataStructures
                 Width = SideX,
                 X = adjustedOrigin.Value.X,
                 Y = adjustedOrigin.Value.Y,
-                FromMap = this
+                FromMap = this,
+                CreationMethod = CreationMethod.PathCover
             };
 
             AssignZoneToGrid(zone);
@@ -616,7 +675,11 @@ namespace ProcGenTools.DataStructures
                         {
                             var result = SpawnZoneAtPosition(maxSide, minSide, pathpoint.point);
                             if (result)
+                            {
                                 createdZones.Add(_Grid[pathpoint.point.X, pathpoint.point.Y]);
+                                //flatZones.Add(_Grid[pathpoint.point.X, pathpoint.point.Y]);
+                                _Grid[pathpoint.point.X, pathpoint.point.Y].CreationMethod = CreationMethod.PathCover;
+                            }
                             else
                             {
                                 succeeded = false;
@@ -643,14 +706,23 @@ namespace ProcGenTools.DataStructures
                         Destination = null,
                         MapRelativePosition = portal.point,
                         ZoneRelativePosition = new Point(portal.point.X - zone.X, portal.point.Y - zone.Y),
-                        directionOfPassage = ZonePortalDirection.Bidirectional,
+                        directionOfPassage = portal.directionOfPassage,
                         ParentPortal = portal,
                         zone = zone,
-                        direction = portal.direction
+                        direction = portal.direction,
                     }
                 );
                 portal.SubPortal = zone.ZonePortals.Last();
-                if(portal.DestinationPortal != null && portal.DestinationPortal.SubPortal != null)
+                //debug
+                if(zone.ZonePortals.Last().directionOfPassage != ZonePortalDirection.Bidirectional)
+                {
+                    var breka = "here";
+                }
+                if (zone.ZonePortals.Last().direction == new Point())
+                {
+                    var breka = "here";
+                }
+                if (portal.DestinationPortal != null && portal.DestinationPortal.SubPortal != null)
                 {
                     zone.ZonePortals.Last().Destination = ((ZonePortal)portal.DestinationPortal.SubPortal).zone;
                     zone.ZonePortals.Last().DestinationPortal = portal.DestinationPortal.SubPortal;
@@ -778,6 +850,12 @@ namespace ProcGenTools.DataStructures
                     zone = zone
 
                 });
+                //debug
+                if(zone.ZonePortals.Last().direction == new Point())
+                {
+                    var breaka = "here";
+                }
+
                 chosen.Neighbor.ZonePortals.Add(new ZonePortal()
                 {
                     Destination = zone,
@@ -794,6 +872,12 @@ namespace ProcGenTools.DataStructures
                 });
                 zone.ZonePortals.Last().DestinationPortal = chosen.Neighbor.ZonePortals.Last();
                 chosen.Neighbor.ZonePortals.Last().DestinationPortal = zone.ZonePortals.Last();
+
+                if (chosen.Neighbor.ZonePortals.Last().direction == new Point())
+                {
+                    var breaka = "here";
+                }
+
             }
         }
 
@@ -1137,6 +1221,69 @@ namespace ProcGenTools.DataStructures
                 Console.WriteLine();
             }
             //Console.ReadKey();
+        }
+
+        public void PrintMasterOrderingToBitmap(string filepath)
+        {
+            var _masterMap = GetMasterMap();
+            var _masterPortal = GetMasterPortal();
+            double _numberOfTerminals = _AllSubChildren.Count(x => x._AllSubChildren.Count == 0);
+            var _flatPortals = GetFlatPortals();
+            var scale = 10;
+            Bitmap bmp = new Bitmap(_masterMap.GetLength(0) * scale, _masterMap.GetLength(1) * scale);
+            
+            for (var y = 0; y < _masterMap.GetLength(1); y++)
+            {
+                
+                for (var x = 0; x < _masterMap.GetLength(0); x++)
+                {
+                    var color = Color.IndianRed;
+                    var terminalRoom = _masterMap[x, y].OrderBy(h => h._Level).LastOrDefault();
+                    //colors
+                    if (terminalRoom._AllSubChildren.Count == 0)
+                    {
+                        //find proper color for this terminal room
+                        for(var i = 0; i < _AllSubChildren.Count; i++)
+                        { 
+                            if (terminalRoom != null && _AllSubChildren[i]._Id == _masterMap[x, y].FirstOrDefault(h => h._AllSubChildren.Count == 0)._Id)
+                            {
+                                ///???????
+                                color = Color.FromArgb(
+                                    (int)(Math.Sin((i / _numberOfTerminals) *2*Math.PI + 2*Math.PI/3)*125)+125,
+                                    (int)(Math.Sin((i / _numberOfTerminals) *2* Math.PI + 4 * Math.PI / 3) * 125)+125,
+                                    (int)(Math.Sin((i / _numberOfTerminals) * 2* Math.PI) * 125)+125
+                                );
+                                break;
+                            }
+                        }
+                    }
+                    //draw room
+                    for(var dx = 0; dx < scale; dx++)
+                    {
+                        for(var dy = 0; dy < scale; dy++)
+                        {
+                            bmp.SetPixel((x * scale)+dx, (y * scale) + dy, color);
+                        }
+                    }
+
+                    
+                    ////portal
+                    //var terminalPortals = _masterPortal[x, y].Where(p => p.SubPortal == null).ToList();
+                    //foreach(var terminalPortal in terminalPortals)
+                    //{
+                    //    var startPoint = new Point(x*scale, y*scale);
+                    //    var endPoint = new Point((x + terminalPortal.direction.X)*scale, (y + terminalPortal.direction.Y)*scale);
+                    //    bmp.SetPixel(startPoint.X, startPoint.Y, Color.White);
+                    //    if(endPoint.X < bmp.Width && endPoint.X > 0 && endPoint.Y < bmp.Height && endPoint.Y > 0)
+                    //        bmp.SetPixel(endPoint.X, endPoint.Y, Color.White);
+                    //}
+                    
+                }
+                Console.WriteLine();
+            }
+            //Console.ReadKey();
+
+            BitmapOperations.SaveBitmapToFile(filepath, bmp);
         }
 
         public void PrintMasterToBitmap(string filepath)

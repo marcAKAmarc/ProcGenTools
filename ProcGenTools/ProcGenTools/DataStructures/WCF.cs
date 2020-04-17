@@ -401,7 +401,14 @@ namespace ProcGenTools.DataStructures
 
             RecordPreviousStatesTemp();
 
-            var remaining = slots.Select(x => x.TryCollapse(context)).Where(x=>x==false).Count();
+            int remaining = 0;
+            foreach(var slot in slots)
+            {
+                var remains = !slot.TryCollapse(context);
+                if (remains)
+                    remaining += 1;
+            }
+            //var remaining = slots.Select(x => x.TryCollapse(context)).Where(x=>x==false).Count();
 
             var justChanged = false;
             for (var i = 0; i < slots.Count; i++)
@@ -469,6 +476,29 @@ namespace ProcGenTools.DataStructures
             //hasCollapsed = true;
             //hasUpdated = true;
         }
+
+        public void PreventItems(List<Guid> itemIds, bool haltIfAllOthersCollapsed = true, bool uncollapseOthers = false)
+        {
+            if (uncollapseOthers)
+            {
+                for (var i = 0; i < slots.Count; i++)
+                {
+                    slots[i].UnCollapse();
+                }
+            }
+
+            for (var i = 0; i < slots.Count; i++)
+            {
+                if (haltIfAllOthersCollapsed && hasCollapsed)
+                    break;
+
+                if (itemIds.Any(x => x == slots[i].item.Id))
+                {
+                    slots[i].Collapse();
+                }
+            }   
+        }
+
         public void CollapseToRandomItem(Random random)
         {
             var available = slots.Where(x => !x.Collapsed).ToList();

@@ -56,7 +56,7 @@ namespace ProcGenTools.DataStructures
         public int _pathHeight;
         public Random _random;
 
-        public Path(PathPoint entrance, PathPoint exit, int pathWidth, int pathHeight, int? seed = null, Random random = null)
+        public Path(PathPoint entrance, PathPoint exit, int pathWidth, int pathHeight, int? seed = null, Random random = null, bool LowRes = false)
         {
             _entrance = entrance;
             _exit = exit;
@@ -71,11 +71,82 @@ namespace ProcGenTools.DataStructures
             if (random != null)
                 _random = random;
 
-            CreateBasePath();
+            if (!LowRes)
+                CreateBasePath();
+            else
+            {
+                var attempts = 0;
+                while (!CreateBasePathLowRes()) {
+                    attempts += 1;
+                    if(attempts > 100)
+                    {
+                        break;
+                    }
+                }
+                printToConsole();
+            }
         }
 
-        private void CreateBasePath()
+        //public void DownSample(int divisor)
+        //{
+        //    var downSampledPoints = new List<PathPoint>();
+        //    for (var i = 0; i < _pathPoints.Count(); i++)
+        //    {
+
+        //        downSampledPoints.Add( new PathPoint(
+        //                new Point(
+        //                    (int)Math.Floor(_pathPoints[i].point.X / 2f),
+        //                    (int)Math.Floor(_pathPoints[i].point.Y / 2f)
+        //                ),
+        //                _pathPoints[i].toDirection,
+        //                _pathPoints[i].fromDirection
+        //        ));
+        //    }
+        //    var upSampledDownSampledPoints = new List<PathPoint>();
+        //    for (var i = 0; i < _pathPoints.Count(); i++)
+        //    {
+
+        //        upSampledDownSampledPoints.Add(new PathPoint(
+        //                new Point(
+        //                    downSampledPoints[i].point.X * 2,
+        //                    downSampledPoints[i].point.Y * 2
+        //                ),
+        //                _pathPoints[i].toDirection,
+        //                _pathPoints[i].fromDirection
+        //        ));
+        //    }
+
+            
+
+        //    if (_pathPoints.First().point != upSampledDownSampledPoints.First().point)
+        //    {
+        //        var difference = new Point(
+        //               _pathPoints.First().point.X - upSampledDownSampledPoints.First().point.X,
+        //               _pathPoints.First().point.Y - upSampledDownSampledPoints.First().point.Y
+        //        );
+        //        for(var i = 0; i < upSampledDownSampledPoints.Count; i++)
+        //        {
+        //            upSampledDownSampledPoints[i] = new PathPoint(
+        //                new Point(
+        //                    upSampledDownSampledPoints[i].point.X + difference.X,
+        //                    upSampledDownSampledPoints[i].point.Y + difference.Y
+        //                ),
+        //                upSampledDownSampledPoints[i].toDirection,
+        //                upSampledDownSampledPoints[i].fromDirection
+        //            );
+        //        }
+        //    }
+        //    //adjust exit
+        //    if (_pathPoints.Last().point != upSampledDownSampledPoints.Last().point)
+        //    {
+        //        var breaka = "here";
+        //    }
+        //}
+
+        private bool CreateBasePath(int resolutionDivisor = 1)
         {
+            //can fail
+
             _pathPoints.Clear();
             List<SearchNode> reachable = new List<SearchNode>() { new SearchNode(_entrance.point, null) };
             List<SearchNode> explored = new List<SearchNode>();
@@ -88,6 +159,8 @@ namespace ProcGenTools.DataStructures
                     checkNode = reachable.Last();
                 else
                     checkNode = reachable[0];
+
+
 
                 if (checkNode.point == _exit.point)
                 {
@@ -118,7 +191,7 @@ namespace ProcGenTools.DataStructures
                     //result[0].toDirection = new Point(next.point.X - result[0].point.X, next.point.Y - result[0].point.Y);
                     
                     _pathPoints = result;
-                    return;
+                    return true;
                 }
 
                 if (checkLast)
@@ -153,8 +226,11 @@ namespace ProcGenTools.DataStructures
                 reachable.AddRange(newReachables);
             }
 
+
+
             //# If we get here, no path was found :(
-        
+            return false;
+
             //function find_path (start_node, end_node):
             //    reachable = [start_node]
             //    explored = []
@@ -205,6 +281,317 @@ namespace ProcGenTools.DataStructures
             //while (currentPoint != _exit);
             //_pathPoints.Add(new PathPoint(currentPoint));
         }
+        private bool CreateBasePathLowRes()
+        {
+            _pathPoints.Clear();
+            List<SearchNode> reachable = new List<SearchNode>() { new SearchNode(_entrance.point, null) };
+            List<SearchNode> explored = new List<SearchNode>();
+            List<PathPoint> result = new List<PathPoint>();
+            while (reachable.Count > 0)
+            {
+
+                SearchNode checkNode = reachable[
+                    Math.Max(
+                        0,
+                        reachable.Count - _random.NextChoice(new List<int> { 1, 1, 1, 1, 1, 2, 3, 4, 5, 6, 7, 8})
+                    )
+                ];
+                reachable = reachable.Where(pp => pp.point != checkNode.point).ToList();
+                
+
+                //can move just 1
+                bool canMoveAnywhere = false;
+                if (/*wentStraightTwice ||*/
+                        (
+                            checkNode.previous != null &&
+                            checkNode.previous.previous != null &&
+                            checkNode.previous.previous.previous != null
+                        ) &&
+                        (
+                           (checkNode.previous.previous.point.X == checkNode.point.X && checkNode.previous.previous.previous.point.X == checkNode.point.X)
+                           ||
+                           (checkNode.previous.previous.point.Y == checkNode.point.Y && checkNode.previous.previous.previous.point.Y == checkNode.point.Y)
+                        )
+                  )
+                    canMoveAnywhere = true;
+
+
+                bool canExit = false;
+                var exitNext = new Point(_exit.point.X + _exit.toDirection.X, _exit.point.Y + _exit.toDirection.Y);
+                if (checkNode.point == _exit.point &&
+                        checkNode.previous != null && checkNode.previous.previous != null &&
+                        (
+                           (checkNode.previous.previous.point.X == checkNode.point.X && exitNext.X == checkNode.previous.point.X)
+                           ||
+                           (checkNode.previous.previous.point.Y == checkNode.point.Y && exitNext.Y == checkNode.previous.point.Y)
+                        )
+                  )
+                    canExit = true;
+
+
+                if (canExit)
+                {
+                    SearchNode next = null;
+                    var current = checkNode;
+                    var prev = current.previous;
+
+                    result.Insert(0, new PathPoint(checkNode.point, _exit.toDirection));
+
+                    //build path list
+                    while (true)
+                    {
+                        if (next != null && result[0].toDirection == new Point())
+                            result[0].toDirection = new Point(next.point.X - result[0].point.X, next.point.Y - result[0].point.Y);
+                        if (prev != null)
+                            result[0].fromDirection = new Point(result[0].point.X - prev.point.X, result[0].point.Y - prev.point.Y);
+                        else
+                            result[0].fromDirection = _entrance.toDirection;
+
+                        if (prev == null)
+                            break;
+
+                        next = current;
+                        current = prev;
+                        prev = current.previous;
+                        result.Insert(0, new PathPoint(current.point, null));
+                    }
+                    //result[0].toDirection = new Point(next.point.X - result[0].point.X, next.point.Y - result[0].point.Y);
+
+                    _pathPoints = result;
+                    return true;
+                }
+
+                
+
+                explored.Add(checkNode);
+
+                //moved more than 1
+                //bool wentStraightTwice = false;
+                //if (checkNode.previous != null &&
+                //    (
+                //        Math.Abs(checkNode.previous.point.X - checkNode.point.X) > 1
+                //        ||
+                //        Math.Abs(checkNode.previous.point.Y - checkNode.point.Y) > 1
+                //    )
+                //)
+                //    wentStraightTwice = true;
+
+                //if (wentStraightTwice)
+                //{
+                //    //add inbetweener
+                //    //explored.Add(
+                //    //    new SearchNode(
+                //    //        new Point(
+                //    //            checkNode.point.X + Math.Sign(checkNode.previous.point.X - checkNode.point.X),
+                //    //            checkNode.point.Y + Math.Sign(checkNode.previous.point.Y - checkNode.point.Y)
+                //    //        ),
+                //    //        checkNode.previous
+                //    //    )
+                //    //);
+
+                //    //checkNode.previous = explored.Last();
+                //}
+
+
+
+                ////can move just 1
+                //bool canMoveAnywhere = false;
+                //if (/*wentStraightTwice ||*/
+                //        (
+                //            checkNode.previous != null &&
+                //            checkNode.previous.previous != null &&
+                //            checkNode.previous.previous.previous != null
+                //        ) &&
+                //        (
+                //           (checkNode.previous.previous.point.X == checkNode.point.X && checkNode.previous.previous.previous.point.X == checkNode.point.X)
+                //           ||
+                //           (checkNode.previous.previous.point.Y == checkNode.point.Y  && checkNode.previous.previous.previous.point.Y == checkNode.point.Y)
+                //        )   
+                //  )
+                //    canMoveAnywhere = true;
+
+                var newReachables = new List<SearchNode>();
+                if (canMoveAnywhere)
+                {
+                    newReachables = new List<SearchNode>()
+                    {
+                        new SearchNode(
+                            new Point(checkNode.point.X + 1, checkNode.point.Y),
+                            checkNode
+                        ),
+                        new SearchNode(
+                            new Point(checkNode.point.X - 1, checkNode.point.Y),
+                            checkNode
+                        ),
+                        new SearchNode(
+                            new Point(checkNode.point.X, checkNode.point.Y+1),
+                            checkNode
+                        ),
+                        new SearchNode(
+                            new Point(checkNode.point.X, checkNode.point.Y-1),
+                            checkNode
+                        )
+                    };
+                }
+                else
+                {
+                    if (checkNode.previous != null)
+                    {
+                        newReachables = new List<SearchNode>()
+                        {
+
+                             new SearchNode(
+                                new Point(
+                                    checkNode.point.X + Math.Sign(checkNode.point.X - checkNode.previous.point.X),
+                                    checkNode.point.Y + Math.Sign(checkNode.point.Y - checkNode.previous.point.Y)
+                                ),
+                                checkNode
+                            )
+
+                        };
+                    }
+                    else
+                    {
+                        newReachables = new List<SearchNode>()
+                        {
+
+                             new SearchNode(
+                                new Point(
+                                    checkNode.point.X + _entrance.toDirection.X,
+                                    checkNode.point.Y + _entrance.toDirection.Y
+                                ),
+                                checkNode
+                            )
+
+                        };
+                    }
+                }
+                
+                newReachables = newReachables.Where(n => n.point.X >= 0 && n.point.Y >= 0 && n.point.X < _pathWidth && n.point.Y < _pathHeight
+                    && !reachable.Any(r => r.point.X == n.point.X && r.point.Y == n.point.Y)
+                    && !explored.Any(r => r.point.X == n.point.X && r.point.Y == n.point.Y)).ToList();
+
+                if(newReachables.Count == 0)
+                {
+                    explored = explored.Where(x => x.point != checkNode.point).ToList();
+                }
+
+                reachable.AddRange(newReachables);
+                reachable = reachable.OrderByDescending(pp => Math.Abs(pp.point.X - _exit.point.X) + Math.Abs(pp.point.Y - _exit.point.Y)).ToList();
+            }
+
+            return false;
+        }
+            //private void CreateBasePathLowerRes()
+            //{
+            //    _pathPoints.Clear();
+            //    List<SearchNode> reachable = new List<SearchNode>() { new SearchNode(_entrance.point, null) };
+            //    List<SearchNode> terminables = new List<SearchNode>();
+            //    List<SearchNode> explored = new List<SearchNode>();
+            //    List<PathPoint> result = new List<PathPoint>();
+            //    while (reachable.Count > 0)
+            //    {
+            //        bool checkLast = _random.NextDouble() >= 0.5;
+            //        SearchNode checkNode;
+            //        if (checkLast)
+            //            checkNode = reachable.Last();
+            //        else
+            //            checkNode = reachable[0];
+
+            //        terminables = new List<SearchNode>()
+            //        {
+            //            new SearchNode(
+            //                new Point(checkNode.point.X + 1, checkNode.point.Y),
+            //                checkNode
+            //            ),
+            //            new SearchNode(
+            //                new Point(checkNode.point.X - 1, checkNode.point.Y),
+            //                checkNode
+            //            ),
+            //            new SearchNode(
+            //                new Point(checkNode.point.X, checkNode.point.Y+1),
+            //                checkNode
+            //            ),
+            //            new SearchNode(
+            //                new Point(checkNode.point.X, checkNode.point.Y-1),
+            //                checkNode
+            //            )
+            //        };
+
+            //        if (checkNode.point == _exit.point
+            //            || terminables[0].point == _exit.point
+            //            || terminables[1].point == _exit.point
+            //            || terminables[2].point == _exit.point
+            //            || terminables[3].point == _exit.point)
+            //        {
+            //            SearchNode next = null;
+            //            var current = checkNode;
+            //            var prev = current.previous;
+
+            //            result.Insert(0, new PathPoint(checkNode.point, _exit.toDirection));
+
+            //            //incase endpoint is just a terminable neighbor
+            //            if (checkNode.point != _exit.point)
+            //                result.Insert(0, new PathPoint(_exit.point, _exit.toDirection));
+            //            //build path list
+            //            while (true)
+            //            {
+            //                if (next != null && result[0].toDirection == new Point())
+            //                    result[0].toDirection = new Point(next.point.X - result[0].point.X, next.point.Y - result[0].point.Y);
+            //                if (prev != null)
+            //                    result[0].fromDirection = new Point(result[0].point.X - prev.point.X, result[0].point.Y - prev.point.Y);
+            //                else
+            //                    result[0].fromDirection = _entrance.toDirection;
+
+            //                if (prev == null)
+            //                    break;
+
+            //                next = current;
+            //                current = prev;
+            //                prev = current.previous;
+            //                result.Insert(0, new PathPoint(current.point, null));
+            //            }
+            //            //result[0].toDirection = new Point(next.point.X - result[0].point.X, next.point.Y - result[0].point.Y);
+
+            //            _pathPoints = result;
+            //            return;
+            //        }
+
+            //        if (checkLast)
+            //            reachable.RemoveAt(reachable.Count - 1);
+            //        else
+            //            reachable.RemoveAt(0);
+
+            //        explored.Add(checkNode);
+
+            //        var newReachables = new List<SearchNode>()
+            //        {
+            //            new SearchNode(
+            //                new Point(checkNode.point.X + 2, checkNode.point.Y),
+            //                checkNode
+            //            ),
+            //            new SearchNode(
+            //                new Point(checkNode.point.X - 2, checkNode.point.Y),
+            //                checkNode
+            //            ),
+            //            new SearchNode(
+            //                new Point(checkNode.point.X, checkNode.point.Y+2),
+            //                checkNode
+            //            ),
+            //            new SearchNode(
+            //                new Point(checkNode.point.X, checkNode.point.Y-2),
+            //                checkNode
+            //            )
+            //        };
+            //        newReachables = newReachables.Where(n => n.point.X >= 0 && n.point.Y >= 0 && n.point.X < _pathWidth && n.point.Y < _pathHeight
+            //            && !reachable.Any(r => r.point.X == n.point.X && r.point.Y == n.point.Y)).ToList();
+
+
+
+            //        reachable.AddRange(newReachables);
+            //    }
+            //}
+
 
         public void printToConsole()
         {
