@@ -28,11 +28,11 @@ namespace ProcGenTools.Helper
             b = (b + (10 * 10)) % 255;
             return Color.FromArgb(r, g, b);
             var maxColor = Math.Max(b, Math.Max(r, g));
-            var ratio = ((double)(maxSum - minSum))/Math.Max(b,Math.Max(r,g));
+            var ratio = ((double)(maxSum - minSum)) / Math.Max(b, Math.Max(r, g));
             return Color.FromArgb(
-                (int)((r * ratio) + (minSum/3)),
-                (int)((g * ratio) + (minSum/3)),
-                (int)((b * ratio) + (minSum/3))
+                (int)((r * ratio) + (minSum / 3)),
+                (int)((g * ratio) + (minSum / 3)),
+                (int)((b * ratio) + (minSum / 3))
             );
         }
     }

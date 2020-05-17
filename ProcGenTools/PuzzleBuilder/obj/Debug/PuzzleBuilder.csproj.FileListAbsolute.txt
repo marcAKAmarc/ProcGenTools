@@ -1,0 +1,8 @@
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\bin\Debug\PuzzleBuilder.dll
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\bin\Debug\PuzzleBuilder.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.dll
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.pdb

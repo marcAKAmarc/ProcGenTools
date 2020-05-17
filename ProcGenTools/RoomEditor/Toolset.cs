@@ -215,8 +215,8 @@ namespace RoomEditor
                                 }
 
                                 //if neighbor in element has neighbor at pos, bail (make distinct - makes faster in long run.. no natural weight though
-                                if (element.GetAcceptableInDirection(relativePoint.X, relativePoint.Y, 0).Any(acc => acc.Id == neighborElement.Id))
-                                    continue;
+                                /*if (element.GetAcceptableInDirection(relativePoint.X, relativePoint.Y, 0).Any(acc => acc.Id == neighborElement.Id))
+                                    continue;*/
                             
                                 if (neighborElement == null)
                                 {

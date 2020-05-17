@@ -49,6 +49,7 @@
     <Compile Include="DataStructures\WCF.cs" />
     <Compile Include="DataStructures\Tree.cs" />
     <Compile Include="Helper\Color.cs" />
+    <Compile Include="Helper\ListExtensions.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

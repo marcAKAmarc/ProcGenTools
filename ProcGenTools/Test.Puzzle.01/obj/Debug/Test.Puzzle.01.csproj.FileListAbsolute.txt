@@ -1,0 +1,13 @@
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\Test.Puzzle.01.exe.config
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\Test.Puzzle.01.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\Test.Puzzle.01.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\RoomEditor.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\RoomEditor.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\obj\Debug\Test.Puzzle.01.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\obj\Debug\Test.Puzzle.01.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\obj\Debug\Test.Puzzle.01.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\obj\Debug\Test.Puzzle.01.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\PuzzleBuilder.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.Puzzle.01\bin\Debug\PuzzleBuilder.pdb
