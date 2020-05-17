@@ -30,10 +30,11 @@ namespace PuzzleBuilder
         public List<OpinionatedItem<Bitmap>> NonDynamic;
         public List<OpinionatedItem<Bitmap>> NonDynamicStrict;
         public List<OpinionatedItem<Bitmap>> Walkable;
+        public List<OpinionatedItem<Bitmap>> FallTiles;
         public Bitmap CautionTile;
         public Bitmap ErrorTile;
 
-        public TilesetConfiguration(string main, string horizontal, string horizontalPlain, string vertical, string ladder, string verticalExit, string door, string button, string box, string rope, string conveyor, string elevator, string shooter, string solid, string empty, string nondynamic, string nondynamicstrict, string walkable, string caution, string error)
+        public TilesetConfiguration(string main, string horizontal, string horizontalPlain, string vertical, string ladder, string verticalExit, string door, string button, string box, string rope, string conveyor, string elevator, string shooter, string solid, string empty, string nondynamic, string nondynamicstrict, string walkable, string fall, string caution, string error)
         {
             MainDistinct = ToOpinionatedList(ChopUpTilesWithMirror(main));
 
@@ -54,6 +55,7 @@ namespace PuzzleBuilder
             NonDynamic = GetMatchesInMain(ChopUpTiles(nondynamic));
             NonDynamicStrict = GetMatchesInMain(ChopUpTiles(nondynamicstrict));
             Walkable = GetMatchesInMain(ChopUpTiles(walkable));
+            FallTiles = GetMatchesInMain(ChopUpTiles(fall));
             ErrorTile = Image.FromFile(error) as Bitmap;
             CautionTile = Image.FromFile(caution) as Bitmap;
 

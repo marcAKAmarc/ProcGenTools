@@ -127,8 +127,9 @@ namespace PuzzleBuilder.Creators
                         result.AddRange(config.EmptyTiles);
                         break;
                     case Meaning.BoxPathVertical:
-                        result.AddRange(config.VerticalTraversableTiles);
-                        result.AddRange(config.EmptyTiles);
+                        result.AddRange(config.FallTiles);
+                        //result.AddRange(config.VerticalTraversableTiles);
+                        //result.AddRange(config.EmptyTiles);
                         break;
                     case Meaning.HTraversablePlain:
                         result.AddRange(config.HorizontalTraversablePlainTiles);
@@ -646,70 +647,88 @@ namespace PuzzleBuilder.Creators
 
             var groundLevelYs = grid.GetByMeaning(Meaning.GroundLevel).Select(gl => gl.Y).Distinct();
 
-            var path = new List<Point>() { new Point(button.X, button.Y) };
+            var overAllAttempts = 0;
+            var path = new List<Point>();
 
-            var tryGoDirection = new Point(0, 0);
-            var oldTryGoDirection = new Point(0, 0);
-            var attempts = 0;
             while (true)
             {
-                oldTryGoDirection = tryGoDirection;
-                tryGoDirection = new List<Point>() { new Point(1, 0), new Point(-1, 0), new Point(0, -1) }.GetRandomOrDefault(random);
-                if (oldTryGoDirection.X != 0 && tryGoDirection.X != 0 && tryGoDirection.X != oldTryGoDirection.X)
+                path = new List<Point>() { new Point(button.X, button.Y) };
+
+                var tryGoDirection = new Point(0, 0);
+                var oldTryGoDirection = new Point(0, 0);
+                var attempts = 0;
+                while (true)
                 {
-                    tryGoDirection = oldTryGoDirection;
-                    continue; //doesn't count for attempts
-                }
-                //if try go horizontal and at ground level and no additional meanings at try go
-                if (
-                    (tryGoDirection.X == 1 || tryGoDirection.X == -1)
-                    &&
-                    path.Last().X + tryGoDirection.X > 0 && path.Last().X + tryGoDirection.X < grid.Width - 1
-                    &&
-                    !(
-                        grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Circuit)
+                    oldTryGoDirection = tryGoDirection;
+                    tryGoDirection = new List<Point>() { new Point(1, 0), new Point(-1, 0), new Point(0, -1) }.GetRandomOrDefault(random);
+                    if (oldTryGoDirection.X != 0 && tryGoDirection.X != 0 && tryGoDirection.X != oldTryGoDirection.X)
+                    {
+                        tryGoDirection = oldTryGoDirection;
+                        continue; //doesn't count for attempts
+                    }
+                    //if try go horizontal and at ground level and no additional meanings at try go
+                    if (
+                        (tryGoDirection.X == 1 || tryGoDirection.X == -1)
                         &&
-                        grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                        path.Last().X + tryGoDirection.X > 0 && path.Last().X + tryGoDirection.X < grid.Width - 1
+                        &&
+                        !(
+                            grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Circuit)
+                            &&
+                            grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                        )
+                        &&
+                        !grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.VTraversable)
+                        &&
+                        groundLevelYs.Any(gl => gl == path.Last().Y)
+                        &&
+                        !grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y].Intentions.Any(i => i.Meaning != Meaning.GroundLevel && i.Meaning != Meaning.Circuit)
                     )
-                    &&
-                    !grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.VTraversable)
-                    &&
-                    groundLevelYs.Any(gl => gl == path.Last().Y)
-                    &&
-                    !grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y].Intentions.Any(i => i.Meaning != Meaning.GroundLevel && i.Meaning != Meaning.Circuit)
-                )
-                    path.Add(new Point(path.Last().X + tryGoDirection.X, path.Last().Y));
-                else if//if not going horizontal and no ladders next to current and no ladders next to next and there is a ground level above us
-                (
-                    tryGoDirection.X == 0
-                    &&
-                    path.Last().Y + tryGoDirection.Y > 0 && path.Last().Y + tryGoDirection.Y < grid.Height - 1
-                    /*&&
-                    !grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i=>i.Meaning == Meaning.Circuit)
-                    */
-                    &&
-                    !grid.Positions[path.Last().X + 1, path.Last().Y].Intentions.Any(i=>i.Meaning == Meaning.Ladder)
-                    &&
-                    !grid.Positions[path.Last().X - 1, path.Last().Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
-                    &&
-                    !grid.Positions[path.Last().X + 1, path.Last().Y + tryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
-                    &&
-                    !grid.Positions[path.Last().X - 1, path.Last().Y + tryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
-                    &&
-                    groundLevelYs.Any(gl=>gl < path.Last().Y)
-                )
-                    path.Add(new Point(path.Last().X + tryGoDirection.X, path.Last().Y + tryGoDirection.Y));
-                else
-                {
-                    tryGoDirection = oldTryGoDirection;
+                        path.Add(new Point(path.Last().X + tryGoDirection.X, path.Last().Y));
+                    else if//if not going horizontal and no ladders next to current and no ladders next to next and there is a ground level above us
+                    (
+                        tryGoDirection.X == 0
+                        &&
+                        path.Last().Y + tryGoDirection.Y > 0 && path.Last().Y + tryGoDirection.Y < grid.Height - 1
+                        /*&&
+                        !grid.Positions[path.Last().X + tryGoDirection.X, path.Last().Y + oldTryGoDirection.Y].Intentions.Any(i=>i.Meaning == Meaning.Circuit)
+                        */
+                        &&
+                        !grid.Positions[path.Last().X + 1, path.Last().Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                        &&
+                        !grid.Positions[path.Last().X - 1, path.Last().Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                        &&
+                        !grid.Positions[path.Last().X + 1, path.Last().Y + tryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                        &&
+                        !grid.Positions[path.Last().X - 1, path.Last().Y + tryGoDirection.Y].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                        &&
+                        groundLevelYs.Any(gl => gl < path.Last().Y)
+                    )
+                        path.Add(new Point(path.Last().X + tryGoDirection.X, path.Last().Y + tryGoDirection.Y));
+                    else
+                    {
+                        tryGoDirection = oldTryGoDirection;
+                    }
+                    attempts += 1;
+                    if (
+                        //long success
+                        (path.Count() >= 6 && path.Last().Y == path[path.Count - 2].Y)
+                        ||
+                        //attempt failure maybe
+                        attempts >= 30)
+                        break;
                 }
-                attempts += 1;
-                if (path.Count() >= 8 || attempts >= 20)
+                if (
+                    (path.Count >= 3 && path.Last().Y == path[path.Count - 2].Y)
+                    ||
+                    //attempt failure maybe
+                    overAllAttempts >= 50
+                )
                     break;
+                overAllAttempts += 1;
             }
 
-
-            if (path.Count == 1)
+            if (path.Count < 3)
                 return; // :(
             if (path.Last().Y != path[path.Count - 2].Y)
                 return; // :(
@@ -732,7 +751,7 @@ namespace PuzzleBuilder.Creators
                 if(
                     //(isVert == true && prev != null && prev.Value.Y != path[i].Y)
                     //||
-                    (next != null && next.Value.Y != path[i].Y)
+                    (prev != null && prev.Value.Y != path[i].Y)
                 )
                 {
                     isVert = true;

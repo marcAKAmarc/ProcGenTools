@@ -48,6 +48,7 @@ namespace Test.Puzzle._01
                                 ConfigurationManager.AppSettings["nondynamic"],
                                 ConfigurationManager.AppSettings["nondynamicstrict"],
                                 ConfigurationManager.AppSettings["walkableTileset"],
+                                ConfigurationManager.AppSettings["fallTileset"],
                                 ConfigurationManager.AppSettings["cautionTileset"],
                                 ConfigurationManager.AppSettings["errorTileset"]
                             );
