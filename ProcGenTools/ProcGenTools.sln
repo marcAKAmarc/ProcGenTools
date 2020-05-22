@@ -27,6 +27,10 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PuzzleBuilder", "PuzzleBuil
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.World.Circuit", "Test.World.Circuit\Test.World.Circuit.csproj", "{6744AE80-2D92-4FC3-A2C4-B4BA4E07556D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.ConstructionInstructions", "Test.ConstructionInstructions\Test.ConstructionInstructions.csproj", "{F98BEB19-D6A9-493F-8AF3-3EBB9908F89E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Construction", "Construction\Construction.csproj", "{4D391FB0-5973-4242-A767-A1ACEB07BB45}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -81,6 +85,14 @@ Global
 		{6744AE80-2D92-4FC3-A2C4-B4BA4E07556D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6744AE80-2D92-4FC3-A2C4-B4BA4E07556D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6744AE80-2D92-4FC3-A2C4-B4BA4E07556D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F98BEB19-D6A9-493F-8AF3-3EBB9908F89E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F98BEB19-D6A9-493F-8AF3-3EBB9908F89E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F98BEB19-D6A9-493F-8AF3-3EBB9908F89E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F98BEB19-D6A9-493F-8AF3-3EBB9908F89E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4D391FB0-5973-4242-A767-A1ACEB07BB45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4D391FB0-5973-4242-A767-A1ACEB07BB45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4D391FB0-5973-4242-A767-A1ACEB07BB45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4D391FB0-5973-4242-A767-A1ACEB07BB45}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

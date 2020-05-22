@@ -1,0 +1,10 @@
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\Construction.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\Construction.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\PuzzleBuilder.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\PuzzleBuilder.pdb

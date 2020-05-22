@@ -7,7 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Configuration;
 namespace PuzzleBuilder
 {
 
@@ -144,7 +144,7 @@ namespace PuzzleBuilder
 
             List<Bitmap> currentBmps = Attempted.Select(s => (Bitmap)s.GetItem()).ToList();
 
-            string path = "../../WfcDebug/Current/";
+            string path = ConfigurationManager.AppSettings["WfcDebugFolder"].ToString();//../../WfcDebug/Current/";
             var subPath = "Top/";
             Helpers.clearFolder(path + subPath);
             for (var i = 0; i < topBmps.Count(); i++)

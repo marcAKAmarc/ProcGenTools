@@ -52,6 +52,7 @@ namespace PuzzleBuilder
     {
         public Meaning Meaning;
         public Intention RelatedTileMeaning;
+        public Point RelatedTilePosition;
         public string Info;
 
         public static Intention HorizontalPlainIntention()

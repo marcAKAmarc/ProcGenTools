@@ -589,8 +589,13 @@ namespace PuzzleBuilder.Creators
             buttonIntention.Info = "toggle";
             var exit = grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).First();
             buttonIntention.RelatedTileMeaning = exit;
+            buttonIntention.RelatedTilePosition = new Point(
+                    grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().X,
+                    grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().Y
+                );
             exit.RelatedTileMeaning = buttonIntention;
-            grid.Positions[tile.X, tile.Y].Intentions.Add(Intention.ButtonIntention());
+            exit.RelatedTilePosition = new Point(tile.X, tile.Y);
+            grid.Positions[tile.X, tile.Y].Intentions.Add(buttonIntention);
 
             DebugPrintMeaning(grid, Meaning.Button);
         }
@@ -779,6 +784,9 @@ namespace PuzzleBuilder.Creators
                 else if(i != 0)
                     grid.Positions[path[i].X, path[i].Y].Intentions.Add(Intention.NonDynamic());
             }
+
+            button.Intentions.Where(x => x.Meaning == Meaning.Button).All(b => { b.Info = "momentary"; return true;});
+
             DebugPrintMeaning(grid, Meaning.BoxPathVertical);
             DebugPrintMeaning(grid, Meaning.Walkable);
             DebugPrintMeaning(grid, Meaning.BoxPath);

@@ -89,8 +89,10 @@ namespace ProcGenTools.DataProcessing
                 return false;
             if (object.Equals(bmp1, bmp2))
                 return true;
-            if (!bmp1.Size.Equals(bmp2.Size) || !bmp1.PixelFormat.Equals(bmp2.PixelFormat))
+            if (!bmp1.Size.Equals(bmp2.Size))
                 return false;
+            /*if (!bmp1.PixelFormat.Equals(bmp2.PixelFormat))
+                return false;*/
 
             //Compare bitmaps using GetPixel method
             for (int column = 0; column < bmp1.Width; column++)

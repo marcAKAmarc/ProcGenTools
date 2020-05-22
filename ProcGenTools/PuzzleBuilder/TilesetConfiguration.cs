@@ -6,7 +6,7 @@ using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Configuration;
 namespace PuzzleBuilder
 {
     public class TilesetConfiguration
@@ -90,7 +90,8 @@ namespace PuzzleBuilder
             tilesetImg = tilesetImg.AddHorizontalMirror(true);
             var tiles = BitmapOperations.GetBitmapTiles(tilesetImg, 6, 6, true);
             //bad form
-            BitmapOperations.SaveBitmapToFile("../../TilesetsDebug/Current/" + "mainTilesetDebug" + ".bmp", BitmapOperations.CreateBitmapFromTiles(tiles, true));
+            var path = ConfigurationManager.AppSettings["TileSetsDebugFolder"].ToString();
+            BitmapOperations.SaveBitmapToFile(path+/*"../../TilesetsDebug/Current/" +*/ "mainTilesetDebug" + ".bmp", BitmapOperations.CreateBitmapFromTiles(tiles, true));
             foreach (var row in tiles)
             {
                 result.AddRange(row);
@@ -232,6 +233,7 @@ namespace PuzzleBuilder
         private static void printLists(List<List<OpinionatedItem<Bitmap>>> ElementsList)
         {
             List<Bitmap> Bitmaps = new List<Bitmap>();
+            var path = ConfigurationManager.AppSettings["TilesetsDebugFolder"].ToString();
             foreach(var Elements in ElementsList)
             {
                 var list = new List<List<Bitmap>>();
@@ -243,7 +245,7 @@ namespace PuzzleBuilder
 
             for(var i = 0; i < Bitmaps.Count; i++)
             {
-                BitmapOperations.SaveBitmapToFile("../../TilesetsDebug/Current/" + i.ToString() + ".bmp", Bitmaps[i]);
+                BitmapOperations.SaveBitmapToFile(path+/*"../../TilesetsDebug/Current/" +*/ i.ToString() + ".bmp", Bitmaps[i]);
             }
         }
     }
