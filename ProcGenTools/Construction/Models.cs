@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using ProcGenTools.DataProcessing;
 using Construction.Models;
 using System.Configuration;
@@ -58,22 +57,57 @@ namespace Construction.Models
 
 }
 
-namespace Processing {
+namespace ConstructionProcessing {
+
+    public class Configuration
+    {
+        public string GroundTile;
+        public string SolidTile;
+        public string EmptyTile;
+        public string LedgeRightTile;
+        public string LedgeLeftTile;
+        public string ShooterRightTile;
+        public string ShooterLeftTile;
+        public string LadderTopTile;
+        public string LadderMidTile;
+        public string LadderBottomTile;
+        public string LadderBottomWithConveyorTile;
+        public string ConveyorTile;
+        public string ButtonTile;
+        public string DoorTile;
+        public string BoxTile;
+        public string HangingRopeTile;
+        public string HangingRopeBottomTile;
+
+        public string DebugTypeGridFolder;
+    }
 
     public class Processor
     {
+        private Configuration Config;
         private Point TileDim;
         private Bitmap Input;
         private List<List<Bitmap>> TileGrid;
         private IntentionGrid IntentionGrid;
         private TileType[,] TypeGrid;
         private List<Bitmap> TileLibrary;
-        private List<GameElement> GameElements;
+        public List<GameElement> GameElements;
 
         public Processor(int TileX, int TileY, Bitmap InputBitmap, IntentionGrid Intentions)
         {
+            initializer(TileX, TileY, InputBitmap, Intentions);
+        }
+
+        public Processor(int TileX, int TileY, Bitmap InputBitmap, IntentionGrid Intentions, Configuration config)
+        {
+            Config = config;
+            initializer(TileX, TileY, InputBitmap, Intentions);
+        }
+
+        private void initializer(int TileX, int TileY, Bitmap InputBitmap, IntentionGrid Intentions)
+        {
             //file cleanup
-            string[] filePaths = Directory.GetFiles("..//..//DebugGetTypeGrid");
+            string[] filePaths = Directory.GetFiles(Config.DebugTypeGridFolder);
             foreach (string filePath in filePaths)
                 File.Delete(filePath);
 
@@ -326,7 +360,7 @@ namespace Processing {
                     catch (Exception ex)
                     {
                         Console.WriteLine("Could Not Determine tile type.  Logged to file system.");
-                        BitmapOperations.SaveBitmapToFile("..//..//DebugGetTypeGrid//unknownTile-" + x.ToString() + "-" + y.ToString() + ".bmp", TileGrid[x][y]);
+                        BitmapOperations.SaveBitmapToFile(Config.DebugTypeGridFolder + "//unknownTile-" + x.ToString() + "-" + y.ToString() + ".bmp", TileGrid[x][y]);
                     }
                 }
             }
@@ -339,14 +373,83 @@ namespace Processing {
 
         private void LoadTilesToRam()
         {
-           for(var i = 0; i < ((TileType[])Enum.GetValues(typeof(TileType))).Count(); i++)// each(var type in (TileType[])Enum.GetValues(typeof(TileType)))
+            if (Config == null)
             {
-                var type = ((TileType[])Enum.GetValues(typeof(TileType))).First(ty => (int)ty == i);
-                var bitmap = GetBitmapByTileTypeFromSystem(type);
-                TileLibrary.Add(bitmap);
+                for (var i = 0; i < ((TileType[])Enum.GetValues(typeof(TileType))).Count(); i++)// each(var type in (TileType[])Enum.GetValues(typeof(TileType)))
+                {
+                    var type = ((TileType[])Enum.GetValues(typeof(TileType))).First(ty => (int)ty == i);
+                    var bitmap = GetBitmapByTileTypeFromSystem(type);
+                    TileLibrary.Add(bitmap);
+                }
+            }
+            else
+            {
+                LoadTilesToRam(Config);
             }
         }
 
+        private void LoadTilesToRam(Configuration config)
+        {
+            for (var i = 0; i < ((TileType[])Enum.GetValues(typeof(TileType))).Count(); i++)// each(var type in (TileType[])Enum.GetValues(typeof(TileType)))
+            {
+                Bitmap tilesetImg = null;
+                switch ((TileType)i){
+                    case TileType.Box:
+                        tilesetImg = Image.FromFile(config.BoxTile) as Bitmap;
+                        break;
+                    case TileType.Button:
+                        tilesetImg = Image.FromFile(config.ButtonTile) as Bitmap;
+                        break;
+                    case TileType.Conveyor:
+                        tilesetImg = Image.FromFile(config.ConveyorTile) as Bitmap;
+                        break;
+                    case TileType.Door:
+                        tilesetImg = Image.FromFile(config.DoorTile) as Bitmap;
+                        break;
+                    case TileType.Empty:
+                        tilesetImg = Image.FromFile(config.EmptyTile) as Bitmap;
+                        break;
+                    case TileType.Ground:
+                        tilesetImg = Image.FromFile(config.GroundTile) as Bitmap;
+                        break;
+                    case TileType.HangingRope:
+                        tilesetImg = Image.FromFile(config.HangingRopeTile) as Bitmap;
+                        break;
+                    case TileType.HangingRopeBottom:
+                        tilesetImg = Image.FromFile(config.HangingRopeBottomTile) as Bitmap;
+                        break;
+                    case TileType.LadderBottom:
+                        tilesetImg = Image.FromFile(config.LadderBottomTile) as Bitmap;
+                        break;
+                    case TileType.LadderBottomWithConveyor:
+                        tilesetImg = Image.FromFile(config.LadderBottomWithConveyorTile) as Bitmap;
+                        break;
+                    case TileType.LadderMid:
+                        tilesetImg = Image.FromFile(config.LadderMidTile) as Bitmap;
+                        break;
+                    case TileType.LadderTop:
+                        tilesetImg = Image.FromFile(config.LadderTopTile) as Bitmap;
+                        break;
+                    case TileType.LedgeLeft:
+                        tilesetImg = Image.FromFile(config.LedgeLeftTile) as Bitmap;
+                        break;
+                    case TileType.LedgeRight:
+                        tilesetImg = Image.FromFile(config.LedgeRightTile) as Bitmap;
+                        break;
+                    case TileType.ShooterLeft:
+                        tilesetImg = Image.FromFile(config.ShooterLeftTile) as Bitmap;
+                        break;
+                    case TileType.ShooterRight:
+                        tilesetImg = Image.FromFile(config.ShooterRightTile) as Bitmap;
+                        break;
+                    case TileType.Solid:
+                        tilesetImg = Image.FromFile(config.SolidTile) as Bitmap;
+                        break;
+                }
+                
+                TileLibrary.Add(tilesetImg);
+            }
+        }
 
 
         private Bitmap GetBitmapByTileTypeFromSystem(TileType tileType)

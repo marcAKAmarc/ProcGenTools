@@ -6,7 +6,6 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
 namespace PuzzleBuilder
 {
@@ -32,7 +31,7 @@ namespace PuzzleBuilder
         public static WcfGrid InitWcfGrid(Random random, IntentionGrid grid, TilesetConfiguration TilesConfig)
         {
             var WcfGrid = new WcfGrid(random);
-            WcfGrid.Init(grid.Width, grid.Height, 1, TilesConfig.MainDistinct);
+            WcfGrid.Init(grid.Width, grid.Height, 1, TilesConfig.MainDistinct.Select(x=>(IOpinionatedItem)x).ToList());
             var shape = new List<WcfVector>().Cross3dShape();
             WcfGrid.SetInfluenceShape(shape);
             WcfGrid.handlePropagation(WcfGrid.SuperPositions[WcfGrid.Width / 2, WcfGrid.Height / 2, 0]);
@@ -77,7 +76,7 @@ namespace PuzzleBuilder
                             {
                                 Console.WriteLine(" -" + meaning.ToString());
                             }
-                            DebugWfcPrint(crossedTiles, wcfGrid, x, y);
+                            DebugWfcPrint(crossedTiles, wcfGrid, x, y, tilesconfig.WFCdebugFolderPath);
                         }
 
                         var result = wcfGrid.handlePropagation(wcfGrid.SuperPositions[x, y, 0]);
@@ -126,7 +125,7 @@ namespace PuzzleBuilder
             return BitmapOperations.CreateBitmapFromTiles(ToTilesList(grid, TilesConfig));
         }
 
-        public static void DebugWfcPrint(List<OpinionatedItem<Bitmap>> Attempted, WcfGrid WcfGrid, int x, int y)
+        public static void DebugWfcPrint(List<OpinionatedItem<Bitmap>> Attempted, WcfGrid WcfGrid, int x, int y, string folderPath)
         {
             Console.WriteLine("Collapse To Specific Item failed.");
             List<Bitmap> topBmps = new List<Bitmap>();
@@ -144,41 +143,41 @@ namespace PuzzleBuilder
 
             List<Bitmap> currentBmps = Attempted.Select(s => (Bitmap)s.GetItem()).ToList();
 
-            string path = ConfigurationManager.AppSettings["WfcDebugFolder"].ToString();//../../WfcDebug/Current/";
+            //string folderPath = ConfigurationManager.AppSettings["WfcDebugFolder"].ToString();//../../WfcDebug/Current/";
             var subPath = "Top/";
-            Helpers.clearFolder(path + subPath);
+            Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < topBmps.Count(); i++)
             {
                 var filename = "bmp_" + i.ToString() + ".bmp";
-                BitmapOperations.SaveBitmapToFile(path + subPath + filename, topBmps[i]);
+                BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, topBmps[i]);
             }
             subPath = "Bottom/";
-            Helpers.clearFolder(path + subPath);
+            Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < bottomBmps.Count(); i++)
             {
                 var filename = "bmp_" + i.ToString() + ".bmp";
-                BitmapOperations.SaveBitmapToFile(path + subPath + filename, bottomBmps[i]);
+                BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, bottomBmps[i]);
             }
             subPath = "Left/";
-            Helpers.clearFolder(path + subPath);
+            Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < leftBmps.Count(); i++)
             {
                 var filename = "bmp_" + i.ToString() + ".bmp";
-                BitmapOperations.SaveBitmapToFile(path + subPath + filename, leftBmps[i]);
+                BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, leftBmps[i]);
             }
             subPath = "Right/";
-            Helpers.clearFolder(path + subPath);
+            Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < rightBmps.Count(); i++)
             {
                 var filename = "bmp_" + i.ToString() + ".bmp";
-                BitmapOperations.SaveBitmapToFile(path + subPath + filename, rightBmps[i]);
+                BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, rightBmps[i]);
             }
             subPath = "CurrentOptions/";
-            Helpers.clearFolder(path + subPath);
+            Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < currentBmps.Count(); i++)
             {
                 var filename = "bmp_" + i.ToString() + ".bmp";
-                BitmapOperations.SaveBitmapToFile(path + subPath + filename, currentBmps[i]);
+                BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, currentBmps[i]);
             }
         }
     }

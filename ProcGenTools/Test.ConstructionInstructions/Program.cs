@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using Construction.Models;
 using System.Configuration;
 using PuzzleBuilder;
@@ -38,13 +37,15 @@ namespace Test.ConstructionInstructions
                         ConfigurationManager.AppSettings["walkableTileset"],
                         ConfigurationManager.AppSettings["fallTileset"],
                         ConfigurationManager.AppSettings["cautionTileset"],
-                        ConfigurationManager.AppSettings["errorTileset"]
+                        ConfigurationManager.AppSettings["errorTileset"],
+                        "..//..//PuzzleBuilder//WfcDebug",
+                        "..//..//PuzzleBuilder//TilesetsDebug"
                     );
             var processor = new PuzzleBuilder.Creators.BasicCircuitProcess.PuzzleProcess(random, grid, TilesConfig);
             var output = processor.CreateIt(new List<Point>() { new Point(0, 9) }, new List<Point>() { new Point(10, 7) });
 
             var inputImg = Image.FromFile(ConfigurationManager.AppSettings["TempInput"]) as Bitmap;
-            var constructionProcessor = new Processing.Processor(6, 6, output.TileMap, output.Grid);
+            var constructionProcessor = new ConstructionProcessing.Processor(6, 6, output.TileMap, output.Grid);
         }
     }
 }

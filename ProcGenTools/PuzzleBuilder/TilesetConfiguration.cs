@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Configuration;
 namespace PuzzleBuilder
 {
@@ -34,7 +33,10 @@ namespace PuzzleBuilder
         public Bitmap CautionTile;
         public Bitmap ErrorTile;
 
-        public TilesetConfiguration(string main, string horizontal, string horizontalPlain, string vertical, string ladder, string verticalExit, string door, string button, string box, string rope, string conveyor, string elevator, string shooter, string solid, string empty, string nondynamic, string nondynamicstrict, string walkable, string fall, string caution, string error)
+        public string WFCdebugFolderPath;
+        public string TilesetDebugFolderPath;
+
+        public TilesetConfiguration(string main, string horizontal, string horizontalPlain, string vertical, string ladder, string verticalExit, string door, string button, string box, string rope, string conveyor, string elevator, string shooter, string solid, string empty, string nondynamic, string nondynamicstrict, string walkable, string fall, string caution, string error, string wfcDebugFolderPath, string tilesetDebugFolderPath)
         {
             MainDistinct = ToOpinionatedList(ChopUpTilesWithMirror(main));
 
@@ -58,6 +60,8 @@ namespace PuzzleBuilder
             FallTiles = GetMatchesInMain(ChopUpTiles(fall));
             ErrorTile = Image.FromFile(error) as Bitmap;
             CautionTile = Image.FromFile(caution) as Bitmap;
+            WFCdebugFolderPath = wfcDebugFolderPath;
+            TilesetDebugFolderPath = tilesetDebugFolderPath;
 
             SetAcceptableItems(MainDistinct, ChopUpTilesWithMirror2D(main));
 
@@ -80,7 +84,7 @@ namespace PuzzleBuilder
                 NonDynamicStrict,
                 Walkable,
                 BoxTiles
-            });
+            }, TilesetDebugFolderPath);
         }
 
         private List<Bitmap> ChopUpTilesWithMirror(string tilespath)
@@ -90,7 +94,7 @@ namespace PuzzleBuilder
             tilesetImg = tilesetImg.AddHorizontalMirror(true);
             var tiles = BitmapOperations.GetBitmapTiles(tilesetImg, 6, 6, true);
             //bad form
-            var path = ConfigurationManager.AppSettings["TileSetsDebugFolder"].ToString();
+            var path = TilesetDebugFolderPath;
             BitmapOperations.SaveBitmapToFile(path+/*"../../TilesetsDebug/Current/" +*/ "mainTilesetDebug" + ".bmp", BitmapOperations.CreateBitmapFromTiles(tiles, true));
             foreach (var row in tiles)
             {
@@ -101,6 +105,7 @@ namespace PuzzleBuilder
 
         private List<Bitmap> ChopUpTiles(string tilespath)
         {
+            Console.WriteLine("ChoppingUpTiles at " + tilespath);
             List<Bitmap> result = new List<Bitmap>();
             Bitmap tilesetImg = Image.FromFile(tilespath) as Bitmap;
             var tiles = BitmapOperations.GetBitmapTiles(tilesetImg, 6, 6, true);
@@ -230,10 +235,10 @@ namespace PuzzleBuilder
             }
         }
 
-        private static void printLists(List<List<OpinionatedItem<Bitmap>>> ElementsList)
+        private static void printLists(List<List<OpinionatedItem<Bitmap>>> ElementsList, string debugFolderPath)
         {
             List<Bitmap> Bitmaps = new List<Bitmap>();
-            var path = ConfigurationManager.AppSettings["TilesetsDebugFolder"].ToString();
+            var path = debugFolderPath;
             foreach(var Elements in ElementsList)
             {
                 var list = new List<List<Bitmap>>();
@@ -245,7 +250,7 @@ namespace PuzzleBuilder
 
             for(var i = 0; i < Bitmaps.Count; i++)
             {
-                BitmapOperations.SaveBitmapToFile(path+/*"../../TilesetsDebug/Current/" +*/ i.ToString() + ".bmp", Bitmaps[i]);
+                BitmapOperations.SaveBitmapToFile(path+"/"+/*"../../TilesetsDebug/Current/" +*/ i.ToString() + ".bmp", Bitmaps[i]);
             }
         }
     }

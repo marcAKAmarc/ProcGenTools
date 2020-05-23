@@ -50,7 +50,9 @@ namespace Test.Puzzle._01
                                 ConfigurationManager.AppSettings["walkableTileset"],
                                 ConfigurationManager.AppSettings["fallTileset"],
                                 ConfigurationManager.AppSettings["cautionTileset"],
-                                ConfigurationManager.AppSettings["errorTileset"]
+                                ConfigurationManager.AppSettings["errorTileset"],
+                                "..//..//WfcDebug",
+                                "..//..//TilesetsDebug"
                             );
                     var processor = new PuzzleBuilder.Creators.BasicCircuitProcess.PuzzleProcess(random, grid, TilesConfig);
                     output = processor.CreateIt(new List<Point>() { new Point(0, 9) }, new List<Point>() { new Point(10, 7) });

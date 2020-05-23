@@ -84,7 +84,9 @@ namespace Test.World.Circuit
                                 ConfigurationManager.AppSettings["nondynamic"],
                                 ConfigurationManager.AppSettings["nondynamicstrict"],
                                 ConfigurationManager.AppSettings["cautionTileset"],
-                                ConfigurationManager.AppSettings["errorTileset"]
+                                ConfigurationManager.AppSettings["errorTileset"],
+                                "..//..//WfcDebug",
+                                "..//..//TilesetsDebug"
                             );
                             var processor = new BasicCircuitProcess.PuzzleProcess(Random, grid, TilesConfig);
                             try
