@@ -508,6 +508,7 @@ namespace ProcGenTools.DataStructures
                 return;
             }
             var keepIndex = random.Next(available.Count());
+            Console.WriteLine("Keep Index: " + keepIndex.ToString());
             for(var i = 0; i < available.Count(); i++)
             {
                 if (i != keepIndex)

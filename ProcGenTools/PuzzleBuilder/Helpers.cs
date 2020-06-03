@@ -38,7 +38,7 @@ namespace PuzzleBuilder
             return WcfGrid;
         }
 
-        public static void ApplyIntentionToGrid(IntentionGrid grid, WcfGrid wcfGrid, TilesetConfiguration tilesconfig, iMeaningConverter converter)
+        public static bool ApplyIntentionToGrid(IntentionGrid grid, WcfGrid wcfGrid, TilesetConfiguration tilesconfig, iMeaningConverter converter)
         {
             for (var x = 0; x < grid.Width; x++)
             {
@@ -85,7 +85,7 @@ namespace PuzzleBuilder
                         {
                             Console.WriteLine("WcfGrid fucke dup");
                             //throw new Exception("WcfGrid fucke dup");
-                            return;
+                            return false;
                         }
                     }
                 }
@@ -95,11 +95,11 @@ namespace PuzzleBuilder
             if (!recurseresult)
             {
                 Console.WriteLine("WcfGrid collapse recursive fucke dup");
-                throw new Exception("WcfGrid collapse recursive fucke dup");
-                return;
+                //throw new Exception("WcfGrid collapse recursive fucke dup");
+                return false;
             }
 
-
+            return true;
         }
 
         private static List<List<Bitmap>> ToTilesList(WcfGrid grid, TilesetConfiguration TilesConfig)

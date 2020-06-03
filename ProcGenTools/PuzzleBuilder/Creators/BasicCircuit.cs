@@ -82,16 +82,19 @@ namespace PuzzleBuilder.Creators
 
                 BasicCircuitCreators.CreateShooterSection(Grid, Random);
 
+                BasicCircuitCreators.CreateEnemy(Grid, Random);
+
                 BasicCircuitCreators.CreateBorder(Grid, Random);
 
                 BasicCircuitCreators.BlanketNonDynamic(Grid, Random);
 
-                Helpers.ApplyIntentionToGrid(Grid, WcfGrid, TilesConfig, Converter);
+                var result = Helpers.ApplyIntentionToGrid(Grid, WcfGrid, TilesConfig, Converter);
 
                 return new PuzzleInfo()
                 {
                     TileMap = Helpers.ToBitmap(WcfGrid, TilesConfig),
-                    Grid = Grid
+                    Grid = Grid,
+                    Success = result
                 };
 
             }
@@ -183,6 +186,9 @@ namespace PuzzleBuilder.Creators
                     case Meaning.SolidOrEmpty:
                         result.AddRange(config.EmptyTiles);
                         result.AddRange(config.SolidTiles);
+                        break;
+                    case Meaning.Enemy:
+                        result.AddRange(config.EnemyTiles);
                         break;
                     case Meaning.NonDynamnic:
                         result.AddRange(config.NonDynamic);
@@ -643,6 +649,22 @@ namespace PuzzleBuilder.Creators
             DebugPrintMeaning(grid, Meaning.Shooter);
         }
 
+        public static void CreateEnemy(IntentionGrid grid, Random random)
+        {
+            var entrance = grid.GetByMeaning(Meaning.EntrancePath).First();
+            //get humble ground level/circuit furthest from entrance
+            var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(t =>
+               grid.Positions[t.X, t.Y].Intentions.Count == 1 
+               || (
+                    grid.Positions[t.X, t.Y].Intentions.Count == 2 
+                    && grid.Positions[t.X, t.Y].Intentions.Any(i=>i.Meaning == Meaning.Circuit)
+               )
+            ).OrderByDescending(t => Math.Abs(t.X - entrance.X) + Math.Abs(t.Y - entrance.Y)).First();
+
+            grid.Positions[tile.X, tile.Y].Intentions.Clear();
+            grid.Positions[tile.X, tile.Y].Intentions.Add(Intention.EnemyIntention());
+        }
+
         public static void CreateBoxButtonSection(IntentionGrid grid, Random random)
         {
             var button = grid.GetByMeaning(Meaning.Button).GetRandomOrDefault(random);
@@ -875,6 +897,8 @@ namespace PuzzleBuilder.Creators
                 intent.Meaning == Meaning.Shooter
                 ||
                 intent.Meaning == Meaning.ToggleDoor
+                ||
+                intent.Meaning == Meaning.Enemy
                 );
         }
     }

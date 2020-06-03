@@ -21,6 +21,7 @@ namespace PuzzleBuilder
         public List<OpinionatedItem<Bitmap>> ButtonTiles;
         public List<OpinionatedItem<Bitmap>> BoxTiles;
         public List<OpinionatedItem<Bitmap>> SolidTiles;
+        public List<OpinionatedItem<Bitmap>> EnemyTiles;
         public List<OpinionatedItem<Bitmap>> EmptyTiles;
         public List<OpinionatedItem<Bitmap>> RopeTiles;
         public List<OpinionatedItem<Bitmap>> ConveyorTiles;
@@ -36,7 +37,7 @@ namespace PuzzleBuilder
         public string WFCdebugFolderPath;
         public string TilesetDebugFolderPath;
 
-        public TilesetConfiguration(string main, string horizontal, string horizontalPlain, string vertical, string ladder, string verticalExit, string door, string button, string box, string rope, string conveyor, string elevator, string shooter, string solid, string empty, string nondynamic, string nondynamicstrict, string walkable, string fall, string caution, string error, string wfcDebugFolderPath, string tilesetDebugFolderPath)
+        public TilesetConfiguration(string main, string horizontal, string horizontalPlain, string vertical, string ladder, string verticalExit, string door, string button, string box, string rope, string conveyor, string elevator, string shooter, string solid, string enemy, string empty, string nondynamic, string nondynamicstrict, string walkable, string fall, string caution, string error, string wfcDebugFolderPath, string tilesetDebugFolderPath)
         {
             MainDistinct = ToOpinionatedList(ChopUpTilesWithMirror(main));
 
@@ -54,6 +55,7 @@ namespace PuzzleBuilder
             ShooterTiles = GetMatchesInMain(ChopUpTiles(shooter));
             SolidTiles = GetMatchesInMain(ChopUpTiles(solid));
             EmptyTiles = GetMatchesInMain(ChopUpTiles(empty));
+            EnemyTiles = GetMatchesInMain(ChopUpTiles(enemy));
             NonDynamic = GetMatchesInMain(ChopUpTiles(nondynamic));
             NonDynamicStrict = GetMatchesInMain(ChopUpTiles(nondynamicstrict));
             Walkable = GetMatchesInMain(ChopUpTiles(walkable));

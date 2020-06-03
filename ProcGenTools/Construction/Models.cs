@@ -29,15 +29,17 @@ namespace Construction.Models
         Door = 13,
         Box = 14,
         HangingRope = 15,
-        HangingRopeBottom = 16
+        HangingRopeBottom = 16,
+        Enemy = 17
     }
 
     public class GameElement {
         public List<Point> Points;
-
+        public Guid Id;
         public GameElement()
         {
             Points = new List<Point>();
+            Id = Guid.NewGuid();
         }
     }
 
@@ -50,6 +52,7 @@ namespace Construction.Models
     }
     public class Door : GameElement { }
     public class Box : GameElement { }
+    public class Enemy : GameElement { }
     public class Rope : GameElement { }
     public class Ground : GameElement {
         
@@ -64,6 +67,7 @@ namespace ConstructionProcessing {
         public string GroundTile;
         public string SolidTile;
         public string EmptyTile;
+        public string EnemyTile;
         public string LedgeRightTile;
         public string LedgeLeftTile;
         public string ShooterRightTile;
@@ -107,9 +111,12 @@ namespace ConstructionProcessing {
         private void initializer(int TileX, int TileY, Bitmap InputBitmap, IntentionGrid Intentions)
         {
             //file cleanup
-            string[] filePaths = Directory.GetFiles(Config.DebugTypeGridFolder);
-            foreach (string filePath in filePaths)
-                File.Delete(filePath);
+            if (Config != null)
+            {
+                string[] filePaths = Directory.GetFiles(Config.DebugTypeGridFolder);
+                foreach (string filePath in filePaths)
+                    File.Delete(filePath);
+            }
 
             TileDim = new Point(TileX, TileY);
             Input = InputBitmap;
@@ -142,6 +149,8 @@ namespace ConstructionProcessing {
             GetRopeElements();
 
             GetButtonElements();
+
+            GetEnemyElements();
         }
 
         private void GetButtonElements()
@@ -201,6 +210,28 @@ namespace ConstructionProcessing {
                                 {
                                     new Point(x,y),
                                     new Point(x,y+yAdd)
+                                }
+                            }
+                        );
+                    }
+                }
+            }
+        }
+
+        private void GetEnemyElements()
+        {
+            for (var x = 0; x < TypeGrid.GetLength(0); x++)
+            {
+                for (var y = 0; y < TypeGrid.GetLength(1); y++)
+                {
+                    if (TypeGrid[x, y] == TileType.Enemy)
+                    {
+                        GameElements.Add(
+                            new Enemy()
+                            {
+                                Points = new List<Point>()
+                                {
+                                    new Point(x,y)
                                 }
                             }
                         );
@@ -444,6 +475,9 @@ namespace ConstructionProcessing {
                         break;
                     case TileType.Solid:
                         tilesetImg = Image.FromFile(config.SolidTile) as Bitmap;
+                        break;
+                    case TileType.Enemy:
+                        tilesetImg = Image.FromFile(config.EnemyTile) as Bitmap;
                         break;
                 }
                 

@@ -11,6 +11,7 @@ namespace PuzzleBuilder
     {
         public IntentionGrid Grid;
         public Bitmap TileMap;
+        public bool Success;
     } 
     public enum Meaning
     {
@@ -39,6 +40,7 @@ namespace PuzzleBuilder
         NonDynamicStrict,
         Empty,
         SolidOrEmpty,
+        Enemy,
         Walkable
     }
 
@@ -53,6 +55,14 @@ namespace PuzzleBuilder
         public Intention RelatedTileMeaning;
         public Point RelatedTilePosition;
         public string Info;
+
+        public static Intention EnemyIntention()
+        {
+            return new Intention()
+            {
+                Meaning = Meaning.Enemy
+            };
+        }
 
         public static Intention HorizontalPlainIntention()
         {

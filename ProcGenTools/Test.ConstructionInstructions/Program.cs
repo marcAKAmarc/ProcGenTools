@@ -13,38 +13,39 @@ namespace Test.ConstructionInstructions
     {
         static void Main(string[] args)
         {
-            var seed = 1;
+            var seed = 3;
             var random = new Random(seed);
             var grid = new IntentionGrid(11, 11);
             var TilesConfig = new TilesetConfiguration(
-                        ConfigurationManager.AppSettings["mainTileset"],
-                        ConfigurationManager.AppSettings["hTileset"],
-                        ConfigurationManager.AppSettings["hPlainTileset"],
-                        ConfigurationManager.AppSettings["vTileset"],
-                        ConfigurationManager.AppSettings["ladderTileset"],
-                        ConfigurationManager.AppSettings["verticalExitTileset"],
-                        ConfigurationManager.AppSettings["doorTileset"],
-                        ConfigurationManager.AppSettings["buttonTileset"],
-                        ConfigurationManager.AppSettings["boxTileset"],
-                        ConfigurationManager.AppSettings["ropeTileset"],
-                        ConfigurationManager.AppSettings["conveyorTileset"],
-                        ConfigurationManager.AppSettings["elevatorTileset"],
-                        ConfigurationManager.AppSettings["shooterTileset"],
-                        ConfigurationManager.AppSettings["solidTileset"],
-                        ConfigurationManager.AppSettings["emptyTileset"],
-                        ConfigurationManager.AppSettings["nondynamic"],
-                        ConfigurationManager.AppSettings["nondynamicstrict"],
-                        ConfigurationManager.AppSettings["walkableTileset"],
-                        ConfigurationManager.AppSettings["fallTileset"],
-                        ConfigurationManager.AppSettings["cautionTileset"],
-                        ConfigurationManager.AppSettings["errorTileset"],
-                        "..//..//PuzzleBuilder//WfcDebug",
-                        "..//..//PuzzleBuilder//TilesetsDebug"
-                    );
+                ConfigurationManager.AppSettings["mainTileset"],
+                ConfigurationManager.AppSettings["hTileset"],
+                ConfigurationManager.AppSettings["hPlainTileset"],
+                ConfigurationManager.AppSettings["vTileset"],
+                ConfigurationManager.AppSettings["ladderTileset"],
+                ConfigurationManager.AppSettings["verticalExitTileset"],
+                ConfigurationManager.AppSettings["doorTileset"],
+                ConfigurationManager.AppSettings["buttonTileset"],
+                ConfigurationManager.AppSettings["boxTileset"],
+                ConfigurationManager.AppSettings["ropeTileset"],
+                ConfigurationManager.AppSettings["conveyorTileset"],
+                ConfigurationManager.AppSettings["elevatorTileset"],
+                ConfigurationManager.AppSettings["shooterTileset"],
+                ConfigurationManager.AppSettings["solidTileset"],
+                ConfigurationManager.AppSettings["enemyTileset"],
+                ConfigurationManager.AppSettings["emptyTileset"],
+                ConfigurationManager.AppSettings["nondynamic"],
+                ConfigurationManager.AppSettings["nondynamicstrict"],
+                ConfigurationManager.AppSettings["walkableTileset"],
+                ConfigurationManager.AppSettings["fallTileset"],
+                ConfigurationManager.AppSettings["cautionTileset"],
+                ConfigurationManager.AppSettings["errorTileset"],
+                 "..//..//PuzzleBuilder//WfcDebug//Current//",
+                 "..//..//PuzzleBuilder//TilesetsDebug//Current//"
+           );
             var processor = new PuzzleBuilder.Creators.BasicCircuitProcess.PuzzleProcess(random, grid, TilesConfig);
             var output = processor.CreateIt(new List<Point>() { new Point(0, 9) }, new List<Point>() { new Point(10, 7) });
 
-            var inputImg = Image.FromFile(ConfigurationManager.AppSettings["TempInput"]) as Bitmap;
+            
             var constructionProcessor = new ConstructionProcessing.Processor(6, 6, output.TileMap, output.Grid);
         }
     }
