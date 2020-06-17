@@ -38,10 +38,23 @@ namespace ProcGenTools.DataStructures
             return shape;
         }
     }
-    public class WcfVector{
+    public class WcfVector {
         public int x = 0;
         public int y = 0;
         public int z = 0;
+
+        private static List<WcfVector> cross3dShape = new List<WcfVector> {
+                new WcfVector(1, 0, 0),
+                new WcfVector(-1, 0, 0),
+                new WcfVector(0, 1, 0),
+                new WcfVector(0, -1, 0),
+                new WcfVector(0, 0, 1),
+                new WcfVector(0, 0, -1)
+            };
+
+        public static List<WcfVector> GetCross3dShape(){
+            return cross3dShape;
+        }
 
         public WcfVector(int _x, int _y, int _z)
         {
@@ -76,6 +89,10 @@ namespace ProcGenTools.DataStructures
         {
             random = new Random();
         }
+        public void SetRandom(Random rand)
+        {
+            random = rand;
+        }
 
         public void Init(int _width, int _height, int _depth, IEnumerable<IOpinionatedItem> items) 
         {
@@ -84,11 +101,11 @@ namespace ProcGenTools.DataStructures
             depth = _depth;
             SuperPositions = new WcfSuperPosition[_width,_height,_depth];
             SuperPositionsFlat = new List<WcfSuperPosition>();
-            for (var x = 0; x < _width; x++)
+            for (int x = 0; x < _width; x++)
             {
-                for(var y = 0; y < _height; y++)
+                for(int y = 0; y < _height; y++)
                 {
-                    for(var z = 0; z < _depth; z++)
+                    for(int z = 0; z < _depth; z++)
                     {
                         SuperPositions[x, y, z] = new WcfSuperPosition(items,random,x,y,z, this);
                         SuperPositionsFlat.Add(SuperPositions[x, y, z]);
@@ -97,9 +114,9 @@ namespace ProcGenTools.DataStructures
             }
 
             var _influenceShape = new List<WcfVector>();
-            for(var x = -1; x < 2; x++)
+            for(int x = -1; x < 2; x++)
             {
-                for(var y = -1; y < 2; y++)
+                for(int y = -1; y < 2; y++)
                 {
                     for(var z = -1; z < 2; z++)
                     {
@@ -113,6 +130,14 @@ namespace ProcGenTools.DataStructures
             InfluenceShape = _influenceShape.ToArray();
 
             //SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
+        }
+
+        public void ClearForReuse()
+        {
+            for(int i = 0; i < SuperPositionsFlat.Count; i++)
+            {
+                SuperPositionsFlat[i].ClearForReuse();
+            }
         }
 
         public void SetInfluenceShape(List<WcfVector> shape)
@@ -131,15 +156,20 @@ namespace ProcGenTools.DataStructures
         private WcfSuperPosition CollapseMinimumEntropyPosition()
         {
             //handle collapse random spot;
-            var entropyOrderedSuperPositions = SuperPositionsFlat.Where(x => !x.hasCollapsed).OrderBy(x => GetNeighborhoodEntropy(x)).ToArray();//.OrderBy(x => x.slots.Where(y => !y.Collapsed).Count()).ToArray();
+            var entropyOrderedSuperPositionsFirst = SuperPositionsFlat.Where(x => !x.hasCollapsed).OrderBy(x => GetNeighborhoodEntropy(x)).First();//.OrderBy(x => x.slots.Where(y => !y.Collapsed).Count()).ToArray();
 
-            var minimumEntropy = entropyOrderedSuperPositions.FirstOrDefault().slots.Where(y => !y.Collapsed).Count();
-            var superPositionsWithMinimumEntropy = entropyOrderedSuperPositions.Where(x => x.slots.Where(y => !y.Collapsed).Count() == minimumEntropy).ToArray();
-            var toBeResolved = superPositionsWithMinimumEntropy[random.Next(superPositionsWithMinimumEntropy.Count())];
+            entropyOrderedSuperPositionsFirst.CollapseToRandomItem(random);
 
-            toBeResolved.CollapseToRandomItem(random);
+            return entropyOrderedSuperPositionsFirst;
 
-            return toBeResolved;            
+            //deprecated - is it really necessary to get random minimum?
+            //var minimumEntropy = entropyOrderedSuperPositions.First().slots.Where(y => !y.Collapsed).Count();
+            //var superPositionsWithMinimumEntropy = entropyOrderedSuperPositions.Where(x => x.slots.Where(y => !y.Collapsed).Count() == minimumEntropy).ToArray();
+            //var toBeResolved = superPositionsWithMinimumEntropy[random.Next(superPositionsWithMinimumEntropy.Count())];
+            //
+            //toBeResolved.CollapseToRandomItem(random);
+            //
+            //return toBeResolved;            
         }
 
         int failures = 0;
@@ -187,20 +217,25 @@ namespace ProcGenTools.DataStructures
 
         public bool handlePropagation(WcfSuperPosition previouslyCollapsed)
         {
-            var propagationResult = previouslyCollapsed.Propagate();
-            //if (propagationResult == false)
-            //{
-            //    SuperPositionsFlat.ForEach(sp => sp.RestorePreviousStates());
-            //    failures++;
-            //    if (failures > 100)
-            //        return false;
-            //}
-            //else
-            //{
-            //    failures = 0;
-            //}
-            //SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
-            return propagationResult;
+            return previouslyCollapsed.Propagate();
+
+            //section deprecated - operational but not optimal
+            //var propagationResult = previouslyCollapsed.Propagate();
+
+            ////section depracted... super old
+            ////if (propagationResult == false)
+            ////{
+            ////    SuperPositionsFlat.ForEach(sp => sp.RestorePreviousStates());
+            ////    failures++;
+            ////    if (failures > 100)
+            ////        return false;
+            ////}
+            ////else
+            ////{
+            ////    failures = 0;
+            ////}
+            ////SuperPositionsFlat.ForEach(sp => sp.RecordPreviousStates());
+            //return propagationResult;
         }
 
         //private void handleCollapseFailure(WcfSuperPosition failedSuperPosition, List<WcfSuperPosition> propagatedSuperPositions, WcfSuperPosition manuallyCollapsedSuperPosition)
@@ -218,13 +253,13 @@ namespace ProcGenTools.DataStructures
         //}
         public List<WcfSuperPosition> GetSuperPositionNeighbors(int _x, int _y, int _z)
         {
-            var neighbors = new List<WcfSuperPosition>();
+            List<WcfSuperPosition> neighbors = new List<WcfSuperPosition>();
 
             foreach(var shapeNode in InfluenceShape)
             {
-                var resultx = shapeNode.x + _x;
-                var resulty = shapeNode.y + _y;
-                var resultz = shapeNode.z + _z;
+                int resultx = shapeNode.x + _x;
+                int resulty = shapeNode.y + _y;
+                int resultz = shapeNode.z + _z;
                 if (
                        (resultx < 0 || resultx >= width)
                     || (resulty < 0 || resulty >= height)
@@ -240,11 +275,11 @@ namespace ProcGenTools.DataStructures
         public void PrintValuesToConsole2d()
         {
             Console.WriteLine("");
-            for (var y = 0; y < height; y++)
+            for (int y = 0; y < height; y++)
             {
-                for (var x = 0; x < width; x++)
+                for (int x = 0; x < width; x++)
                 {
-                    var resolutions = SuperPositions[x, y, 0].slots.Where(o => !o.Collapsed);
+                    IEnumerable<WcfCollapsableSlot> resolutions = SuperPositions[x, y, 0].slots.Where(o => !o.Collapsed);
                     if (resolutions.Count() == 1)
                         Console.Write(resolutions.FirstOrDefault().item.Name);
                     else
@@ -257,18 +292,19 @@ namespace ProcGenTools.DataStructures
         }
         public void PrintStatesToConsole2d()
         {
+            return;
             //var updatedSuperPosition = SuperPositionsFlat.Where(x => x.hasUpdated);
             Console.WriteLine("");
-            for (var y = 0; y < height; y++)
+            for (int y = 0; y < height; y++)
             {
-                for(var x = 0; x < width; x++)
+                for(int x = 0; x < width; x++)
                 {
-                    var thisSuperPosition = SuperPositions[x, y, 0];
+                    WcfSuperPosition thisSuperPosition = SuperPositions[x, y, 0];
                     //var isUpdated = updatedSuperPosition.Any(usp => usp.x == thisSuperPosition.x && usp.y == thisSuperPosition.y && thisSuperPosition.z == 0);
-                    var numberOfPossibilities = thisSuperPosition.slots.Where(s => !s.Collapsed).Count();
-                    var firstOpenSlot = thisSuperPosition.slots.Where(s => !s.Collapsed).FirstOrDefault();
+                    int numberOfPossibilities = thisSuperPosition.slots.Where(s => !s.Collapsed).Count();
+                    //WcfCollapsableSlot firstOpenSlot = thisSuperPosition.slots.Where(s => !s.Collapsed).FirstOrDefault();
 
-                    var color = ConsoleColor.White;
+                    ConsoleColor color = ConsoleColor.White;
                     //if ( thisSuperPosition.hasUpdated)
                     //    color = ConsoleColor.Cyan;
                     //if ( thisSuperPosition.hasUpdated)
@@ -318,8 +354,8 @@ namespace ProcGenTools.DataStructures
         public int y { get; set; }
         public int z { get; set; }
         public List<WcfCollapsableSlot> slots;
-        private List<bool> previousStates;
-        private List<bool> previousStatesTemp;
+        private List<bool> previousStates = null;
+        private List<bool> previousStatesTemp = null;
         internal WcfGrid parent;
 
         public bool Propagate()
@@ -327,8 +363,8 @@ namespace ProcGenTools.DataStructures
             //parent.PrintValuesToConsole2d();
             //true = OK!
             //false = failure, revert!
-            var neighbors = parent.GetSuperPositionNeighbors(x, y, z);
-            foreach(var neighbor in neighbors)
+            //var neighbors = parent.GetSuperPositionNeighbors(x, y, z);
+            foreach(WcfSuperPosition neighbor in parent.GetSuperPositionNeighbors(x, y, z))
             {
                 var resultCollapse = neighbor.Collapse(this);
                 
@@ -352,10 +388,10 @@ namespace ProcGenTools.DataStructures
                     }
                 }
 
-                if(resultCollapse == false)
-                {
-                    //No change was made to them, do nothing!
-                }
+                //if(resultCollapse == false)
+                //{
+                //    //No change was made to them, do nothing!
+                //}
             }
 
             return true;
@@ -363,7 +399,10 @@ namespace ProcGenTools.DataStructures
 
         public void RecordPreviousStates()
         {
-            previousStates = new List<bool>();
+            if (previousStates == null)
+                previousStates = new List<bool>();
+            else
+                previousStates.Clear();
             foreach (var slot in slots)
                 previousStates.Add(slot.Collapsed);
             //hasUpdatedPrevious = hasUpdated;
@@ -371,7 +410,11 @@ namespace ProcGenTools.DataStructures
         }
         public void RecordPreviousStatesTemp()
         {
-            previousStatesTemp = new List<bool>();
+            if (previousStatesTemp == null)
+                previousStatesTemp = new List<bool>();
+            else
+                previousStatesTemp.Clear();
+
             foreach (var slot in slots)
                 previousStatesTemp.Add(slot.Collapsed);
         }
@@ -390,11 +433,6 @@ namespace ProcGenTools.DataStructures
         }
         private bool HasCollapsed()
         {
-            var result = slots.Count(x => !x.Collapsed) <= 1;
-            if(result == true)
-            {
-                var breka = "asdf";
-            }
             return slots.Count(x => !x.Collapsed) <= 1;
         }
         public bool? Collapse(WcfSuperPosition context) {
@@ -409,6 +447,11 @@ namespace ProcGenTools.DataStructures
                     remaining += 1;
             }
             //var remaining = slots.Select(x => x.TryCollapse(context)).Where(x=>x==false).Count();
+            if (remaining == 0)
+            {
+                //undefined, we have no options left!
+                return null;
+            }
 
             var justChanged = false;
             for (var i = 0; i < slots.Count; i++)
@@ -421,10 +464,9 @@ namespace ProcGenTools.DataStructures
                 }
             }
 
-            if (remaining > 0)
-                return justChanged;
-            //undefined, we have no options left!
-            return null; 
+            //if (remaining > 0)
+            return justChanged;
+
         } 
 
         public void CollapseToItem (Guid itemId)
@@ -462,6 +504,9 @@ namespace ProcGenTools.DataStructures
 
         public void CollapseToItems(List<Guid> itemIds, bool doNotUncollapse = false)
         {
+            ////for debug only
+            //if(!slots.Any(s=>s.Collapsed == false && itemIds.Any())
+
             for (var i = 0; i < slots.Count; i++)
             {
                 if (!itemIds.Any(x=>x == slots[i].item.Id))
@@ -473,6 +518,8 @@ namespace ProcGenTools.DataStructures
                     slots[i].UnCollapse();
                 }
             }
+
+            //return slots.Any(x => x.Collapsed == false);
             //hasCollapsed = true;
             //hasUpdated = true;
         }
@@ -508,7 +555,7 @@ namespace ProcGenTools.DataStructures
                 return;
             }
             var keepIndex = random.Next(available.Count());
-            Console.WriteLine("Keep Index: " + keepIndex.ToString());
+            //Console.WriteLine("Keep Index: " + keepIndex.ToString());
             for(var i = 0; i < available.Count(); i++)
             {
                 if (i != keepIndex)
@@ -565,10 +612,19 @@ namespace ProcGenTools.DataStructures
 
             random = _random;
         }
+        public void ClearForReuse()
+        {
+            foreach(var slot in slots)
+            {
+                slot.UnCollapse();
+            }
 
+            hasUpdated = false;
 
+            hasUpdatedPrevious = false;
+            hasCollapsedPrevious = false;
 
-        
+        }
     }
 
 
@@ -581,21 +637,23 @@ namespace ProcGenTools.DataStructures
         public bool Collapsed { get { return collapsed; } }
         public WcfSuperPosition superPosition;
 
+
+        private int TC_relativex, TC_relativey, TC_relativez;
         public bool TryCollapse(WcfSuperPosition _superPosition)
         {
             //returns true if collapsed to 1 or less...
             //returns false if more options left
 
-            var relativex = _superPosition.x - superPosition.x;
-            var relativey = _superPosition.y - superPosition.y;
-            var relativez = _superPosition.z - superPosition.z;
+            var TC_relativex = _superPosition.x - superPosition.x;
+            var TC_relativey = _superPosition.y - superPosition.y;
+            var TC_relativez = _superPosition.z - superPosition.z;
 
             var foundAcceptableItem = false;
             foreach (var superPositionItem in _superPosition.slots.Where(x => !x.Collapsed).Select(x => x.item))
             {
-                var accepted = item.AcceptsInDirection(superPositionItem, relativex, relativey, relativez);
-
-                if (accepted)
+                if (
+                    item.AcceptsInDirection(superPositionItem, TC_relativex, TC_relativey, TC_relativez)
+                )
                 {
                     foundAcceptableItem = true;
                     break;
@@ -606,9 +664,7 @@ namespace ProcGenTools.DataStructures
                 return collapsed;
             }
             //check requirements are met
-            var requirementsMet = RequirementsMet();
-
-            if (!requirementsMet)
+            if (!RequirementsMet())
             {
                 collapsed = true;
                 return collapsed;
@@ -805,11 +861,12 @@ namespace ProcGenTools.DataStructures
             {
                 item.acceptableItemsArray[(x * -1) + offsetX,(y * -1) + offsetY,(z * -1) + offsetZ] = item.acceptableItemsArray[(x * -1) + offsetX,(y * -1) + offsetY,(z * -1) + offsetZ].Where(_x => _x.Id == item.Id).ToList();
             }
-            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ] = new List<IOpinionatedItem>();
+
+            acceptableItemsArray[x + offsetX, y + offsetY, z + offsetZ].Clear();
         }
         public void ClearExclusiveAcceptionInDirection(int x, int y, int z)
         {
-            acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ] = new List<IOpinionatedItem>();
+            acceptableItemsArray[x + offsetX, y + offsetY, z + offsetZ].Clear();
         }
         private bool AcceptItemIndexExists(int x, int y, int z)
         {

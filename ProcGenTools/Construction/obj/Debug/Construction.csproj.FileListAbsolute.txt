@@ -8,3 +8,5 @@ D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\PuzzleBuilder.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\PuzzleBuilder.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.Properties.Resources.resources
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.csproj.GenerateResource.Cache

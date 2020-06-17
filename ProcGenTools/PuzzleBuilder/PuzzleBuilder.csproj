@@ -43,9 +43,18 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ProcessFactory.cs" />
+    <Compile Include="Process\AndvancedCircuit.cs" />
     <Compile Include="Creators\BasicCircuit.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Models.cs" />
+    <Compile Include="Process\BasicProcess.cs" />
+    <Compile Include="Process\Core.cs" />
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="TilesetConfiguration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -54,6 +63,87 @@
       <Project>{82a6d710-2dc8-447a-9ef6-b1cb7a78d18b}</Project>
       <Name>ProcGenTools</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Properties\Resources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\horizontalPlain.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\horizontal.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\empty.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\solid.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ladder.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\button.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\door.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\main.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\kit.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\enemy.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\fall.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\walkable.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\box.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nondynamicStrict.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\notMiniPlatform.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\verticalExit.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\vertical.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\shooter.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\nondynamic.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\rope.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\elevator.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\conveyor.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\caution.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\error.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\ledges.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

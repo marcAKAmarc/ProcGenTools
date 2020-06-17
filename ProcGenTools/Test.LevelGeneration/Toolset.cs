@@ -114,7 +114,7 @@ namespace Test.LevelGeneration
             else
                 _grid = new WcfGrid(_random);
             _grid.Init(_levelWidth, _levelHeight, 1, _wfcTiles);
-            var shape = new List<WcfVector>().Cross3dShape();
+            List<WcfVector> shape = WcfVector.GetCross3dShape();
             _grid.SetInfluenceShape(shape);
         }
 
@@ -229,7 +229,7 @@ namespace Test.LevelGeneration
             for (var x = 0; x < list.Count; x++)
             {
                 var bmp = list[x];
-                items.Add(new OpinionatedItem<T>(bmp, x.ToString(), new List<WcfVector>().Cross3dShape()));
+                items.Add(new OpinionatedItem<T>(bmp, x.ToString(), WcfVector.GetCross3dShape()));
             }
 
             return items;

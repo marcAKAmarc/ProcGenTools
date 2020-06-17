@@ -41,7 +41,8 @@ namespace PuzzleBuilder
         Empty,
         SolidOrEmpty,
         Enemy,
-        Walkable
+        Walkable,
+        Ledge
     }
 
     public interface iMeaningConverter
@@ -55,6 +56,14 @@ namespace PuzzleBuilder
         public Intention RelatedTileMeaning;
         public Point RelatedTilePosition;
         public string Info;
+
+        public static Intention LedgeIntention()
+        {
+            return new Intention()
+            {
+                Meaning = Meaning.Ledge
+            };
+        }
 
         public static Intention EnemyIntention()
         {
@@ -292,6 +301,17 @@ namespace PuzzleBuilder
                     Positions[x, y] = new IntentionTiles();
                     Positions[x, y].X = x;
                     Positions[x, y].Y = y;
+                }
+            }
+        }
+
+        public void Clear()
+        {
+            for (var x = 0; x < Width; x++)
+            {
+                for (var y = 0; y < Height; y++)
+                {
+                    Positions[x, y].Intentions.Clear();
                 }
             }
         }

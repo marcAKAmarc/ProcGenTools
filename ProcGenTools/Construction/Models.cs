@@ -8,6 +8,8 @@ using Construction.Models;
 using System.Configuration;
 using System.IO;
 using PuzzleBuilder;
+using Construction.Properties;
+
 namespace Construction.Models
 {
 
@@ -64,26 +66,50 @@ namespace ConstructionProcessing {
 
     public class Configuration
     {
-        public string GroundTile;
-        public string SolidTile;
-        public string EmptyTile;
-        public string EnemyTile;
-        public string LedgeRightTile;
-        public string LedgeLeftTile;
-        public string ShooterRightTile;
-        public string ShooterLeftTile;
-        public string LadderTopTile;
-        public string LadderMidTile;
-        public string LadderBottomTile;
-        public string LadderBottomWithConveyorTile;
-        public string ConveyorTile;
-        public string ButtonTile;
-        public string DoorTile;
-        public string BoxTile;
-        public string HangingRopeTile;
-        public string HangingRopeBottomTile;
+        public Bitmap GroundTile;
+        public Bitmap SolidTile;
+        public Bitmap EmptyTile;
+        public Bitmap EnemyTile;
+        public Bitmap LedgeRightTile;
+        public Bitmap LedgeLeftTile;
+        public Bitmap ShooterRightTile;
+        public Bitmap ShooterLeftTile;
+        public Bitmap LadderTopTile;
+        public Bitmap LadderMidTile;
+        public Bitmap LadderBottomTile;
+        public Bitmap LadderBottomWithConveyorTile;
+        public Bitmap ConveyorTile;
+        public Bitmap ButtonTile;
+        public Bitmap DoorTile;
+        public Bitmap BoxTile;
+        public Bitmap HangingRopeTile;
+        public Bitmap HangingRopeBottomTile;
 
         public string DebugTypeGridFolder;
+
+        public Configuration( string debugTypeGridFolder )
+        {
+            GroundTile = Resources.ground;
+            SolidTile = Resources.solid;
+            EmptyTile = Resources.empty;
+            EnemyTile = Resources.enemy;
+            LedgeRightTile = Resources.ledgeRight;
+            LedgeLeftTile = Resources.ledgeLeft;
+            ShooterRightTile = Resources.shooterRight;
+            ShooterLeftTile = Resources.shooterLeft;
+            LadderTopTile = Resources.ladderTop;
+            LadderMidTile = Resources.ladderMid;
+            LadderBottomTile = Resources.ladderBottom;
+            LadderBottomWithConveyorTile = Resources.ladderBottomConveyor;
+            ConveyorTile = Resources.conveyor;
+            ButtonTile = Resources.button;
+            DoorTile = Resources.door;
+            BoxTile = Resources.box;
+            HangingRopeTile = Resources.rope;
+            HangingRopeBottomTile = Resources.ropeBottom;
+
+            DebugTypeGridFolder = debugTypeGridFolder;
+        }
     }
 
     public class Processor
@@ -97,21 +123,40 @@ namespace ConstructionProcessing {
         private List<Bitmap> TileLibrary;
         public List<GameElement> GameElements;
 
-        public Processor(int TileX, int TileY, Bitmap InputBitmap, IntentionGrid Intentions)
+        public Processor(int TileX, int TileY)
         {
-            initializer(TileX, TileY, InputBitmap, Intentions);
+            initializer(TileX, TileY);
         }
 
-        public Processor(int TileX, int TileY, Bitmap InputBitmap, IntentionGrid Intentions, Configuration config)
+        public Processor(int TileX, int TileY, Configuration config)
         {
             Config = config;
-            initializer(TileX, TileY, InputBitmap, Intentions);
+            initializer(TileX, TileY);
+        }
+        public void ClearForReuse()
+        {
+           //foreach(var list in TileGrid)
+           // {
+           //     list.Clear();
+           // }
+
+            //for(var x = 0; x < IntentionGrid.Width; x++)
+            //{
+            //    for(var y = 0; y < IntentionGrid.Height; y++)
+            //    {
+            //        IntentionGrid.Positions[x, y].Intentions.Clear();
+            //    }
+            //}
+
+            //typegrid has to just be overwritten pretty much
+
+            GameElements.Clear();
         }
 
-        private void initializer(int TileX, int TileY, Bitmap InputBitmap, IntentionGrid Intentions)
+        private void initializer(int TileX, int TileY)
         {
             //file cleanup
-            if (Config != null)
+            if (Config != null && Config.DebugTypeGridFolder != null)
             {
                 string[] filePaths = Directory.GetFiles(Config.DebugTypeGridFolder);
                 foreach (string filePath in filePaths)
@@ -119,17 +164,25 @@ namespace ConstructionProcessing {
             }
 
             TileDim = new Point(TileX, TileY);
-            Input = InputBitmap;
+            
             TileLibrary = new List<Bitmap>();
-            IntentionGrid = Intentions;
+            
 
-            GetBitmapGrid();
-            TypeGrid = new TileType[TileGrid.Count, TileGrid[0].Count];
+            
+            
 
             LoadTilesToRam();
-            GetTypeGrid();
-
             GameElements = new List<GameElement>();
+        }
+
+        public void DoIt(Bitmap InputBitmap, IntentionGrid Intentions)
+        {
+            Input = InputBitmap;
+            IntentionGrid = Intentions;
+            GetBitmapGrid();
+            if(TypeGrid == null)
+                TypeGrid = new TileType[TileGrid.Count, TileGrid[0].Count];
+            GetTypeGrid();
             GetGameElements();
         }
 
@@ -390,8 +443,11 @@ namespace ConstructionProcessing {
                     }
                     catch (Exception ex)
                     {
-                        Console.WriteLine("Could Not Determine tile type.  Logged to file system.");
-                        BitmapOperations.SaveBitmapToFile(Config.DebugTypeGridFolder + "//unknownTile-" + x.ToString() + "-" + y.ToString() + ".bmp", TileGrid[x][y]);
+                        if (Config.DebugTypeGridFolder != null)
+                        {
+                            Console.WriteLine("Could Not Determine tile type.  Logged to file system.");
+                            BitmapOperations.SaveBitmapToFile(Config.DebugTypeGridFolder + "//unknownTile-" + x.ToString() + "-" + y.ToString() + ".bmp", TileGrid[x][y]);
+                        }
                     }
                 }
             }
@@ -426,58 +482,58 @@ namespace ConstructionProcessing {
                 Bitmap tilesetImg = null;
                 switch ((TileType)i){
                     case TileType.Box:
-                        tilesetImg = Image.FromFile(config.BoxTile) as Bitmap;
+                        tilesetImg = config.BoxTile as Bitmap;
                         break;
                     case TileType.Button:
-                        tilesetImg = Image.FromFile(config.ButtonTile) as Bitmap;
+                        tilesetImg = config.ButtonTile as Bitmap;
                         break;
                     case TileType.Conveyor:
-                        tilesetImg = Image.FromFile(config.ConveyorTile) as Bitmap;
+                        tilesetImg = config.ConveyorTile as Bitmap;
                         break;
                     case TileType.Door:
-                        tilesetImg = Image.FromFile(config.DoorTile) as Bitmap;
+                        tilesetImg = config.DoorTile as Bitmap;
                         break;
                     case TileType.Empty:
-                        tilesetImg = Image.FromFile(config.EmptyTile) as Bitmap;
+                        tilesetImg = config.EmptyTile as Bitmap;
                         break;
                     case TileType.Ground:
-                        tilesetImg = Image.FromFile(config.GroundTile) as Bitmap;
+                        tilesetImg = config.GroundTile as Bitmap;
                         break;
                     case TileType.HangingRope:
-                        tilesetImg = Image.FromFile(config.HangingRopeTile) as Bitmap;
+                        tilesetImg = config.HangingRopeTile as Bitmap;
                         break;
                     case TileType.HangingRopeBottom:
-                        tilesetImg = Image.FromFile(config.HangingRopeBottomTile) as Bitmap;
+                        tilesetImg = config.HangingRopeBottomTile as Bitmap;
                         break;
                     case TileType.LadderBottom:
-                        tilesetImg = Image.FromFile(config.LadderBottomTile) as Bitmap;
+                        tilesetImg = config.LadderBottomTile as Bitmap;
                         break;
                     case TileType.LadderBottomWithConveyor:
-                        tilesetImg = Image.FromFile(config.LadderBottomWithConveyorTile) as Bitmap;
+                        tilesetImg = config.LadderBottomWithConveyorTile as Bitmap;
                         break;
                     case TileType.LadderMid:
-                        tilesetImg = Image.FromFile(config.LadderMidTile) as Bitmap;
+                        tilesetImg = config.LadderMidTile as Bitmap;
                         break;
                     case TileType.LadderTop:
-                        tilesetImg = Image.FromFile(config.LadderTopTile) as Bitmap;
+                        tilesetImg = config.LadderTopTile as Bitmap;
                         break;
                     case TileType.LedgeLeft:
-                        tilesetImg = Image.FromFile(config.LedgeLeftTile) as Bitmap;
+                        tilesetImg = config.LedgeLeftTile as Bitmap;
                         break;
                     case TileType.LedgeRight:
-                        tilesetImg = Image.FromFile(config.LedgeRightTile) as Bitmap;
+                        tilesetImg = config.LedgeRightTile as Bitmap;
                         break;
                     case TileType.ShooterLeft:
-                        tilesetImg = Image.FromFile(config.ShooterLeftTile) as Bitmap;
+                        tilesetImg = config.ShooterLeftTile as Bitmap;
                         break;
                     case TileType.ShooterRight:
-                        tilesetImg = Image.FromFile(config.ShooterRightTile) as Bitmap;
+                        tilesetImg = config.ShooterRightTile as Bitmap;
                         break;
                     case TileType.Solid:
-                        tilesetImg = Image.FromFile(config.SolidTile) as Bitmap;
+                        tilesetImg = config.SolidTile as Bitmap;
                         break;
                     case TileType.Enemy:
-                        tilesetImg = Image.FromFile(config.EnemyTile) as Bitmap;
+                        tilesetImg = config.EnemyTile as Bitmap;
                         break;
                 }
                 

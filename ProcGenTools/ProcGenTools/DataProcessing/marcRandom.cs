@@ -121,7 +121,10 @@ namespace ProcGenTools.DataProcessing
         //     and less than 1.0.
         public override double NextDouble()
         {
-            throw new NotImplementedException();
+            var result = (double)Next() / (double)Int32.MaxValue;
+            if (result > 1.0)
+                throw new Exception("This is not programmed properly.");
+            return result;
         }
         //
         // Summary:

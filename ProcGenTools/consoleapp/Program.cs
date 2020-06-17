@@ -10,15 +10,15 @@ namespace consoleapp
     {
         static void Main(string[] args)
         {
-            var tl = new OpinionatedItem<String>("┌", "┌", new List<WcfVector>().Cross3dShape());
-            var tr = new OpinionatedItem<String>("┐", "┐", new List<WcfVector>().Cross3dShape());
-            var bl = new OpinionatedItem<String>("└", "└", new List<WcfVector>().Cross3dShape());
-            var br = new OpinionatedItem<String>("┘", "┘", new List<WcfVector>().Cross3dShape());
-            var h = new OpinionatedItem<String>("-", "-", new List<WcfVector>().Cross3dShape());
-            var v = new OpinionatedItem<String>("|", "|", new List<WcfVector>().Cross3dShape());
-            var em = new OpinionatedItem<String>(" ", " ", new List<WcfVector>().Cross3dShape());
-            var no = new OpinionatedItem<String>("X", "X", new List<WcfVector>().Cross3dShape());
-            var ladder = new OpinionatedItem<String>("L", "L", new List<WcfVector>().Cross3dShape());
+            var tl = new OpinionatedItem<String>("┌", "┌", WcfVector.GetCross3dShape());
+            var tr = new OpinionatedItem<String>("┐", "┐", WcfVector.GetCross3dShape());
+            var bl = new OpinionatedItem<String>("└", "└", WcfVector.GetCross3dShape());
+            var br = new OpinionatedItem<String>("┘", "┘", WcfVector.GetCross3dShape());
+            var h = new OpinionatedItem<String>("-", "-", WcfVector.GetCross3dShape());
+            var v = new OpinionatedItem<String>("|", "|", WcfVector.GetCross3dShape());
+            var em = new OpinionatedItem<String>(" ", " ", WcfVector.GetCross3dShape());
+            var no = new OpinionatedItem<String>("X", "X", WcfVector.GetCross3dShape());
+            var ladder = new OpinionatedItem<String>("L", "L", WcfVector.GetCross3dShape());
             var all = new List<IOpinionatedItem> { tl, tr, br, bl, em, h, v, no,ladder};
             
             em.SetAcceptableInDirection(new List<IOpinionatedItem>() {tl, bl, em, no, v}, 1, 0, 0);
@@ -95,7 +95,7 @@ namespace consoleapp
             {
                 var wcf = new WcfGrid(seed++);
                 wcf.Init(20, 10, 1, all);
-                var shape = new List<WcfVector>().Cross3dShape();
+                List<WcfVector> shape = WcfVector.GetCross3dShape();
                 wcf.SetInfluenceShape(shape);
 
                 wcf.CollapseAllRecursive();

@@ -156,22 +156,22 @@ namespace Test.Puzzle._01
                 }
             }
 
-            //debug
-            Console.WriteLine("shift debug");
-            for (var y = 0; y < grid.Height; y++)
-            {
-                var str = "";
-                for (var x = 0; x < grid.Width; x++)
-                {
-                    if (bufferGrid[x, y])
-                        str += "X";
-                    else
-                        str += "-";
+            ////debug
+            //Console.WriteLine("shift debug");
+            //for (var y = 0; y < grid.Height; y++)
+            //{
+            //    var str = "";
+            //    for (var x = 0; x < grid.Width; x++)
+            //    {
+            //        if (bufferGrid[x, y])
+            //            str += "X";
+            //        else
+            //            str += "-";
 
-                }
-                Console.WriteLine(str);
-            }
-            Console.WriteLine();
+            //    }
+            //    Console.WriteLine(str);
+            //}
+            //Console.WriteLine();
 
             //corners
             for (var y = 0; y < groundLevels.Max() -1; y++)

@@ -32,7 +32,7 @@ namespace PuzzleBuilder
         {
             var WcfGrid = new WcfGrid(random);
             WcfGrid.Init(grid.Width, grid.Height, 1, TilesConfig.MainDistinct.Select(x=>(IOpinionatedItem)x).ToList());
-            var shape = new List<WcfVector>().Cross3dShape();
+            List<WcfVector> shape = WcfVector.GetCross3dShape();
             WcfGrid.SetInfluenceShape(shape);
             WcfGrid.handlePropagation(WcfGrid.SuperPositions[WcfGrid.Width / 2, WcfGrid.Height / 2, 0]);
             return WcfGrid;
@@ -68,6 +68,7 @@ namespace PuzzleBuilder
                         {
                             Console.WriteLine("Crossing Tile Intentions yeilded no items!");
                         }
+                        //DebugWfcPrint(crossedTiles, wcfGrid, x, y, tilesconfig.WFCdebugFolderPath);
                         wcfGrid.SuperPositions[x, y, 0].CollapseToItems(crossedTiles.Select(c => c.Id).ToList(), true);
                         if (!wcfGrid.SuperPositions[x, y, 0].slots.Any(s => !s.Collapsed))
                         {
@@ -127,6 +128,8 @@ namespace PuzzleBuilder
 
         public static void DebugWfcPrint(List<OpinionatedItem<Bitmap>> Attempted, WcfGrid WcfGrid, int x, int y, string folderPath)
         {
+            if (folderPath == null)
+                return;
             Console.WriteLine("Collapse To Specific Item failed.");
             List<Bitmap> topBmps = new List<Bitmap>();
             List<Bitmap> bottomBmps = new List<Bitmap>();
@@ -142,7 +145,7 @@ namespace PuzzleBuilder
                 rightBmps = WcfGrid.SuperPositions[x + 1, y, 0].slots.Where(s => !s.Collapsed).Select(s => (Bitmap)s.item.GetItem()).ToList();
 
             List<Bitmap> currentBmps = Attempted.Select(s => (Bitmap)s.GetItem()).ToList();
-
+            List<Bitmap> existingBmps = WcfGrid.SuperPositions[x, y, 0].slots.Where(s => !s.Collapsed).Select(s => (Bitmap)s.item.GetItem()).ToList();
             //string folderPath = ConfigurationManager.AppSettings["WfcDebugFolder"].ToString();//../../WfcDebug/Current/";
             var subPath = "Top/";
             Helpers.clearFolder(folderPath + subPath);
@@ -179,6 +182,15 @@ namespace PuzzleBuilder
                 var filename = "bmp_" + i.ToString() + ".bmp";
                 BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, currentBmps[i]);
             }
+
+            subPath = "Existing/";
+            Helpers.clearFolder(folderPath + subPath);
+            for (var i = 0; i < existingBmps.Count(); i++)
+            {
+                var filename = "bmp_" + i.ToString() + ".bmp";
+                BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, existingBmps[i]);
+            }
+
         }
     }
     

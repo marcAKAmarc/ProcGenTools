@@ -6,204 +6,10 @@ using System.Text;
 using ProcGenTools.Helper;
 using ProcGenTools.DataStructures;
 using System.Drawing;
-
+using ProcGenTools.Helper;
 namespace PuzzleBuilder.Creators
 {
-    public static class BasicCircuitProcess
-    {
-        public class PuzzleProcess
-        {
-            public Random Random;
-            public IntentionGrid Grid;
-            public int[] GroundLevels;
-            public TilesetConfiguration TilesConfig;
-            public WcfGrid WcfGrid;
-            public iMeaningConverter Converter;
 
-            public PuzzleProcess(Random random, IntentionGrid grid, TilesetConfiguration tilesConfig)
-            {
-                Grid = grid;
-                Random = random;
-                TilesConfig = tilesConfig;
-
-                Converter = new MyMeaningConverter();
-
-                WcfGrid = Helpers.InitWcfGrid(random, grid, TilesConfig);
-            }
-
-            public PuzzleInfo CreateIt(List<Point> Entrances, List<Point> Exits)
-            {
-                GroundLevels = BasicCircuitCreators.CreateGroundLevels(Grid);
-
-                //if all entrances have ground level
-                var allPortals = new List<Point>();
-                allPortals.AddRange(Entrances);
-                allPortals.AddRange(Exits);
-                if (PointsOnGroundLevels(GetHorizontalPortals(allPortals, Grid), Grid))
-                {
-                    BasicCircuitCreators.CreateCircuitFractured(Grid, Random);
-                }
-                else
-                {
-                    BasicCircuitCreators.CreateCircuit(Grid, Random);
-                }
-
-                var hEntrances = GetHorizontalPortals(Entrances, Grid);
-                var vEntrances = GetVerticalPortals(Entrances, Grid);
-                var vExits = GetVerticalPortals(Exits, Grid);
-                var hExits = GetHorizontalPortals(Exits, Grid);
-
-                foreach (var entrance in hEntrances)
-                {
-                    BasicCircuitCreators.CreateHorizontalEntrancePath(Grid, entrance.X, entrance.Y);
-                }
-                //Grid.Commit();
-                foreach (var entrance in hExits)
-                {
-                    BasicCircuitCreators.CreateHorizontalExitPath(Grid, entrance.X, entrance.Y);
-                }
-                //Creators.CreateHorizontalExitPath(Grid, Exits.X, Exits.Y);
-                foreach (var entrance in vEntrances)
-                {
-                    BasicCircuitCreators.CreateVerticalEntrancePath(Grid, entrance.X, entrance.Y);
-                }
-                foreach (var exit in vExits)
-                {
-                    BasicCircuitCreators.CreateVerticalExitPath(Grid, exit.X, exit.Y);
-                }
-                //Grid.Commit();
-                BasicCircuitCreators.CreateToggleExitDoor(Grid);
-                //Grid.Commit();
-                BasicCircuitCreators.CreateToggleExitDoorButton(Grid, Random);
-                //Grid.Commit();
-                BasicCircuitCreators.CreateBoxButtonSection(Grid, Random);
-
-                BasicCircuitCreators.CreateRopeSection(Grid, Random);
-
-                BasicCircuitCreators.CreateShooterSection(Grid, Random);
-
-                BasicCircuitCreators.CreateEnemy(Grid, Random);
-
-                BasicCircuitCreators.CreateBorder(Grid, Random);
-
-                BasicCircuitCreators.BlanketNonDynamic(Grid, Random);
-
-                var result = Helpers.ApplyIntentionToGrid(Grid, WcfGrid, TilesConfig, Converter);
-
-                return new PuzzleInfo()
-                {
-                    TileMap = Helpers.ToBitmap(WcfGrid, TilesConfig),
-                    Grid = Grid,
-                    Success = result
-                };
-
-            }
-            private List<Point> GetHorizontalPortals(List<Point> points, IntentionGrid grid)
-            {
-                return points.Where(p => p.X == 0 || p.X == grid.Width - 1).ToList();
-            }
-            private List<Point> GetVerticalPortals(List<Point> points, IntentionGrid grid)
-            {
-                return points.Where(p => p.Y == 0 || p.Y == grid.Height - 1).ToList();
-            }
-            private bool PointsOnGroundLevels(List<Point> points, IntentionGrid grid)
-            {
-                var groundlevels = grid.GetByMeaning(Meaning.GroundLevel);
-                return !points.Any(p => !groundlevels.Any(gl => gl.Y == p.Y));
-            }
-        }
-
-        public class MyMeaningConverter : iMeaningConverter
-        {
-            public List<OpinionatedItem<Bitmap>> MeaningToTiles(Meaning meaning, TilesetConfiguration config)
-            {
-                var result = new List<OpinionatedItem<Bitmap>>();
-                switch (meaning)
-                {
-                    case Meaning.Box:
-                        result.AddRange(config.BoxTiles);
-                        break;
-                    case Meaning.BoxPath:
-                        result.AddRange(config.HorizontalTraversableTiles);
-                        result.AddRange(config.VerticalTraversableTiles);
-                        result.AddRange(config.EmptyTiles);
-                        break;
-                    case Meaning.BoxPathVertical:
-                        result.AddRange(config.FallTiles);
-                        //result.AddRange(config.VerticalTraversableTiles);
-                        //result.AddRange(config.EmptyTiles);
-                        break;
-                    case Meaning.HTraversablePlain:
-                        result.AddRange(config.HorizontalTraversablePlainTiles);
-                        break;
-                    case Meaning.Circuit:
-                        result.AddRange(config.HorizontalTraversableTiles);
-                        result.AddRange(config.VerticalTraversableTiles);
-                        break;
-                    case Meaning.HTraversable:
-                    case Meaning.GroundLevel:
-                        result.AddRange(config.HorizontalTraversableTiles);
-                        break;
-                    case Meaning.VTraversable:
-                        result.AddRange(config.VerticalTraversableTiles);
-                        break;
-                    case Meaning.Ladder:
-                        result.AddRange(config.LadderTiles);
-                        break;
-                    case Meaning.VerticalExit:
-                        result.AddRange(config.VerticalExitTiles);
-                        break;
-                    case Meaning.ToggleDoor:
-                        result.AddRange(config.DoorTiles);
-                        break;
-                    case Meaning.Button:
-                        result.AddRange(config.ButtonTiles);
-                        break;
-                    case Meaning.Rope:
-                        result.AddRange(config.RopeTiles);
-                        break;
-                    case Meaning.Elevator:
-                        result.AddRange(config.ElevatorTiles);
-                        break;
-                    case Meaning.Shooter:
-                        result.AddRange(config.ShooterTiles);
-                        break;
-                    case Meaning.Conveyor:
-                        result.AddRange(config.ConveyorTiles);
-                        break;
-                    case Meaning.ExitPath:
-                    case Meaning.EntrancePath:
-                        result.AddRange(config.HorizontalTraversablePlainTiles);
-                        result.AddRange(config.VerticalTraversableTiles);
-                        result.AddRange(config.DoorTiles);
-                        break;
-                    case Meaning.Solid:
-                        result.AddRange(config.SolidTiles);
-                        break;
-                    case Meaning.Empty:
-                        result.AddRange(config.EmptyTiles);
-                        break;
-                    case Meaning.SolidOrEmpty:
-                        result.AddRange(config.EmptyTiles);
-                        result.AddRange(config.SolidTiles);
-                        break;
-                    case Meaning.Enemy:
-                        result.AddRange(config.EnemyTiles);
-                        break;
-                    case Meaning.NonDynamnic:
-                        result.AddRange(config.NonDynamic);
-                        break;
-                    case Meaning.NonDynamicStrict:
-                        result.AddRange(config.NonDynamicStrict);
-                        break;
-                    case Meaning.Walkable:
-                        result.AddRange(config.Walkable);
-                        break;
-                }
-                return result;
-            }
-        }
-    }
     public static class BasicCircuitCreators
     {
         public static int[] CreateGroundLevels(IntentionGrid grid)
@@ -274,6 +80,7 @@ namespace PuzzleBuilder.Creators
 
 
             //Debug
+            DebugPrintMeaning(grid, Meaning.Ladder);
             DebugPrintMeaning(grid, Meaning.Circuit);
         }
 
@@ -586,6 +393,76 @@ namespace PuzzleBuilder.Creators
             DebugPrintMeaning(grid, Meaning.ToggleDoor);
         }
 
+        public static Point? CreateExtraDoor(IntentionGrid grid, Random random)
+        {
+            var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(x =>
+                x.Intentions.Count() == 1
+                &&
+                x.X > 1 && x.X < grid.Width - 2
+            ).ToList().GetRandomOrDefault(random);
+
+            if (tile == null)
+                return null;
+
+            //remove walkable?
+            tile.Intentions = tile.Intentions.Where(x => x.Meaning != Meaning.Walkable && x.Meaning != Meaning.NonDynamnic).ToList();
+
+            var intention = Intention.ToggleDoorIntention();
+            grid.Positions[tile.X, tile.Y].Intentions.Add(Intention.ToggleDoorIntention());
+
+            DebugPrintMeaning(grid, Meaning.ToggleDoor);
+
+            return new Point(tile.X, tile.Y);
+        }
+
+        public static Point? CreateBoxPathImpedingExtraDoor(IntentionGrid grid, Random random)
+        {
+            var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(x =>
+                /*x.Intentions.Count() == 1
+                ||(x.Intentions.Count() == 2 && x.Intentions.Any(i => i.Meaning == Meaning.BoxPath))*/
+                x.Intentions.Count() == 4 && x.Intentions.Any(i => i.Meaning == Meaning.BoxPath) && x.Intentions.Any(i => i.Meaning == Meaning.NonDynamnic) && !x.Intentions.Any(i => i.Meaning == Meaning.BoxPathVertical)
+                && !grid.Positions[x.X, x.Y - 1].Intentions.Any(i=> i.Meaning == Meaning.BoxPathVertical || i.Meaning == Meaning.VerticalExit || i.Meaning == Meaning.VTraversable || i.Meaning == Meaning.Ladder || i.Meaning == Meaning.Empty)
+            ).ToList().GetRandomOrDefault(random);
+
+            if (tile == null)
+                return null;
+
+            //remove walkable?
+            tile.Intentions = tile.Intentions.Where(x => x.Meaning != Meaning.Walkable && x.Meaning != Meaning.NonDynamnic).ToList();
+
+            var intention = Intention.ToggleDoorIntention();
+            grid.Positions[tile.X, tile.Y].Intentions.Add(Intention.ToggleDoorIntention());
+
+            DebugPrintMeaning(grid, Meaning.ToggleDoor);
+
+            return new Point(tile.X, tile.Y);
+        }
+
+        public static bool CreateExtraDoorButton(IntentionGrid grid, Random random, Point doorIntentionPoint)
+        {
+            var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(x =>
+                (x.Intentions.Count() == 1
+                ||(x.Intentions.Count() == 2 && x.Intentions.Any(i => i.Meaning == Meaning.Circuit)))
+                && !grid.Positions[x.X, x.Y - 1].Intentions.Any(i => i.Meaning == Meaning.BoxPathVertical || i.Meaning == Meaning.VerticalExit || i.Meaning == Meaning.VTraversable || i.Meaning == Meaning.Ladder)
+            ).ToList().GetRandomOrDefault(random);
+
+            if (tile == null)
+                return false;
+
+            var buttonIntention = Intention.ButtonIntention();
+            buttonIntention.Info = "toggle";
+            buttonIntention.RelatedTileMeaning = grid.Positions[doorIntentionPoint.X, doorIntentionPoint.Y].Intentions.First(x=>x.Meaning == Meaning.ToggleDoor);
+            buttonIntention.RelatedTilePosition = doorIntentionPoint;
+            buttonIntention.RelatedTileMeaning.RelatedTileMeaning = buttonIntention;
+            buttonIntention.RelatedTileMeaning.RelatedTilePosition = new Point(tile.X, tile.Y);
+            grid.Positions[tile.X, tile.Y].Intentions.Add(buttonIntention);
+
+            DebugPrintMeaning(grid, Meaning.Button);
+
+            return true;
+
+        }
+
         public static void CreateToggleExitDoorButton(IntentionGrid grid, Random random)
         {
             //get a humble GroundLevel Tile
@@ -607,7 +484,6 @@ namespace PuzzleBuilder.Creators
 
         public static void CreateRopeSection(IntentionGrid grid, Random random)
         {
-            //TODO - RANDOMIZE THIS
 
             //get a humble groundlevel tile
             var tiles = grid.GetByMeaning(Meaning.GroundLevel).Where(t => grid.Positions[t.X, t.Y].Intentions.Count == 1).ToList();
@@ -619,6 +495,75 @@ namespace PuzzleBuilder.Creators
                 grid.Positions[middle.X, middle.Y].Intentions.Add(Intention.RopeIntention());
                 //grid.Positions[middle.X, middle.Y-1].Intentions.Add(Intention.RopeIntention());
             }
+
+            DebugPrintMeaning(grid, Meaning.Rope);
+        }
+
+        public static void CreateRopeCube(IntentionGrid grid, Random random)
+        {
+            var trChance = .025f;
+            var brChance = .025f;
+            var tlChance = .025f;
+            var blChance = .025f;
+            //get a humble groundlevel tile
+            var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(t =>
+                t.X >= 2 && t.Y >= 1 && t.X <= grid.Width - 3 && t.Y <= grid.Height - 2 
+                && grid.Positions[t.X, t.Y].Intentions.Count == 1
+                && grid.Positions[t.X -1, t.Y].Intentions.Count == 1
+                && grid.Positions[t.X + 1, t.Y].Intentions.Count == 1
+                && grid.Positions[t.X - 2, t.Y].Intentions.Count == 1
+                && grid.Positions[t.X + 2, t.Y].Intentions.Count == 1
+                && grid.Positions[t.X-1, t.Y -1].Intentions.Count == 0
+                && grid.Positions[t.X, t.Y -1].Intentions.Count == 0
+                && grid.Positions[t.X + 1, t.Y - 1].Intentions.Count == 0
+                && grid.Positions[t.X - 1, t.Y + 1].Intentions.Count == 0
+                && grid.Positions[t.X, t.Y + 1].Intentions.Count == 0
+                && grid.Positions[t.X + 1, t.Y + 1].Intentions.Count == 0
+
+            ).GetRandomOrDefault(random);
+
+            if(tile==null)
+                return;
+
+            if(random.NextDouble() > trChance)
+            {
+                grid.Positions[tile.X+1, tile.Y - 1].Intentions.Add(Intention.EmptyIntention());
+            }
+            else
+            {
+                grid.Positions[tile.X + 1, tile.Y - 1].Intentions.Add(Intention.SolidIntention());
+            }
+
+            if (random.NextDouble() > tlChance)
+            {
+                grid.Positions[tile.X - 1, tile.Y - 1].Intentions.Add(Intention.EmptyIntention());
+            }
+            else
+            {
+                grid.Positions[tile.X - 1, tile.Y - 1].Intentions.Add(Intention.SolidIntention());
+            }
+
+            if (random.NextDouble() > brChance)
+            {
+                //grid.Positions[tile.X + 1, tile.Y + 1].Intentions.Add(Intention.EmptyIntention());
+                grid.Positions[tile.X + 1, tile.Y].Intentions.Add(Intention.LedgeIntention()); //MAY NOT EVEN HAVE A THING
+            }
+            else
+            {
+                grid.Positions[tile.X + 1, tile.Y].Intentions.Add(Intention.WalkableIntention());
+            }
+
+            if (random.NextDouble() > blChance)
+            {
+                //grid.Positions[tile.X - 1, tile.Y + 1].Intentions.Add(Intention.EmptyIntention());
+                grid.Positions[tile.X - 1, tile.Y].Intentions.Add(Intention.LedgeIntention());
+            }
+            else
+            {
+                grid.Positions[tile.X - 1, tile.Y].Intentions.Add(Intention.WalkableIntention());
+            }
+
+            grid.Positions[tile.X, tile.Y].Intentions.Add(Intention.RopeIntention());
 
             DebugPrintMeaning(grid, Meaning.Rope);
         }
@@ -792,7 +737,7 @@ namespace PuzzleBuilder.Creators
                 else
                     isHoriz = false;
 
-                if (isVert && wasVert)
+                if (isVert && /*wasVert*/true)
                     grid.Positions[path[i].X, path[i].Y].Intentions.Add(Intention.BoxPathVerticalIntention());
                 if(isHoriz)
                     grid.Positions[path[i].X, path[i].Y].Intentions.Add(Intention.WalkableIntention());
@@ -808,8 +753,8 @@ namespace PuzzleBuilder.Creators
 
             button.Intentions.Where(x => x.Meaning == Meaning.Button).All(b => { b.Info = "momentary"; return true;});
 
-            DebugPrintMeaning(grid, Meaning.BoxPathVertical);
             DebugPrintMeaning(grid, Meaning.Walkable);
+            DebugPrintMeaning(grid, Meaning.BoxPathVertical);            
             DebugPrintMeaning(grid, Meaning.BoxPath);
             DebugPrintMeaning(grid, Meaning.Box);
         }
@@ -860,21 +805,21 @@ namespace PuzzleBuilder.Creators
         private static void DebugPrintMeaning(IntentionGrid grid, Meaning meaning)
         {
             //Debug
-            Console.WriteLine(meaning.ToString() + ":  ");
-            for (var y = 0; y < grid.Height; y++)
-            {
-                var str = "";
-                for (var x = 0; x < grid.Width; x++)
-                {
+            //Console.WriteLine(meaning.ToString() + ":  ");
+            //for (var y = 0; y < grid.Height; y++)
+            //{
+            //    var str = "";
+            //    for (var x = 0; x < grid.Width; x++)
+            //    {
 
-                    if (grid.Positions[x, y].Intentions.Any(i => i.Meaning == meaning))
-                        str = str + "X";
-                    else
-                        str = str + "-";
-                }
-                Console.WriteLine(str);
-            }
-            Console.WriteLine("");
+            //        if (grid.Positions[x, y].Intentions.Any(i => i.Meaning == meaning))
+            //            str = str + "X";
+            //        else
+            //            str = str + "-";
+            //    }
+            //    Console.WriteLine(str);
+            //}
+            //Console.WriteLine("");
         }
 
         private static bool IntentionListHasDynamics(List<Intention> list)

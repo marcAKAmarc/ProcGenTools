@@ -93,16 +93,47 @@ namespace ProcGenTools.DataProcessing
             /*if (!bmp1.PixelFormat.Equals(bmp2.PixelFormat))
                 return false;*/
 
-            //Compare bitmaps using GetPixel method
-            for (int column = 0; column < bmp1.Width; column++)
+
+            ////PROPER EXHAUSTIVE:
+            ////Compare bitmaps using GetPixel method
+            //for (int column = 0; column < bmp1.Width; column++)
+            //{
+            //    for (int row = 0; row < bmp1.Height; row++)
+            //    {
+            //        if (!bmp1.GetPixel(column, row).Equals(bmp2.GetPixel(column, row)))
+            //            return false;
+            //    }
+            //}
+
+            //SHADY SHORTCUT:
+            //middle down
+            for (int y = bmp1.Height / 2; y < bmp1.Height; y++)
             {
-                for (int row = 0; row < bmp1.Height; row++)
+                if (!bmp1.GetPixel(bmp1.Width / 2, y).Equals(bmp2.GetPixel(bmp1.Width / 2, y)))
                 {
-                    if (!bmp1.GetPixel(column, row).Equals(bmp2.GetPixel(column, row)))
-                        return false;
+                    return false;
                 }
             }
+            //bottom left and right two
+            if (!bmp1.GetPixel(0, bmp1.Height - 1).Equals(bmp2.GetPixel(0, bmp1.Height - 1)))
+                return false;
+            if (!bmp1.GetPixel(bmp1.Width - 1, bmp1.Height - 1).Equals(bmp2.GetPixel(bmp1.Width - 1, bmp1.Height - 1)))
+                return false;
+            if (!bmp1.GetPixel(0, bmp1.Height - 2).Equals(bmp2.GetPixel(0, bmp1.Height - 2)))
+                return false;
+            if (!bmp1.GetPixel(bmp1.Width - 1, bmp1.Height - 2).Equals(bmp2.GetPixel(bmp1.Width - 1, bmp1.Height - 2)))
+                return false;
+            //top 2
+            if (!bmp1.GetPixel(bmp1.Width / 2, 0).Equals(bmp2.GetPixel(bmp1.Width / 2, 0)))
+                return false;
+            if (!bmp1.GetPixel(bmp1.Width / 2, 1).Equals(bmp2.GetPixel(bmp1.Width / 2, 1)))
+                return false;
 
+            //middle left and right 
+            if (!bmp1.GetPixel(0, bmp1.Height / 2).Equals(bmp2.GetPixel(0, bmp1.Height / 2)))
+                return false;
+            if (!bmp1.GetPixel(bmp1.Width - 1, bmp1.Height / 2).Equals(bmp2.GetPixel(bmp1.Width - 1, bmp1.Height / 2)))
+                return false;
             return true;         
         }
 

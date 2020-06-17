@@ -1,11 +1,11 @@
 ﻿using ProcGenTools.DataProcessing;
 using ProcGenTools.DataStructures;
+using PuzzleBuilder.Properties;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Configuration;
+
 namespace PuzzleBuilder
 {
     public class TilesetConfiguration
@@ -31,12 +31,67 @@ namespace PuzzleBuilder
         public List<OpinionatedItem<Bitmap>> NonDynamicStrict;
         public List<OpinionatedItem<Bitmap>> Walkable;
         public List<OpinionatedItem<Bitmap>> FallTiles;
+        public List<OpinionatedItem<Bitmap>> LedgeTiles;
         public Bitmap CautionTile;
         public Bitmap ErrorTile;
 
         public string WFCdebugFolderPath;
         public string TilesetDebugFolderPath;
 
+        public TilesetConfiguration(string wfcDebugFolderPath, string tilesetDebugFolderPath)
+        {
+            MainDistinct = ToOpinionatedList(ChopUpTilesWithMirror(Resources.main));
+
+            HorizontalTraversableTiles = GetMatchesInMain(ChopUpTiles(Resources.horizontal));
+            HorizontalTraversablePlainTiles = GetMatchesInMain(ChopUpTiles(Resources.horizontalPlain));
+
+            VerticalTraversableTiles = GetMatchesInMain(ChopUpTiles(Resources.vertical));
+            LadderTiles = GetMatchesInMain(ChopUpTiles(Resources.ladder));
+            VerticalExitTiles = GetMatchesInMain(ChopUpTiles(Resources.verticalExit));
+            DoorTiles = GetMatchesInMain(ChopUpTiles(Resources.door));
+            ButtonTiles = GetMatchesInMain(ChopUpTiles(Resources.button));
+            BoxTiles = GetMatchesInMain(ChopUpTiles(Resources.box));
+            RopeTiles = GetMatchesInMain(ChopUpTiles(Resources.rope));
+            ConveyorTiles = GetMatchesInMain(ChopUpTiles(Resources.conveyor));
+            ElevatorTiles = GetMatchesInMain(ChopUpTiles(Resources.elevator));
+            ShooterTiles = GetMatchesInMain(ChopUpTiles(Resources.shooter));
+            SolidTiles = GetMatchesInMain(ChopUpTiles(Resources.solid));
+            EmptyTiles = GetMatchesInMain(ChopUpTiles(Resources.empty));
+            EnemyTiles = GetMatchesInMain(ChopUpTiles(Resources.enemy));
+            NonDynamic = GetMatchesInMain(ChopUpTiles(Resources.nondynamic));
+            NonDynamicStrict = GetMatchesInMain(ChopUpTiles(Resources.nondynamicStrict));
+            Walkable = GetMatchesInMain(ChopUpTiles(Resources.walkable));
+            FallTiles = GetMatchesInMain(ChopUpTiles(Resources.fall));
+            LedgeTiles = GetMatchesInMain(ChopUpTiles(Resources.ledges));
+            ErrorTile = Resources.error;
+            CautionTile = Resources.caution;
+            WFCdebugFolderPath = wfcDebugFolderPath;
+            TilesetDebugFolderPath = tilesetDebugFolderPath;
+
+            SetAcceptableItems(MainDistinct, ChopUpTilesWithMirror2D(Resources.main));
+
+
+            printLists(new List<List<OpinionatedItem<Bitmap>>>() {
+                MainDistinct,
+                HorizontalTraversableTiles,
+                HorizontalTraversablePlainTiles,
+                VerticalTraversableTiles,
+                LadderTiles,
+                DoorTiles,
+                ButtonTiles,
+                RopeTiles,
+                ConveyorTiles,
+                ElevatorTiles,
+                ShooterTiles,
+                SolidTiles,
+                EmptyTiles,
+                NonDynamic,
+                NonDynamicStrict,
+                Walkable,
+                BoxTiles
+            }, TilesetDebugFolderPath);
+
+        }
         public TilesetConfiguration(string main, string horizontal, string horizontalPlain, string vertical, string ladder, string verticalExit, string door, string button, string box, string rope, string conveyor, string elevator, string shooter, string solid, string enemy, string empty, string nondynamic, string nondynamicstrict, string walkable, string fall, string caution, string error, string wfcDebugFolderPath, string tilesetDebugFolderPath)
         {
             MainDistinct = ToOpinionatedList(ChopUpTilesWithMirror(main));
@@ -60,8 +115,8 @@ namespace PuzzleBuilder
             NonDynamicStrict = GetMatchesInMain(ChopUpTiles(nondynamicstrict));
             Walkable = GetMatchesInMain(ChopUpTiles(walkable));
             FallTiles = GetMatchesInMain(ChopUpTiles(fall));
-            ErrorTile = Image.FromFile(error) as Bitmap;
-            CautionTile = Image.FromFile(caution) as Bitmap;
+            ErrorTile = LoadBmp(error);
+            CautionTile = LoadBmp(caution);
             WFCdebugFolderPath = wfcDebugFolderPath;
             TilesetDebugFolderPath = tilesetDebugFolderPath;
 
@@ -92,12 +147,29 @@ namespace PuzzleBuilder
         private List<Bitmap> ChopUpTilesWithMirror(string tilespath)
         {
             List<Bitmap> result = new List<Bitmap>();
-            Bitmap tilesetImg = Image.FromFile(tilespath) as Bitmap;
+            Bitmap tilesetImg = LoadBmp(tilespath);
             tilesetImg = tilesetImg.AddHorizontalMirror(true);
             var tiles = BitmapOperations.GetBitmapTiles(tilesetImg, 6, 6, true);
             //bad form
             var path = TilesetDebugFolderPath;
-            BitmapOperations.SaveBitmapToFile(path+/*"../../TilesetsDebug/Current/" +*/ "mainTilesetDebug" + ".bmp", BitmapOperations.CreateBitmapFromTiles(tiles, true));
+            if(path != null)
+                BitmapOperations.SaveBitmapToFile(path+/*"../../TilesetsDebug/Current/" +*/ "mainTilesetDebug" + ".bmp", BitmapOperations.CreateBitmapFromTiles(tiles, true));
+            foreach (var row in tiles)
+            {
+                result.AddRange(row);
+            }
+            return result;
+        }
+
+        private List<Bitmap> ChopUpTilesWithMirror(Bitmap img)
+        {
+            List<Bitmap> result = new List<Bitmap>();
+            var tilesImg = img.AddHorizontalMirror(true);
+            var tiles = BitmapOperations.GetBitmapTiles(tilesImg, 6, 6, true);
+            //bad form
+            var path = TilesetDebugFolderPath;
+            if(path != null)
+                BitmapOperations.SaveBitmapToFile(path +/*"../../TilesetsDebug/Current/" +*/ "mainTilesetDebug" + ".bmp", BitmapOperations.CreateBitmapFromTiles(tiles, true));
             foreach (var row in tiles)
             {
                 result.AddRange(row);
@@ -109,8 +181,19 @@ namespace PuzzleBuilder
         {
             Console.WriteLine("ChoppingUpTiles at " + tilespath);
             List<Bitmap> result = new List<Bitmap>();
-            Bitmap tilesetImg = Image.FromFile(tilespath) as Bitmap;
+            Bitmap tilesetImg = LoadBmp(tilespath);
             var tiles = BitmapOperations.GetBitmapTiles(tilesetImg, 6, 6, true);
+            foreach (var row in tiles)
+            {
+                result.AddRange(row);
+            }
+            return result;
+        }
+
+        private List<Bitmap> ChopUpTiles(Bitmap img)
+        {
+            List<Bitmap> result = new List<Bitmap>();
+            var tiles = BitmapOperations.GetBitmapTiles(img, 6, 6, true);
             foreach (var row in tiles)
             {
                 result.AddRange(row);
@@ -122,8 +205,17 @@ namespace PuzzleBuilder
         {
 
             List<Bitmap> result = new List<Bitmap>();
-            Bitmap tilesetImg = Image.FromFile(tilespath) as Bitmap;
+            Bitmap tilesetImg = LoadBmp(tilespath);
             tilesetImg = tilesetImg.AddHorizontalMirror(true);
+            var tiles = BitmapOperations.GetBitmapTiles(tilesetImg, 6, 6, true);
+            return tiles;
+        }
+
+        private List<List<Bitmap>> ChopUpTilesWithMirror2D(Bitmap img)
+        {
+
+            List<Bitmap> result = new List<Bitmap>();
+            Bitmap tilesetImg = img.AddHorizontalMirror(true);
             var tiles = BitmapOperations.GetBitmapTiles(tilesetImg, 6, 6, true);
             return tiles;
         }
@@ -136,7 +228,7 @@ namespace PuzzleBuilder
             for (var x = 0; x < list.Count; x++)
             {
                 var bmp = list[x];
-                items.Add(new OpinionatedItem<Bitmap>(bmp, x.ToString(), new List<WcfVector>().Cross3dShape()));
+                items.Add(new OpinionatedItem<Bitmap>(bmp, x.ToString(), WcfVector.GetCross3dShape()));
             }
 
             return items;
@@ -254,6 +346,11 @@ namespace PuzzleBuilder
             {
                 BitmapOperations.SaveBitmapToFile(path+"/"+/*"../../TilesetsDebug/Current/" +*/ i.ToString() + ".bmp", Bitmaps[i]);
             }
+        }
+
+        protected virtual Bitmap LoadBmp(string path)
+        {
+            return Image.FromFile(path) as Bitmap;
         }
     }
 }
