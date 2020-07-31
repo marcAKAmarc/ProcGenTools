@@ -314,6 +314,8 @@ namespace PuzzleBuilder.Creators
                     grid.Positions[x, exitY + 1].Intentions.Add(Intention.SolidIntention());
                 }
                 grid.Positions[x, exitY].Intentions.Add(Intention.ExitPathIntention());
+                //remove solid intention from this position
+                grid.Positions[x, exitY].Intentions = grid.Positions[x, exitY].Intentions.Where(i => i.Meaning != Meaning.Solid).ToList();
             }
             if (exitY > circuits.Select(t => t.Y).Max() || exitY < circuits.Select(t => t.Y).Min())
             {
@@ -338,16 +340,22 @@ namespace PuzzleBuilder.Creators
             else
             {
                 yDir = -1;
-                yStart = grid.Width - 1;
+                yStart = grid.Height - 1;
                 yStop = bottomMost - 1;
             }
 
             for (var y = yStart; y != yStop; y += yDir)
             {
                 grid.Positions[exitX, y].Intentions.Add(Intention.ExitPathIntention());
-                if (y != yStop - yDir)//not the last one
+                //remove solid intention from this position
+                grid.Positions[exitX, y].Intentions = grid.Positions[exitX, y].Intentions.Where(i => i.Meaning != Meaning.Solid).ToList();
+                if (y != yStop - yDir)//not the last one //but why? tryting witout
                 {
                     grid.Positions[exitX, y].Intentions.Add(Intention.VerticalExitIntention());
+                }
+                else
+                {
+                    //grid.Positions[exitX, y].Intentions.Add(Intention.LadderIntention());
                 }
             }
 
@@ -386,7 +394,13 @@ namespace PuzzleBuilder.Creators
 
         public static void CreateToggleExitDoor(IntentionGrid grid)
         {
-            var tile = grid.GetByMeaning(Meaning.ExitPath).Where(t => t.X == grid.Width - 1 || t.X == 0 || t.Y == 0 || t.Y == grid.Height - 1).FirstOrDefault();
+            var tile = grid.GetByMeaning(Meaning.ExitPath).Where(t => !t.Intentions.Any(i=>
+                i.Meaning == Meaning.VerticalExit) 
+                &&( t.X == grid.Width - 1 || t.X == 0 || t.Y == 0 || t.Y == grid.Height - 1)
+            ).FirstOrDefault();
+
+            if (tile == null)
+                return;
 
             grid.Positions[tile.X, tile.Y].Intentions.Add(Intention.ToggleDoorIntention());
 
@@ -469,7 +483,11 @@ namespace PuzzleBuilder.Creators
             var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(t => grid.Positions[t.X, t.Y].Intentions.Count == 1).GetRandomOrDefault(random);
             var buttonIntention = Intention.ButtonIntention();
             buttonIntention.Info = "toggle";
-            var exit = grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).First();
+            var exitTile = grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).FirstOrDefault();
+            if (exitTile == null)
+                return;
+            var exit = exitTile.Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).FirstOrDefault();
+            
             buttonIntention.RelatedTileMeaning = exit;
             buttonIntention.RelatedTilePosition = new Point(
                     grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().X,
@@ -596,7 +614,9 @@ namespace PuzzleBuilder.Creators
 
         public static void CreateEnemy(IntentionGrid grid, Random random)
         {
-            var entrance = grid.GetByMeaning(Meaning.EntrancePath).First();
+            var entrance = grid.GetByMeaning(Meaning.EntrancePath).FirstOrDefault();
+            if (entrance == null)
+                return;
             //get humble ground level/circuit furthest from entrance
             var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(t =>
                grid.Positions[t.X, t.Y].Intentions.Count == 1 
@@ -791,7 +811,8 @@ namespace PuzzleBuilder.Creators
                         (grid.Positions[x, y].Intentions.Count == 1 && grid.Positions[x, y].Intentions.Any(i => i.Meaning == Meaning.GroundLevel)
                         )*/
                         !IntentionListHasDynamics(grid.Positions[x,y].Intentions)
-                        
+                        &&
+                        NotTerminalLadder(x,y,grid)
                     )
                     {
                         grid.Positions[x, y].Intentions.Add(Intention.NonDynamicStrict());
@@ -802,24 +823,24 @@ namespace PuzzleBuilder.Creators
             DebugPrintMeaning(grid, Meaning.NonDynamicStrict);
         }
 
-        private static void DebugPrintMeaning(IntentionGrid grid, Meaning meaning)
+        public static void DebugPrintMeaning(IntentionGrid grid, Meaning meaning)
         {
             //Debug
-            //Console.WriteLine(meaning.ToString() + ":  ");
-            //for (var y = 0; y < grid.Height; y++)
-            //{
-            //    var str = "";
-            //    for (var x = 0; x < grid.Width; x++)
-            //    {
+            Console.WriteLine(meaning.ToString() + ":  ");
+            for (var y = 0; y < grid.Height; y++)
+            {
+                var str = "";
+                for (var x = 0; x < grid.Width; x++)
+                {
 
-            //        if (grid.Positions[x, y].Intentions.Any(i => i.Meaning == meaning))
-            //            str = str + "X";
-            //        else
-            //            str = str + "-";
-            //    }
-            //    Console.WriteLine(str);
-            //}
-            //Console.WriteLine("");
+                    if (grid.Positions[x, y].Intentions.Any(i => i.Meaning == meaning))
+                        str = str + "X";
+                    else
+                        str = str + "-";
+                }
+                Console.WriteLine(str);
+            }
+            Console.WriteLine("");
         }
 
         private static bool IntentionListHasDynamics(List<Intention> list)
@@ -844,7 +865,37 @@ namespace PuzzleBuilder.Creators
                 intent.Meaning == Meaning.ToggleDoor
                 ||
                 intent.Meaning == Meaning.Enemy
+                ||
+                intent.Meaning == Meaning.VerticalExit
+                
                 );
+        }
+
+        private static bool NotTerminalLadder(int x, int y, IntentionGrid grid)
+        {
+            if (y - 1 >= 0 && (
+                    grid.Positions[x, y - 1].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                    ||
+                    grid.Positions[x, y - 1].Intentions.Any(i => i.Meaning == Meaning.VerticalExit)
+                )
+            )
+                return false;
+            if (y + 1 < grid.Height && (
+                    grid.Positions[x, y + 1].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                    ||
+                    grid.Positions[x, y + 1].Intentions.Any(i => i.Meaning == Meaning.VerticalExit)
+                )
+            )
+                return false;
+
+            if (y + 2 < grid.Height && (
+                    grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                    ||
+                    grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.VerticalExit)
+                )
+            )
+                return false;
+            return true;
         }
     }
 }

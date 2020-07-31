@@ -1,4 +1,5 @@
 ﻿using ProcGenTools.DataStructures;
+using PuzzleBuilder.Core;
 using PuzzleBuilder.Creators;
 using System;
 using System.Collections.Generic;
@@ -125,6 +126,11 @@ namespace PuzzleBuilder.Process
                 var groundlevels = grid.GetByMeaning(Meaning.GroundLevel);
                 return !points.Any(p => !groundlevels.Any(gl => gl.Y == p.Y));
             }
+
+            public override void SetDisplayer(iDisplayer displayer)
+            {
+                throw new NotImplementedException();
+            }
         }
 
         public class MyMeaningConverter : iMeaningConverter
@@ -188,7 +194,7 @@ namespace PuzzleBuilder.Process
                     case Meaning.ExitPath:
                     case Meaning.EntrancePath:
                         result.AddRange(config.HorizontalTraversablePlainTiles);
-                        result.AddRange(config.VerticalTraversableTiles);
+                        result.AddRange(config.VerticalTraversableTiles);//was verticaltraversableTiles
                         result.AddRange(config.DoorTiles);
                         break;
                     case Meaning.Solid:

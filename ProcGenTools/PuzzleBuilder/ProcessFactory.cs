@@ -1,4 +1,5 @@
 ﻿using ProcGenTools.DataProcessing;
+using PuzzleBuilder.Core;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -33,6 +34,17 @@ namespace PuzzleBuilder
             _wfcDebugPath = wfcDebugPath;
             _tilesetDebugPath = tilesetDebugPath;
 
+        }
+
+        public void SetProcessDisplayer(iDisplayer displayer)
+        {
+            myProcess.SetDisplayer(displayer);
+        }
+
+        public void  Reset(int newWidth, int newHeight)
+        {
+            myGrid.Reset(newWidth, newHeight);
+            myProcess.ClearForReuse(random);
         }
 
         public PuzzleInfo GetPuzzle(int seed, List<Point> Entrances, List<Point> Exits)

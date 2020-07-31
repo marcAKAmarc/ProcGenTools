@@ -316,6 +316,22 @@ namespace PuzzleBuilder
             }
         }
 
+        public void Reset(int newWidth, int newHeight)
+        {
+            Width = newWidth;
+            Height = newHeight;
+            Positions = new IntentionTiles[newWidth, newHeight];
+            for (var x = 0; x < Width; x++)
+            {
+                for (var y = 0; y < Height; y++)
+                {
+                    Positions[x, y] = new IntentionTiles();
+                    Positions[x, y].X = x;
+                    Positions[x, y].Y = y;
+                }
+            }
+        }
+
         public List<IntentionTiles> listed()
         {
             var result = new List<IntentionTiles>();

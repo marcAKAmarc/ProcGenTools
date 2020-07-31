@@ -118,11 +118,9 @@ namespace RoomEditor.Models
         public Point point;
         public Point direction;
         public HierarchicalMapPortal fromPortal;
-        public bool IsEntrance(Room room)
+        public bool IsEntrance()
         {
-            return (point.X + direction.X > 0 && point.X + direction.X < room.Width)
-                &&
-                (point.Y + direction.Y > 0 && point.Y + direction.Y < room.Height);
+            return fromPortal.Map.SequentialId > fromPortal.destination.SequentialId;
         }
     }
 }

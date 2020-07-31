@@ -8,18 +8,22 @@ using ProcGenTools.DataStructures;
 using PuzzleBuilder.Creators;
 using System.Drawing;
 using PuzzleBuilder.Process;
+using ProcGenTools.DataProcessing;
+using PuzzleBuilder.Core;
 
 namespace PuzzleBuilder.Process
 {
     public static class AdvancedCircuitProcess
     {
-        public class PuzzleProcess:Process
+
+        public class PuzzleProcess:Process, WcfGridEventHandler
         {
             public Random Random;
             public IntentionGrid Grid;
             public int[] GroundLevels;
             public TilesetConfiguration TilesConfig;
             public WcfGrid WcfGrid;
+            public iDisplayer Displayer;
             public iMeaningConverter Converter;
 
             public PuzzleProcess() { }
@@ -38,14 +42,27 @@ namespace PuzzleBuilder.Process
                 Converter = new BasicCircuitProcess.MyMeaningConverter();
 
                 WcfGrid = Helpers.InitWcfGrid(random, grid, TilesConfig);
+                WcfGrid.eventHandler = this; 
+            }
+
+            public override void SetDisplayer(iDisplayer displayer)
+            {
+                Displayer = displayer;
             }
 
             public override void ClearForReuse(Random random)
             {
                 Random = random;
                 Grid.Clear();
-                WcfGrid.ClearForReuse();
-                WcfGrid.SetRandom(random);
+                if (WcfGrid.Width != Grid.Width || WcfGrid.Height != Grid.Height)
+                    WcfGrid = Helpers.InitWcfGrid(random, Grid, TilesConfig);
+                else
+                {
+                    WcfGrid.ClearForReuse();
+                    WcfGrid.SetRandom(random);
+
+                }
+                WcfGrid.eventHandler = this;
             }
 
             public override PuzzleInfo CreateIt(List<Point> Entrances, List<Point> Exits)
@@ -162,6 +179,21 @@ namespace PuzzleBuilder.Process
             {
                 var groundlevels = grid.GetByMeaning(Meaning.GroundLevel);
                 return !points.Any(p => !groundlevels.Any(gl => gl.Y == p.Y));
+            }
+
+            void WcfGridEventHandler.OnPropagation()
+            {
+                if (Displayer != null)
+                    Displayer.Display(Helpers.ToBitmap(WcfGrid, TilesConfig));
+                //BitmapOperations.SaveBitmapToFile("D:\\_Projects\\ProcGenTools\\ProcGenTools\\Test.World.Circuit\\Output\\liveUpdate.bmp", Helpers.ToBitmap(WcfGrid, TilesConfig));
+            }
+
+            void WcfGridEventHandler.OnCollapse()
+            {
+                if (Displayer != null)
+                    Displayer.Display(Helpers.ToBitmap(WcfGrid, TilesConfig));
+                //BitmapOperations.SaveBitmapToFile("D:\\_Projects\\ProcGenTools\\ProcGenTools\\Test.World.Circuit\\Output\\liveUpdate.bmp", Helpers.ToBitmap(WcfGrid, TilesConfig));
+
             }
         }
 

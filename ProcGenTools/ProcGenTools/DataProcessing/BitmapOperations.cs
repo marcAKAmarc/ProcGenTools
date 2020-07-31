@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Drawing;
 using System.Drawing.Drawing2D;
+using System.IO;
 
 namespace ProcGenTools.DataProcessing
 {
@@ -75,12 +76,29 @@ namespace ProcGenTools.DataProcessing
         {
             using (Graphics g = Graphics.FromImage(bitmap))
             {
+                var fileInfo = new FileInfo(filepath);
+                if (!fileInfo.Directory.Exists)
+                    fileInfo.Directory.Create();
+
                 //SAVING TO FILE
                 g.Flush();
                 bitmap.Save(filepath, System.Drawing.Imaging.ImageFormat.Bmp);
             }
         }
-
+        private static bool FileAvailable(string fileName)
+        {
+            try
+            {
+                using (FileStream inputStream = File.Open(fileName, FileMode.Open, FileAccess.Read, FileShare.None))
+                {
+                    return true;
+                }
+            }
+            catch (IOException ex)
+            {
+                return false;
+            }
+        }
         public static bool Compare(this Bitmap bmp1, Bitmap bmp2)
         {
             

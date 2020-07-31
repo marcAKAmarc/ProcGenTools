@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 namespace ProcGenTools.DataStructures
 {
-    public static class Extensions{
+    public static class Extensions {
 
         public static List<WcfVector> CubeShape(this List<WcfVector> shape)
         {
@@ -52,7 +52,7 @@ namespace ProcGenTools.DataStructures
                 new WcfVector(0, 0, -1)
             };
 
-        public static List<WcfVector> GetCross3dShape(){
+        public static List<WcfVector> GetCross3dShape() {
             return cross3dShape;
         }
 
@@ -64,8 +64,13 @@ namespace ProcGenTools.DataStructures
         }
     }
 
+    public interface WcfGridEventHandler{
+        void OnPropagation();
+        void OnCollapse();
+    }
     public class WcfGrid
     {
+        public WcfGridEventHandler eventHandler;
         private int width;
         private int height;
         private int depth;
@@ -367,7 +372,10 @@ namespace ProcGenTools.DataStructures
             foreach(WcfSuperPosition neighbor in parent.GetSuperPositionNeighbors(x, y, z))
             {
                 var resultCollapse = neighbor.Collapse(this);
-                
+
+                if(parent.eventHandler != null)
+                    parent.eventHandler.OnPropagation();
+
                 if(resultCollapse == null)
                 {
                     //failure
@@ -518,6 +526,9 @@ namespace ProcGenTools.DataStructures
                     slots[i].UnCollapse();
                 }
             }
+            if (parent.eventHandler != null)
+                parent.eventHandler.OnCollapse();
+
 
             //return slots.Any(x => x.Collapsed == false);
             //hasCollapsed = true;

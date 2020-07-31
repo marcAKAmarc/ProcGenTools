@@ -130,6 +130,8 @@ namespace PuzzleBuilder
         {
             if (folderPath == null)
                 return;
+
+            
             Console.WriteLine("Collapse To Specific Item failed.");
             List<Bitmap> topBmps = new List<Bitmap>();
             List<Bitmap> bottomBmps = new List<Bitmap>();
@@ -148,6 +150,9 @@ namespace PuzzleBuilder
             List<Bitmap> existingBmps = WcfGrid.SuperPositions[x, y, 0].slots.Where(s => !s.Collapsed).Select(s => (Bitmap)s.item.GetItem()).ToList();
             //string folderPath = ConfigurationManager.AppSettings["WfcDebugFolder"].ToString();//../../WfcDebug/Current/";
             var subPath = "Top/";
+            var FileInfo = new FileInfo(folderPath + subPath);
+            if (!FileInfo.Directory.Exists)
+                FileInfo.Directory.Create();
             Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < topBmps.Count(); i++)
             {
@@ -155,6 +160,9 @@ namespace PuzzleBuilder
                 BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, topBmps[i]);
             }
             subPath = "Bottom/";
+            FileInfo = new FileInfo(folderPath + subPath);
+            if (!FileInfo.Directory.Exists)
+                FileInfo.Directory.Create();
             Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < bottomBmps.Count(); i++)
             {
@@ -162,6 +170,9 @@ namespace PuzzleBuilder
                 BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, bottomBmps[i]);
             }
             subPath = "Left/";
+            FileInfo = new FileInfo(folderPath + subPath);
+            if (!FileInfo.Directory.Exists)
+                FileInfo.Directory.Create();
             Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < leftBmps.Count(); i++)
             {
@@ -169,6 +180,9 @@ namespace PuzzleBuilder
                 BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, leftBmps[i]);
             }
             subPath = "Right/";
+            FileInfo = new FileInfo(folderPath + subPath);
+            if (!FileInfo.Directory.Exists)
+                FileInfo.Directory.Create();
             Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < rightBmps.Count(); i++)
             {
@@ -176,6 +190,9 @@ namespace PuzzleBuilder
                 BitmapOperations.SaveBitmapToFile(folderPath + subPath + filename, rightBmps[i]);
             }
             subPath = "CurrentOptions/";
+            FileInfo = new FileInfo(folderPath + subPath);
+            if (!FileInfo.Directory.Exists)
+                FileInfo.Directory.Create();
             Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < currentBmps.Count(); i++)
             {
@@ -184,6 +201,9 @@ namespace PuzzleBuilder
             }
 
             subPath = "Existing/";
+            FileInfo = new FileInfo(folderPath + subPath);
+            if (!FileInfo.Directory.Exists)
+                FileInfo.Directory.Create();
             Helpers.clearFolder(folderPath + subPath);
             for (var i = 0; i < existingBmps.Count(); i++)
             {

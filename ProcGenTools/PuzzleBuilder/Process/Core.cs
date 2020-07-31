@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PuzzleBuilder.Core;
+using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
@@ -12,5 +13,6 @@ namespace PuzzleBuilder.Process
         public abstract void Init(Random random, IntentionGrid grid, TilesetConfiguration tilesConfig);
         public abstract PuzzleInfo CreateIt(List<Point> Entrances, List<Point> Exits);
         public abstract void ClearForReuse(Random random);
+        public abstract void SetDisplayer(iDisplayer displayer);
     }
 }

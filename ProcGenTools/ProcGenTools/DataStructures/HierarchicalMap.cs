@@ -7,10 +7,23 @@ using ProcGenTools.DataProcessing;
 using ProcGenTools.Helper;
 namespace ProcGenTools.DataStructures
 {
+    public class ZoneSequentialId
+    {
+        private static int newIdCounter;
+        public static int NewId()
+        {
+            return newIdCounter++;
+        }
+        public static void Reset()
+        {
+            newIdCounter = 0;
+        }
+    }
     public enum CreationMethod { Cluster, PathCover};
     public class Zone
     {
         public Guid id;
+        public int SequentialId;
         public int Level;
         public static int totalLevels = 0;
         public int X;
@@ -28,6 +41,7 @@ namespace ProcGenTools.DataStructures
         public Zone()
         {
             id = Guid.NewGuid();
+            SequentialId = ZoneSequentialId.NewId();
             ZonePortals = new List<ZonePortal>();
         }
 
@@ -43,6 +57,7 @@ namespace ProcGenTools.DataStructures
             SubMap = new HierarchicalMap(Width * scale, Height * scale, random, Level + 1);
             SubMap.fromZone = this;
             SubMap.CreationMethod = CreationMethod;
+            SubMap.SequentialId = SequentialId;
            
 
             foreach (var portal in ZonePortals)
@@ -66,7 +81,8 @@ namespace ProcGenTools.DataStructures
                     ),
                     ParentPortal = portal,
                     directionOfPassage = portal.directionOfPassage,
-                    Map = SubMap
+                    Map = SubMap,
+                    destination = null
                 };
 
                 portal.SubPortal = subportal;
@@ -115,8 +131,12 @@ namespace ProcGenTools.DataStructures
 
             //create extraneous zones?
             SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            //SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            //SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
 
             SubMap.MarkExitOnlyPortals();
 
@@ -233,6 +253,7 @@ namespace ProcGenTools.DataStructures
     public class HierarchicalMap
     {
         public Guid _Id;
+        public int SequentialId;
         public int _Level = 0;
         public static int _TotalLevels = 0;
         public int _MapWidth;
@@ -381,22 +402,42 @@ namespace ProcGenTools.DataStructures
 
             return _masterMap;
         }
-
+        public void ReassignSequentialIds()
+        {
+            if(flatZones.Count != 0)
+            {
+                foreach(var zone in flatZones)
+                {
+                    zone.SubMap.ReassignSequentialIds();
+                }
+            }
+            else
+            {
+                SequentialId = ZoneSequentialId.NewId();
+            }
+        }
         public void CreateSubMaps()
         {
-            var subbed = new List<Guid>();
+            var subbed = new List<Zone>();
+            
             for(var y = 0; y < _MapHeight; y++)
             {
                 for(var x = 0; x < _MapWidth; x++)
                 {
-                    if(_Grid[x,y] != null && !subbed.Any(s=>s == _Grid[x, y].id))
+                    if(_Grid[x,y] != null && !subbed.Any(s=>s.id == _Grid[x, y].id))
                     {
-                        _Grid[x, y].CreateSubMap(_Random);
-                        _TotalLevels = Zone.totalLevels;
-                        subbed.Add(_Grid[x, y].id);
+                       
+                        subbed.Add(_Grid[x, y]);
                     }
                 }
-            }   
+            }
+
+            subbed.OrderBy(x => x.SequentialId);
+            foreach(var zone in subbed)
+            {
+                zone.CreateSubMap(_Random);
+                _TotalLevels = Zone.totalLevels;
+            }
         }
 
         public List<HierarchicalMapPortal>[,] GetMasterPortal(List<HierarchicalMapPortal>[,] _masterMap = null, int originalLevel = -1, int depth = 0)
@@ -516,6 +557,16 @@ namespace ProcGenTools.DataStructures
             int SideX = SideX_o;
             int SideY = SideY_o;
             SearchCache search = SearchForFreePosition(null, searchStartPoint);
+
+            //crappy version of randomness
+            while(_Random.NextDouble()> .1)
+            {
+                search = SearchForFreePosition(search);
+                if (search.result == null)
+                    break;
+            }
+
+            //do a few more times here maybe
             if (search.result == null)
                 return false;
 
@@ -829,7 +880,7 @@ namespace ProcGenTools.DataStructures
                 }
             }
 
-            foreach(var group in neighborZones.GroupBy(x => x.Neighbor.id))
+            foreach(var group in neighborZones.GroupBy(x => x.Neighbor.id).OrderBy(x=>x.First().Neighbor.SequentialId))
             {
                 var zoneList = group.ToList();
                 var chosen = zoneList[_Random.Next(0, zoneList.Count)];
@@ -900,17 +951,18 @@ namespace ProcGenTools.DataStructures
                 //{
                 //    newDirection = new Point(-1, 0);
                 //}
-
+                
                 portals.Add(new HierarchicalMapPortal()
                 {
                     point = newPoint,
-                    direction = new Point(0, 0)
+                    direction = new Point(0, 0),
+                    destination = this
                 });
             }
 
 
             List<HierarchicalMapPortal> connected = new List<HierarchicalMapPortal>();
-            foreach(var portal in portals)
+            foreach(var portal in portals.OrderBy(x=> { if (x.destination != null && x.destination._AllSubChildren.Count()!=0) return x.destination.SequentialId; else return 99999; }))
             {
                 foreach(var destPortal in portals.Where(x=>x.id != portal.id && !connected.Any(c=>c.id == x.id)))
                 {
@@ -961,9 +1013,9 @@ namespace ProcGenTools.DataStructures
             //bool minnedX = true;
             //bool minnedY = false;
             //bool horizTravel = true;
-            while(_Grid[searchCache.position.X, searchCache.position.Y] != null)
+            do
             {
-                if(searchCache.horizTravel == false && center.Y - searchCache.position.Y >= 0 && (int)Math.Abs(center.Y - searchCache.position.Y) == searchCache.maxY)
+                if (searchCache.horizTravel == false && center.Y - searchCache.position.Y >= 0 && (int)Math.Abs(center.Y - searchCache.position.Y) == searchCache.maxY)
                 {
                     searchCache.horizTravel = true;
                     searchCache.minnedY = true;
@@ -1016,6 +1068,8 @@ namespace ProcGenTools.DataStructures
                 }
                 //PrintToConsole(searchCache.position);
             }
+            while (_Grid[searchCache.position.X, searchCache.position.Y] != null);
+
             searchCache.result = searchCache.position;
             return searchCache;
         }
@@ -1226,11 +1280,13 @@ namespace ProcGenTools.DataStructures
         {
             var _masterMap = GetMasterMap();
             var _masterPortal = GetMasterPortal();
-            double _numberOfTerminals = _AllSubChildren.Count(x => x._AllSubChildren.Count == 0);
+            double _numberOfTerminals = _AllSubChildren.SelectMany(c=>c._AllSubChildren)
+                .Count(x => x._AllSubChildren.Count == 0);
             var _flatPortals = GetFlatPortals();
             var scale = 10;
             Bitmap bmp = new Bitmap(_masterMap.GetLength(0) * scale, _masterMap.GetLength(1) * scale);
-            
+
+            int colorNumber = 0;
             for (var y = 0; y < _masterMap.GetLength(1); y++)
             {
                 
@@ -1244,14 +1300,18 @@ namespace ProcGenTools.DataStructures
                         //find proper color for this terminal room
                         for(var i = 0; i < _AllSubChildren.Count; i++)
                         { 
-                            if (terminalRoom != null && _AllSubChildren[i]._Id == _masterMap[x, y].FirstOrDefault(h => h._AllSubChildren.Count == 0)._Id)
+                            if ( _AllSubChildren[i]._Id == terminalRoom._Id)
                             {
                                 ///???????
                                 color = Color.FromArgb(
-                                    (int)(Math.Sin((i / _numberOfTerminals) *2*Math.PI + 2*Math.PI/3)*125)+125,
-                                    (int)(Math.Sin((i / _numberOfTerminals) *2* Math.PI + 4 * Math.PI / 3) * 125)+125,
-                                    (int)(Math.Sin((i / _numberOfTerminals) * 2* Math.PI) * 125)+125
+                                    (int)((_AllSubChildren[i].SequentialId * (double)255/ (_AllSubChildren.Count))),
+                                    (int)((_AllSubChildren[i].SequentialId * (double)255 / (_AllSubChildren.Count))),
+                                    (int)((_AllSubChildren[i].SequentialId * (double)255 / (_AllSubChildren.Count)))
+                                    //(int)(Math.Sin((i / _numberOfTerminals) *2*Math.PI + 2*Math.PI/3)*125)+125,
+                                    //(int)(Math.Sin((i / _numberOfTerminals) *2* Math.PI + 4 * Math.PI / 3) * 125)+125,
+                                    //(int)(Math.Sin((i / _numberOfTerminals) * 2* Math.PI) * 125)+125
                                 );
+                                
                                 break;
                             }
                         }

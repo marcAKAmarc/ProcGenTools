@@ -43,6 +43,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Core\iDisplayer.cs" />
     <Compile Include="ProcessFactory.cs" />
     <Compile Include="Process\AndvancedCircuit.cs" />
     <Compile Include="Creators\BasicCircuit.cs" />

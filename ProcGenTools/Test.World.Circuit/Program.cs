@@ -10,6 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using PuzzleBuilder.Creators;
 using PuzzleBuilder;
+using PuzzleBuilder.Process;
 
 namespace Test.World.Circuit
 {
@@ -19,15 +20,20 @@ namespace Test.World.Circuit
         static void Main(string[] args)
         {
             //setup hierarchical map
-            var Random = new Random(3);
+            var seed = 3;
+
+            var Random = new Random(seed);
             HierarchicalMap.RelativeScales = new int[] { 2,2 };
             var map = new HierarchicalMap(8, 8, Random);
-            map.SpawnZoneAtClusterPosition(4, 3);
+            map.SpawnZoneAtClusterPosition(4, 3, null, false);
             map.SpawnZoneAtClusterPosition(4, 3, null, true);
             map.SpawnZoneAtClusterPosition(4, 3, null, true);
             map.SpawnZoneAtClusterPosition(4, 3, null, true);
             map.MarkExitOnlyPortals();
             map.CreateSubMaps();
+
+            ZoneSequentialId.Reset();
+            map.ReassignSequentialIds();
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);
             //for (var i = 0; i < map.flatZones.Count(); i++)
             //{
@@ -52,52 +58,47 @@ namespace Test.World.Circuit
 
             var finalBitmap = new Bitmap(mastermap.GetLength(0) * scale * tileSize, mastermap.GetLength(1) * scale * tileSize);
 
-            int bmpIndex = 0;
+
+            ProcessFactory<AdvancedCircuitProcess.PuzzleProcess> factory = null;
+            int roomSeed = seed;
+            PuzzleInfo roomResult;
             for (var y = 0; y < mastermap.GetLength(1); y++)
             {
                 for (var x = 0; x < mastermap.GetLength(0); x++)
                 {
-
+                    roomSeed = roomSeed + 10;
                     var roomLevelMap = mastermap[x, y].FirstOrDefault(mm => mm.flatZones.Count == 0 && mm.contents == null);
                     if (roomLevelMap != null)
                     {
-                        bmpIndex += 1;
-                        for (var attempt = 0; attempt < 8; attempt++)
+
+                        var room = roomLevelMap.ToRoom(scale);
+
+                        if (factory == null)
+                            factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(room.Width, room.Height, "..//..//WfcDebug//Current//", "..//..//TilesetsDebug//Current//");
+                        else
+                            factory.Reset(room.Width, room.Height);
+
+                        try
                         {
-                            var room = roomLevelMap.ToRoom(scale);
-                            var grid = new IntentionGrid(room.Width, room.Height);
-                            var TilesConfig = new TilesetConfiguration(
-                                ConfigurationManager.AppSettings["mainTileset"],
-                                ConfigurationManager.AppSettings["hTileset"],
-                                ConfigurationManager.AppSettings["hPlainTileset"],
-                                ConfigurationManager.AppSettings["vTileset"],
-                                ConfigurationManager.AppSettings["ladderTileset"],
-                                ConfigurationManager.AppSettings["verticalExitTileset"],
-                                ConfigurationManager.AppSettings["doorTileset"],
-                                ConfigurationManager.AppSettings["buttonTileset"],
-                                ConfigurationManager.AppSettings["ropeTileset"],
-                                ConfigurationManager.AppSettings["conveyorTileset"],
-                                ConfigurationManager.AppSettings["elevatorTileset"],
-                                ConfigurationManager.AppSettings["shooterTileset"],
-                                ConfigurationManager.AppSettings["solidTileset"],
-                                ConfigurationManager.AppSettings["emptyTileset"],
-                                ConfigurationManager.AppSettings["nondynamic"],
-                                ConfigurationManager.AppSettings["nondynamicstrict"],
-                                ConfigurationManager.AppSettings["cautionTileset"],
-                                ConfigurationManager.AppSettings["errorTileset"],
-                                "..//..//WfcDebug",
-                                "..//..//TilesetsDebug"
+                            roomResult = factory.GetPuzzle(
+                                seed,
+                                room.portals.Where(p => p.IsEntrance()).Select(p => p.point).ToList(),
+                                room.portals.Where(p => !p.IsEntrance()).Select(p => p.point).ToList()
                             );
-                            var processor = new BasicCircuitProcess.PuzzleProcess(Random, grid, TilesConfig);
-                            try
-                            {
-                                roomLevelMap.contents = processor.CreateIt(room.portals.Select(p => p.point).ToList(), new List<Point>()).TileMap;
-                            }catch(Exception ex)
-                            {
-                                continue;
-                            }
-                            break;
                         }
+                        catch(Exception ex)
+                        {
+                            continue;
+                        }
+                        if (roomResult.Success)
+                        {
+                            roomLevelMap.contents = roomResult.TileMap;
+                        }
+                            //factory.SaveResult(
+                            //    ConfigurationManager.AppSettings["Output"].ToString()
+                            //            .Replace("output.bmp", "")
+                            //);
+                        
 
                         //draw to larger bitmap
                         Graphics g = Graphics.FromImage(finalBitmap);

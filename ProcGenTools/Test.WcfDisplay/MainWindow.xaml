@@ -1,0 +1,13 @@
+﻿<Window x:Class="Test.WcfDisplay.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Test.WcfDisplay"
+        mc:Ignorable="d"
+        Title="MainWindow" Height="751.852" Width="375.926">
+    <Grid x:Name="grid">
+        <TextBox x:Name="FakeConsole" Margin="0,0,10,356" />
+        <Image x:Name="wcfImageControl" Margin="0,370,0,10"/>
+    </Grid>
+</Window>
