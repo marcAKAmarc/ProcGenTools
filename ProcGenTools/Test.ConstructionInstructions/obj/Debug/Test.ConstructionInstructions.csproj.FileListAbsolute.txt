@@ -2,12 +2,12 @@ D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\T
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\Test.ConstructionInstructions.exe
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\Test.ConstructionInstructions.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\Construction.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\PuzzleBuilder.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\ProcGenTools.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\Construction.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\PuzzleBuilder.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\ProcGenTools.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\obj\Debug\Test.ConstructionInstructions.csprojResolveAssemblyReference.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\obj\Debug\Test.ConstructionInstructions.csproj.CoreCompileInputs.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\obj\Debug\Test.ConstructionInstructions.exe
 D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\obj\Debug\Test.ConstructionInstructions.pdb
-D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\PuzzleBuilder.dll
-D:\_Projects\ProcGenTools\ProcGenTools\Test.ConstructionInstructions\bin\Debug\PuzzleBuilder.pdb

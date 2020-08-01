@@ -3,8 +3,8 @@ D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\bin\Debug\PuzzleBuilder.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\bin\Debug\ProcGenTools.dll
 D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\bin\Debug\ProcGenTools.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.Properties.Resources.resources
+D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.csproj.GenerateResource.Cache
 D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.csproj.CoreCompileInputs.cache
 D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.dll
 D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.pdb
-D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.Properties.Resources.resources
-D:\_Projects\ProcGenTools\ProcGenTools\PuzzleBuilder\obj\Debug\PuzzleBuilder.csproj.GenerateResource.Cache

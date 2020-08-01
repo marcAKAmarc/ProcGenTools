@@ -19,15 +19,14 @@ namespace Test.Puzzle._01
         //private Random random;
         static void Main(string[] args)
         {
-            List<int> seeds = new List<int>() { 1, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
-            var factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(11, 11, "..//..//WfcDebug//Current//", "..//..//TilesetsDebug//Current//");
+            List<int> seeds = new List<int>() { 11 };
+            var factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(11, 9, "..//..//WfcDebug//Current//", "..//..//TilesetsDebug//Current//");
             var failures = 0;
             foreach (var i in seeds)
             {
-                factory.GetPuzzle(i, new List<Point>() { new Point(0, 6) }, new List<Point>() { new Point(10, 6) });
+                var result = factory.GetPuzzle(i, new List<Point>() { new Point(0, 6) }, new List<Point>() { new Point(10, 4) });
                 factory.SaveResult(
                     ConfigurationManager.AppSettings["Output"].ToString()
-                            .Replace("output.bmp", "")
                 );
                 failures += factory.currentAttempt;
             }

@@ -149,7 +149,7 @@ namespace ConstructionProcessing {
             //}
 
             //typegrid has to just be overwritten pretty much
-
+            //have to put that in here i guess I dunno.
             GameElements.Clear();
         }
 
@@ -180,8 +180,8 @@ namespace ConstructionProcessing {
             Input = InputBitmap;
             IntentionGrid = Intentions;
             GetBitmapGrid();
-            if(TypeGrid == null)
-                TypeGrid = new TileType[TileGrid.Count, TileGrid[0].Count];
+
+            TypeGrid = new TileType[TileGrid.Count, TileGrid[0].Count];
             GetTypeGrid();
             GetGameElements();
         }

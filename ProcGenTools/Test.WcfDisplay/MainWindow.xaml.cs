@@ -40,6 +40,7 @@ namespace Test.WcfDisplay
             var back = new BackgroundWorker();
             back.DoWork += new DoWorkEventHandler(back_DoWork);
             back.RunWorkerAsync();
+            mainWindow.UseLayoutRounding = true;
             //CreateItAll();
 
         }
