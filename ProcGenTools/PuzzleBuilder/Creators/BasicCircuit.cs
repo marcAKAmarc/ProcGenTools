@@ -889,8 +889,8 @@ namespace PuzzleBuilder.Creators
                 return false;
 
             if (y + 2 < grid.Height && (
-                    grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.Ladder)
-                    ||
+                    /*grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.Ladder)
+                    ||*/
                     grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.VerticalExit)
                 )
             )

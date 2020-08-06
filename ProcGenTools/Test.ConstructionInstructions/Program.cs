@@ -15,7 +15,7 @@ namespace Test.ConstructionInstructions
         static DateTime time, endtime;
         static void Main(string[] args)
         {
-            var seed = 11;
+            var seed = 28;
             // var random = new Random(seed);
             // var grid = new IntentionGrid(11, 11);
             // var TilesConfig = new TilesetConfiguration(/*
@@ -48,12 +48,12 @@ namespace Test.ConstructionInstructions
             //var output = processor.CreateIt(new List<Point>() { new Point(0, 9) }, new List<Point>() { new Point(10, 7) });
             time = DateTime.Now;
 
-            var factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(11, 9, "..//..//PuzzleBuilder//WfcDebug//Current//", "..//..//PuzzleBuilder//TilesetsDebug//Current//");
-            var puzzleResult = factory.GetPuzzle(seed, new List<Point>() { new Point(0, 6) }, new List<Point>() { new Point(10, 4) });
-            /*factory.SaveResult(
+            var factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(11,11, "..//..//PuzzleBuilder//WfcDebug//Current//", "..//..//PuzzleBuilder//TilesetsDebug//Current//");
+            var puzzleResult = factory.GetPuzzle(seed, new List<Point>() { new Point(0, 6) }, new List<Point>() { new Point(10, 6) });
+            factory.SaveResult(
                 ConfigurationManager.AppSettings["Output"].ToString()
                         .Replace("output.bmp", "")
-            );*/
+            );
 
             var conFactory = new Construction.Factory("..//..//DebugGetTypeGrid//", 6, 6);
             var result = conFactory.GetGameElements(puzzleResult.TileMap, puzzleResult.Grid);
