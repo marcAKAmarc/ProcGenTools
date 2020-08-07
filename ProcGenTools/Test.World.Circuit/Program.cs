@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Drawing;
+using System.Drawing.Design;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,11 +21,11 @@ namespace Test.World.Circuit
         static void Main(string[] args)
         {
             //setup hierarchical map
-            var seed = 3;
+            var seed = 1;
 
             var Random = new Random(seed);
-            HierarchicalMap.RelativeScales = new int[] { 2,2 };
-            var map = new HierarchicalMap(8, 8, Random);
+            HierarchicalMap.RelativeScales = new double[] {4};
+            var map = new HierarchicalMap(16,16, Random);
             map.SpawnZoneAtClusterPosition(4, 3, null, false);
             map.SpawnZoneAtClusterPosition(4, 3, null, true);
             map.SpawnZoneAtClusterPosition(4, 3, null, true);
@@ -34,6 +35,9 @@ namespace Test.World.Circuit
 
             ZoneSequentialId.Reset();
             map.ReassignSequentialIds();
+            map.AssignAbsPositions();
+            map.SetClutchRoomRelations();
+
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);
             //for (var i = 0; i < map.flatZones.Count(); i++)
             //{
@@ -42,8 +46,9 @@ namespace Test.World.Circuit
 
             //}
             var mastermap = map.GetMasterMap();
+            var terminalmap = map.GetMapTerminals();
             var masterPortals = map.GetMasterPortal();
-
+            var thevar = terminalmap.Select(tm => new { absX = tm._AbsX, absY = tm._AbsY }).ToList();
 
             map.PrintMasterOrderingToBitmap(ConfigurationManager.AppSettings["Output"].Replace(".bmp", "main_map.bmp"));
             map.PrintMasterToBitmap(ConfigurationManager.AppSettings["Output"].Replace(".bmp", "main__map.bmp"));
@@ -54,7 +59,7 @@ namespace Test.World.Circuit
 
 
             //must be divisible by 3 for paths?!
-            var scale = 5;
+            var scale = 3;
 
             var finalBitmap = new Bitmap(mastermap.GetLength(0) * scale * tileSize, mastermap.GetLength(1) * scale * tileSize);
 
@@ -88,6 +93,8 @@ namespace Test.World.Circuit
                         }
                         catch(Exception ex)
                         {
+                            //do this so we don't end up trying again....
+                            roomLevelMap.contents = new Bitmap(roomLevelMap._MapWidth * scale * tileSize, roomLevelMap._MapHeight * scale * tileSize);
                             continue;
                         }
                         if (roomResult.Success)
@@ -150,9 +157,26 @@ namespace Test.World.Circuit
                             }
                         }
 
+
+
                         //BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "_wcf_" + bmpIndex.ToString() + ".bmp"), roomLevelMap.contents);
 
                     }
+                }
+            }
+
+            //draw line from clutch rooms
+            foreach(var relation in map.ClutchRelations.Where(x=>x.ItemRoom._AllSubChildren.Count == 0))
+            {
+                using (Graphics g = Graphics.FromImage(finalBitmap))
+                {
+                    g.DrawLine(Pens.Red,
+                        new Point((relation.ItemRoom._AbsX * scale * tileSize), relation.ItemRoom._AbsY * scale * tileSize),
+                        new Point(relation.LockedRoom._AbsX * scale * tileSize, relation.LockedRoom._AbsY * scale * tileSize)
+                    );
+                    g.DrawString("I", SystemFonts.DefaultFont, Brushes.Red, (relation.ItemRoom._AbsX * scale * tileSize), relation.ItemRoom._AbsY * scale * tileSize);
+
+                    g.DrawString(" L", SystemFonts.DefaultFont, Brushes.Red, (relation.LockedRoom._AbsX * scale * tileSize), relation.LockedRoom._AbsY * scale * tileSize);
                 }
             }
 

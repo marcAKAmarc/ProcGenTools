@@ -17,12 +17,12 @@ namespace Test.World
         {
             //setup hierarchical map
             var Random = new Random(0);
-            HierarchicalMap.RelativeScales = new int[] { 2 };
-            var map = new HierarchicalMap(10, 10, Random);
-            map.SpawnZoneAtClusterPosition(3, 2);
-            map.SpawnZoneAtClusterPosition(3, 2, null, true);
-            map.SpawnZoneAtClusterPosition(3, 2, null, true);
-            map.SpawnZoneAtClusterPosition(3, 2, null, true);
+            HierarchicalMap.RelativeScales = new double[] { 4 };
+            var map = new HierarchicalMap(12, 12, Random);
+            map.SpawnZoneAtClusterPosition(4, 3);
+            map.SpawnZoneAtClusterPosition(4, 3, null, true);
+            map.SpawnZoneAtClusterPosition(4, 3, null, true);
+            map.SpawnZoneAtClusterPosition(4, 3, null, true);
             map.MarkExitOnlyPortals();
             map.CreateSubMaps();
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);

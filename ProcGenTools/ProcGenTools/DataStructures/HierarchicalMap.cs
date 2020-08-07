@@ -30,8 +30,6 @@ namespace ProcGenTools.DataStructures
         public int Y;
         public int Width;
         public int Height;
-        public int AbsoluteX;
-        public int AbsoluteY;
         public HierarchicalMap SubMap;
         public HierarchicalMap FromMap;
 
@@ -51,10 +49,10 @@ namespace ProcGenTools.DataStructures
 
             if (totalLevels < Level + 1)
                 totalLevels = Level + 1;
-            var scale = 1;
+            var scale = 1d;
             if (HierarchicalMap.RelativeScales.Count() - 1 >= Level)
                 scale = HierarchicalMap.RelativeScales[Level];
-            SubMap = new HierarchicalMap(Width * scale, Height * scale, random, Level + 1);
+            SubMap = new HierarchicalMap((int)Math.Round(Width * scale), (int)(Height * scale), random, Level + 1);
             SubMap.fromZone = this;
             SubMap.CreationMethod = CreationMethod;
             SubMap.SequentialId = SequentialId;
@@ -62,14 +60,14 @@ namespace ProcGenTools.DataStructures
 
             foreach (var portal in ZonePortals)
             {
-                var newX = portal.ZoneRelativePosition.X * scale;
-                var newY = portal.ZoneRelativePosition.Y * scale;
+                var newX = (int)Math.Round(portal.ZoneRelativePosition.X * scale);
+                var newY = (int)Math.Round(portal.ZoneRelativePosition.Y * scale);
                 if(portal.direction.X == 1)
-                    newX = (Width * scale) -1;
+                    newX = (int)Math.Round((Width * scale)) -1;
                 if (portal.direction.X == -1)
                     newX = 0;
                 if (portal.direction.Y == 1)
-                    newY = (Height * scale) - 1;
+                    newY = (int)Math.Round((Height * scale)) - 1;
                 if (portal.direction.Y == -1)
                     newY = 0;
                 var subportal = new HierarchicalMapPortal()
@@ -115,7 +113,7 @@ namespace ProcGenTools.DataStructures
                 return;
 
             SubMap.CreatePaths();
-            var result = SubMap.CoverPathsWithZones(3, 2);
+            var result = SubMap.CoverPathsWithZones(4,3);
             if(result == false)
                 throw new Exception("failed to create path");
             if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
@@ -130,13 +128,9 @@ namespace ProcGenTools.DataStructures
             //SubMap.SpawnZone(3, 2, new Point(randomZone.X, randomZone.Y));
 
             //create extraneous zones?
-            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
-            SubMap.SpawnZoneAtClusterPosition(3, 2, null, true);
+            SubMap.SpawnZoneAtClusterPosition(4, 3, null, true);
+            SubMap.SpawnZoneAtClusterPosition(4, 3, null, true);
+            SubMap.SpawnZoneAtClusterPosition(4, 3, null, true);
 
             SubMap.MarkExitOnlyPortals();
 
@@ -249,7 +243,11 @@ namespace ProcGenTools.DataStructures
             id = Guid.NewGuid();
         }
     }
-
+    public class ClutchRoomRelation
+    {
+        public HierarchicalMap ItemRoom;
+        public HierarchicalMap LockedRoom;
+    }
     public class HierarchicalMap
     {
         public Guid _Id;
@@ -260,6 +258,8 @@ namespace ProcGenTools.DataStructures
         public int _MapHeight;
         public int _AbsWidth;
         public int _AbsHeight;
+        public int _AbsX;
+        public int _AbsY;
         public double _MapHypotenuse;
         public Zone[,] _Grid;
         public List<Zone> flatZones;
@@ -270,7 +270,8 @@ namespace ProcGenTools.DataStructures
         public Zone fromZone = null;
         public CreationMethod CreationMethod;
         public Bitmap contents = null;
-        public static int[] RelativeScales;
+        public static double[] RelativeScales;
+        public List<ClutchRoomRelation> ClutchRelations;
 
         private ConsoleColor dbColorConsole;
         private Color dbColor;
@@ -278,13 +279,64 @@ namespace ProcGenTools.DataStructures
         private static int consoleColorIndex = 0;
         private static DifferentColors differentColors;
 
+        public bool IsClutchRoom()
+        {
+            return _Portals.Count > 0 
+                && !_Portals.Any(p => p.destination!=null && p.destination.SequentialId == SequentialId + 1);
+        }
+
+        public void SetClutchRoomRelations()
+        {
+            if (ClutchRelations == null)
+                ClutchRelations = new List<ClutchRoomRelation>();
+            foreach(var rm in _AllSubChildren.OrderBy(x=>x.SequentialId))
+            {
+                if (rm.IsClutchRoom() 
+                    //next room exists
+                    && _AllSubChildren.Any(c => c.SequentialId == rm.SequentialId + 1 && c._Level == rm._Level)
+                )
+                {
+                    //remove locked rooms as previously locked as we will raise them to a higher level
+                    ClutchRelations = ClutchRelations.Where(cr => 
+                        cr.LockedRoom.SequentialId != _AllSubChildren.First(c => 
+                            c.SequentialId == rm.SequentialId + 1 
+                            && c._Level == rm._Level
+                        ).SequentialId)
+                    .ToList();
+
+                    ClutchRelations.Add(new ClutchRoomRelation
+                    {
+                        ItemRoom = rm,
+                        LockedRoom = _AllSubChildren.FirstOrDefault(c => c.SequentialId == rm.SequentialId + 1 && c._Level == rm._Level)
+                    });
+
+
+                    //additional locked rooms
+                    var additionalLockedRooms = _AllSubChildren.Where(c => c.SequentialId > rm.SequentialId && c._Level == rm._Level && c._Portals.Any(p => p.destination != null && p.destination.SequentialId < rm.SequentialId));
+
+                    //remove
+                    ClutchRelations = ClutchRelations.Where(cr => !additionalLockedRooms.Any(al => al.SequentialId == cr.LockedRoom.SequentialId)).ToList();
+                    //add
+                    foreach (var lockedroom in additionalLockedRooms.OrderBy(x=>x.SequentialId)){
+                        ClutchRelations.Add(new ClutchRoomRelation
+                        {
+                            ItemRoom = rm,
+                            LockedRoom = lockedroom
+                        });
+                    }
+                    //bad form
+                    /*if (ClutchRelations.Last().LockedRoom == null)
+                        ClutchRelations.RemoveAt(ClutchRelations.Count - 1);*/
+                }
+            }
+        }
 
         public static int ScaleAtLevel(int level)
         {
             var scaleAtLevel = 1;
             for (var i = level; i < RelativeScales.Count(); i++)
             {
-                scaleAtLevel = scaleAtLevel * RelativeScales[i];
+                scaleAtLevel = (int)Math.Round(scaleAtLevel * RelativeScales[i]);
             }
             return scaleAtLevel;
         }
@@ -295,7 +347,6 @@ namespace ProcGenTools.DataStructures
             _AllSubChildren = new List<HierarchicalMap>();
             _MapHeight = height;
             _MapWidth = width;
-            
             _Random = random;
 
             _Grid = new Zone[width, height];
@@ -328,9 +379,9 @@ namespace ProcGenTools.DataStructures
         public void MarkExitOnlyPortals()
         {
             List<Zone> lowerNumberedExtraneousZones = new List<Zone>();
-            for(var i = 0; i < flatZones.Count; i++)
+            for (var i = 0; i < flatZones.Count; i++)
             {
-                
+
 
                 if (flatZones[i].CreationMethod != CreationMethod.Cluster)
                     continue;
@@ -346,29 +397,29 @@ namespace ProcGenTools.DataStructures
                 if (!flatZones[i].ZonePortals.Any(zp => lowerNumberedExtraneousZones.Any(ln => ln.id == zp.Destination.id)))
                     continue;
 
-                foreach(var portalToEssential in flatZones[i].ZonePortals.Where(zp=>zp.Destination.CreationMethod == CreationMethod.PathCover))
+                foreach (var portalToEssential in flatZones[i].ZonePortals.Where(zp => zp.Destination.CreationMethod == CreationMethod.PathCover))
                 {
                     portalToEssential.directionOfPassage = ZonePortalDirection.Out;
                     ((ZonePortal)portalToEssential.DestinationPortal).directionOfPassage = ZonePortalDirection.In;
                 }
 
-                
+
             }
         }
         public List<HierarchicalMap>[,] GetMasterMap(List<HierarchicalMap>[,] _masterMap = null, int originalLevel = -1, int depth = 0)
         {
 
-            if(depth == 3)
+            if (depth == 3)
             {
                 var breaka = "here";
             }
 
-            if(originalLevel == -1)
+            if (originalLevel == -1)
                 originalLevel = this._Level;
             var scaleAtLevel = HierarchicalMap.ScaleAtLevel(_Level);
 
             if (_masterMap == null)
-                _masterMap = new List<HierarchicalMap>[scaleAtLevel*_MapWidth, scaleAtLevel * _MapHeight];
+                _masterMap = new List<HierarchicalMap>[scaleAtLevel * _MapWidth, scaleAtLevel * _MapHeight];
 
             var myWidth = scaleAtLevel * _MapWidth;
             var myHeight = scaleAtLevel * _MapHeight;
@@ -384,9 +435,12 @@ namespace ProcGenTools.DataStructures
                 currentZone = currentZone.FromMap.fromZone;
             }
 
-            for(var y = absY; y < absY + myHeight; y++)
+            this._AbsX = absX;
+            this._AbsY = absY;
+
+            for (var y = absY; y < absY + myHeight; y++)
             {
-                for(var x = absX; x < absX + myWidth; x++)
+                for (var x = absX; x < absX + myWidth; x++)
                 {
                     if (_masterMap[x, y] == null)
                         _masterMap[x, y] = new List<HierarchicalMap>();
@@ -394,13 +448,38 @@ namespace ProcGenTools.DataStructures
                 }
             }
 
-            foreach(var zone in flatZones)
+            foreach (var zone in flatZones)
             {
-                if(zone.SubMap != null)
+                if (zone.SubMap != null)
                     zone.SubMap.GetMasterMap(_masterMap, originalLevel, depth + 1);
             }
 
             return _masterMap;
+        }
+        public void AssignAbsPositions(int offsetX = 0, int offsetY = 0)
+        {
+            if(this.fromZone == null)
+            {
+                _AbsX = offsetX;
+                _AbsY = offsetY;
+            }
+            else
+            {
+                _AbsX = offsetX + this.fromZone.X;
+                _AbsY = offsetY + this.fromZone.Y;
+            }
+
+            foreach(var child in this.flatZones.Select(x => x.SubMap))
+            {
+                if (child == null)
+                    continue;
+                else
+                    child.AssignAbsPositions(_AbsX, _AbsY);
+            }
+        }
+        public List<HierarchicalMap> GetMapTerminals()
+        { 
+            return _AllSubChildren.Where(hmap => hmap._AllSubChildren.Count() == 0).OrderBy(hmap => hmap.SequentialId).ToList();
         }
         public void ReassignSequentialIds()
         {
@@ -1286,7 +1365,7 @@ namespace ProcGenTools.DataStructures
             var scale = 10;
             Bitmap bmp = new Bitmap(_masterMap.GetLength(0) * scale, _masterMap.GetLength(1) * scale);
 
-            int colorNumber = 0;
+
             for (var y = 0; y < _masterMap.GetLength(1); y++)
             {
                 

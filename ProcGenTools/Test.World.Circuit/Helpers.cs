@@ -14,7 +14,7 @@ namespace Test.World.Circuit
 
         public static Room ToRoom(this HierarchicalMap hMap, int scale = 1)
         {
-            ///MAYBE THIS IS MESSED UP //confirming other stuff first.
+
             var room = new Room();
             room.Height = hMap._MapHeight * scale;
             room.Width = hMap._MapWidth * scale;
@@ -49,9 +49,9 @@ namespace Test.World.Circuit
                 var p = new Portal()
                 {
                     point = new Point(x, y),
-                    direction = portal.direction
+                    direction = portal.direction,
+                    fromPortal = portal
                 };
-                p.fromPortal = portal;
                 portal.portalOffsetFromRoom = new Point(x, y);
                 room.portals.Add(p);
             }
