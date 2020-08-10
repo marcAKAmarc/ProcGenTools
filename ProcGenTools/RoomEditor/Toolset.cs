@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using System.Drawing;
 using ProcGenTools.DataProcessing;
 using ProcGenTools.DataStructures;
@@ -129,22 +128,23 @@ namespace RoomEditor
 
         public void InitWcfGrid(int? seed = null)
         {
-            if (seed != null)
-            {
-                _random = new Random(seed.Value);
-            }
-            else
-            {
-                _random = null;
-            }
-            if (_random == null)
-                _grid = new WcfGrid();
-            else
-                _grid = new WcfGrid(_random);
-            _grid.Init(_levelWidth, _levelHeight, 1, _wfcTiles);
-            List<WcfVector> shape = WcfVector.GetCross3dShape();
-            _grid.SetInfluenceShape(shape);
-            _grid.handlePropagation(_grid.SuperPositions[_grid.Width / 2, _grid.Height / 2, 0]);
+            throw new NotSupportedException("This has been deprecated.");
+            //if (seed != null)
+            //{
+            //    _random = new Random(seed.Value);
+            //}
+            //else
+            //{
+            //    _random = null;
+            //}
+            //if (_random == null)
+            //    _grid = new WcfGrid();
+            //else
+            //    _grid = new WcfGrid(_random);
+            //_grid.Init(_levelWidth, _levelHeight, 1, _wfcTiles);
+            //List<WcfVector> shape = WcfVector.GetCross3dShape();
+            //_grid.SetInfluenceShape(shape);
+            //_grid.handlePropagation(_grid.SuperPositions[_grid.Width / 2, _grid.Height / 2, 0]);
         }
 
         public bool CollapseWcf()

@@ -32,6 +32,8 @@ namespace ProcGenTools.DataStructures
         public int Height;
         public HierarchicalMap SubMap;
         public HierarchicalMap FromMap;
+        public int SubMapMaxSize;
+        public int SubMapMinSize;
 
         public CreationMethod CreationMethod;
 
@@ -52,7 +54,7 @@ namespace ProcGenTools.DataStructures
             var scale = 1d;
             if (HierarchicalMap.RelativeScales.Count() - 1 >= Level)
                 scale = HierarchicalMap.RelativeScales[Level];
-            SubMap = new HierarchicalMap((int)Math.Round(Width * scale), (int)(Height * scale), random, Level + 1);
+            SubMap = new HierarchicalMap((int)Math.Round(Width * scale), (int)(Height * scale), random, SubMapMaxSize, SubMapMinSize, Level + 1);
             SubMap.fromZone = this;
             SubMap.CreationMethod = CreationMethod;
             SubMap.SequentialId = SequentialId;
@@ -113,7 +115,7 @@ namespace ProcGenTools.DataStructures
                 return;
 
             SubMap.CreatePaths();
-            var result = SubMap.CoverPathsWithZones(4,3);
+            var result = SubMap.CoverPathsWithZones(SubMapMaxSize, SubMapMinSize);
             if(result == false)
                 throw new Exception("failed to create path");
             if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
@@ -128,13 +130,11 @@ namespace ProcGenTools.DataStructures
             //SubMap.SpawnZone(3, 2, new Point(randomZone.X, randomZone.Y));
 
             //create extraneous zones?
-            SubMap.SpawnZoneAtClusterPosition(4, 3, null, true);
-            SubMap.SpawnZoneAtClusterPosition(4, 3, null, true);
-            SubMap.SpawnZoneAtClusterPosition(4, 3, null, true);
+            SubMap.SpawnZoneAtClusterPosition(SubMapMaxSize, SubMapMinSize, null, true);
+            SubMap.SpawnZoneAtClusterPosition(SubMapMaxSize, SubMapMinSize, null, true);
+            SubMap.SpawnZoneAtClusterPosition(SubMapMaxSize, SubMapMinSize, null, true);
 
             SubMap.MarkExitOnlyPortals();
-
-
 
             SubMap.CreateSubMaps();
         }
@@ -271,7 +271,13 @@ namespace ProcGenTools.DataStructures
         public CreationMethod CreationMethod;
         public Bitmap contents = null;
         public static double[] RelativeScales;
+
         public List<ClutchRoomRelation> ClutchRelations;
+        public bool IsSkippable;
+        public bool IsItemRoom;
+        public bool IsLockedRoom;
+        public List<ClutchRoomRelation> RelationsAsLockedRoom;
+        public List<ClutchRoomRelation> RelationsAsItemRoom;
 
         private ConsoleColor dbColorConsole;
         private Color dbColor;
@@ -329,6 +335,37 @@ namespace ProcGenTools.DataStructures
                         ClutchRelations.RemoveAt(ClutchRelations.Count - 1);*/
                 }
             }
+
+            //so we can pull clutch info from room reference
+            foreach(var rel in ClutchRelations)
+            {
+                if (rel.ItemRoom.RelationsAsItemRoom == null)
+                    rel.ItemRoom.RelationsAsItemRoom = new List<ClutchRoomRelation>();
+                if (rel.LockedRoom.RelationsAsLockedRoom == null)
+                    rel.LockedRoom.RelationsAsLockedRoom = new List<ClutchRoomRelation>();
+                rel.ItemRoom.IsItemRoom = true;
+                rel.LockedRoom.IsLockedRoom = true;
+
+                rel.LockedRoom.RelationsAsLockedRoom.Add(rel);
+                rel.ItemRoom.RelationsAsItemRoom.Add(rel);
+            }
+        }
+
+        public void SetSkippable()
+        {
+            foreach(var child in _AllSubChildren)
+            {
+                if (!child.IsLockedRoom && child._AllSubChildren.Count == 0)
+                {
+                    var minSequentialId = child._Portals.Where(p => p.destination.SequentialId < child.SequentialId - 1).Select(p => p.destination.SequentialId).OrderBy(x => x).FirstOrDefault();
+                    if (minSequentialId == 0)
+                        continue;
+                    foreach(var skippableRm in _AllSubChildren.Where(skip=>skip.SequentialId > minSequentialId && skip.SequentialId < child.SequentialId && skip._Level == child._Level))
+                    {
+                        skippableRm.IsSkippable = true;
+                    }
+                }
+            }
         }
 
         public static int ScaleAtLevel(int level)
@@ -341,7 +378,7 @@ namespace ProcGenTools.DataStructures
             return scaleAtLevel;
         }
 
-        public HierarchicalMap(int width, int height, Random random, int Level = 0)
+        public HierarchicalMap(int width, int height, Random random, int maxSubSize, int minSubSize, int Level = 0)
         {
             _Id = Guid.NewGuid();
             _AllSubChildren = new List<HierarchicalMap>();
@@ -375,6 +412,22 @@ namespace ProcGenTools.DataStructures
             //    dbColor = Color.FromArgb(_Random.Next(128) + 128, 0, _Random.Next(128) + 128);
             //if (colorMode == 0)
             //    dbColor = Color.FromArgb(0, _Random.Next(128) + 128, _Random.Next(128) + 128);
+        }
+
+        public void DefaultSetup()
+        {
+            SpawnZoneAtClusterPosition(4, 3, null, false);
+            SpawnZoneAtClusterPosition(4, 3, null, true);
+            SpawnZoneAtClusterPosition(4, 3, null, true);
+            SpawnZoneAtClusterPosition(4, 3, null, true);
+            MarkExitOnlyPortals();
+            CreateSubMaps();
+
+            ZoneSequentialId.Reset();
+            ReassignSequentialIds();
+            AssignAbsPositions();
+            SetClutchRoomRelations();
+            SetSkippable();
         }
         public void MarkExitOnlyPortals()
         {
@@ -698,7 +751,9 @@ namespace ProcGenTools.DataStructures
                 X = adjustedOrigin.Value.X,
                 Y = adjustedOrigin.Value.Y,
                 FromMap = this,
-                CreationMethod = CreationMethod.Cluster
+                CreationMethod = CreationMethod.Cluster,
+                SubMapMaxSize = maxSide,
+                SubMapMinSize = minSide
             };
 
             AssignZoneToGrid(zone);
@@ -736,7 +791,9 @@ namespace ProcGenTools.DataStructures
                 X = adjustedOrigin.Value.X,
                 Y = adjustedOrigin.Value.Y,
                 FromMap = this,
-                CreationMethod = CreationMethod.PathCover
+                CreationMethod = CreationMethod.PathCover,
+                SubMapMaxSize = maxSide,
+                SubMapMinSize = minSide
             };
 
             AssignZoneToGrid(zone);

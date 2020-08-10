@@ -268,6 +268,8 @@ namespace PuzzleBuilder.Creators
                     grid.Positions[x, entranceY + 1].Intentions.Add(Intention.SolidIntention());
                 }
                 grid.Positions[x, entranceY].Intentions.Add(Intention.EntrancePathIntention());
+                //filter out solide
+                grid.Positions[x, entranceY].Intentions = grid.Positions[x, entranceY].Intentions.Where(intent => intent.Meaning != Meaning.Solid).ToList();
             }
             if (entranceY > circuits.Select(t => t.Y).Max() || entranceY < circuits.Select(t => t.Y).Min())
             {
@@ -387,6 +389,9 @@ namespace PuzzleBuilder.Creators
                 {
                     grid.Positions[exitX, y].Intentions.Add(Intention.VerticalExitIntention());
                 }
+
+                //filter out solide
+                grid.Positions[exitX, y].Intentions = grid.Positions[exitX, y].Intentions.Where(intent => intent.Meaning != Meaning.Solid).ToList();
             }
 
             DebugPrintMeaning(grid, Meaning.ExitPath);

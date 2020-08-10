@@ -18,13 +18,8 @@ namespace Test.World
             //setup hierarchical map
             var Random = new Random(0);
             HierarchicalMap.RelativeScales = new double[] { 4 };
-            var map = new HierarchicalMap(12, 12, Random);
-            map.SpawnZoneAtClusterPosition(4, 3);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.MarkExitOnlyPortals();
-            map.CreateSubMaps();
+            var map = new HierarchicalMap(12, 12, Random, 4, 3);
+            map.DefaultSetup();
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);
             //for (var i = 0; i < map.flatZones.Count(); i++)
             //{

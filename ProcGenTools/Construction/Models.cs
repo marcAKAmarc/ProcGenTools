@@ -193,7 +193,7 @@ namespace ConstructionProcessing {
             GetShooterLeftElements();
             GetShooterRightElements();
 
-            GetLadderElements();
+            GetOnscreenLadderElements();
 
             GetDoorElements();
 
@@ -337,17 +337,37 @@ namespace ConstructionProcessing {
             }
         }
 
-        private void GetLadderElements()
+        private void GetOnscreenLadderElements()
         {
             for (var x = 0; x < TypeGrid.GetLength(0); x++)
             {
                 for (var y = 0; y < TypeGrid.GetLength(1); y++)
                 {
-                    if (TypeGrid[x, y] == TileType.LadderTop)
+                    //if at ladder top or any ladder type on top row
+                    if (
+                        TypeGrid[x, y] == TileType.LadderTop || (
+                            y == 0 && (
+                                TypeGrid[x, y] == TileType.LadderMid
+                                ||
+                                TypeGrid[x, y] == TileType.LadderBottom
+                                ||
+                                TypeGrid[x, y] == TileType.LadderBottomWithConveyor
+                            )
+                        )
+                    )
                     {
                         var yAdd = 0;
-                        while (TypeGrid[x, y + yAdd] != TileType.LadderBottom && TypeGrid[x, y + yAdd] != TileType.LadderBottomWithConveyor)
+                        while (TypeGrid[x, y + yAdd] != TileType.LadderBottom 
+                            && TypeGrid[x, y + yAdd] != TileType.LadderBottomWithConveyor
+                            && y + yAdd != TypeGrid.GetLength(1) - 1
+                        )
                             yAdd += 1;
+                        if(y + yAdd >= TypeGrid.GetLength(1))
+                        {
+                            //we ran off the bottom of the screen, so this is a transitional ladder
+                            continue;
+                        }
+
 
                         GameElements.Add(
                             new Ladder()

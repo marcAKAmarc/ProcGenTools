@@ -21,22 +21,12 @@ namespace Test.World.Circuit
         static void Main(string[] args)
         {
             //setup hierarchical map
-            var seed = 1;
+            var seed = 2;
 
             var Random = new Random(seed);
             HierarchicalMap.RelativeScales = new double[] {4};
-            var map = new HierarchicalMap(16,16, Random);
-            map.SpawnZoneAtClusterPosition(4, 3, null, false);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.MarkExitOnlyPortals();
-            map.CreateSubMaps();
-
-            ZoneSequentialId.Reset();
-            map.ReassignSequentialIds();
-            map.AssignAbsPositions();
-            map.SetClutchRoomRelations();
+            var map = new HierarchicalMap(16,16, Random, 4, 3);
+            map.DefaultSetup();
 
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);
             //for (var i = 0; i < map.flatZones.Count(); i++)
@@ -180,6 +170,13 @@ namespace Test.World.Circuit
                 }
             }
 
+            foreach (var child in map._AllSubChildren.Where(x => x._AllSubChildren.Count == 0 && x.IsSkippable))
+            {
+                using (Graphics g = Graphics.FromImage(finalBitmap))
+                {
+                    g.DrawString("  S", SystemFonts.DefaultFont, Brushes.Red, child._AbsX * scale * tileSize, child._AbsY * scale * tileSize);
+                }
+            }
             //draw portals
             //for (var y = 0; y < masterPortals.GetLength(1); y++)
             //{

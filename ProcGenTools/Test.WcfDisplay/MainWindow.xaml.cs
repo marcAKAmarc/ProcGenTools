@@ -70,11 +70,11 @@ namespace Test.WcfDisplay
         private void CreateItAll()
         {
             //setup hierarchical map
-            var seed = 3;
+            var seed = 1;
 
             var Random = new Random(seed);
-            HierarchicalMap.RelativeScales = new int[] { 2, 2 };
-            var map = new HierarchicalMap(8, 8, Random);
+            HierarchicalMap.RelativeScales = new double[] { 4 };
+            var map = new HierarchicalMap(16, 16, Random, 4, 3);
             map.SpawnZoneAtClusterPosition(4, 3, null, false);
             map.SpawnZoneAtClusterPosition(4, 3, null, true);
             map.SpawnZoneAtClusterPosition(4, 3, null, true);
@@ -104,7 +104,7 @@ namespace Test.WcfDisplay
 
 
             //must be divisible by 3 for paths?!
-            var scale = 5;
+            var scale = 3;
 
             var finalBitmap = new Bitmap(mastermap.GetLength(0) * scale * tileSize, mastermap.GetLength(1) * scale * tileSize);
 
@@ -143,6 +143,10 @@ namespace Test.WcfDisplay
                         if (roomResult.Success)
                         {
                             roomLevelMap.contents = roomResult.TileMap;
+                        }
+                        else
+                        {
+                            var breaka = "here";
                         }
                         //factory.SaveResult(
                         //    ConfigurationManager.AppSettings["Output"].ToString()
