@@ -137,5 +137,18 @@ namespace ProcGenTools.DataProcessing
             throw new NotImplementedException();
         }
         
+        public void testNextDouble()
+        {
+            var result = 0d;
+            var resultCount = 0d;
+            for(var i = 0; i < 10000; i++)
+            {
+                result = result * resultCount;
+                result += NextDouble();
+                resultCount++;
+                result = result / resultCount;
+            }
+
+        }
     }
 }

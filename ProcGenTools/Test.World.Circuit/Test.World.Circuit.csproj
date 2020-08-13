@@ -52,6 +52,10 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Construction\Construction.csproj">
+      <Project>{4d391fb0-5973-4242-a767-a1aceb07bb45}</Project>
+      <Name>Construction</Name>
+    </ProjectReference>
     <ProjectReference Include="..\ProcGenTools\ProcGenTools.csproj">
       <Project>{82a6d710-2dc8-447a-9ef6-b1cb7a78d18b}</Project>
       <Name>ProcGenTools</Name>

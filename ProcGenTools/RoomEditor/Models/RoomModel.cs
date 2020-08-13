@@ -115,7 +115,7 @@ namespace RoomEditor.Models
     public class Portal
     {
         public Point point;
-        public Point direction;
+        public Point direction;  //this might be useless
         public HierarchicalMapPortal fromPortal;
         public bool IsEntrance()
         {

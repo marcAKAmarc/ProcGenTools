@@ -67,7 +67,11 @@ namespace PuzzleBuilder.Process
 
             public override PuzzleInfo CreateIt(List<Point> Entrances, List<Point> Exits)
             {
-                GroundLevels = BasicCircuitCreators.CreateGroundLevels(Grid);
+                int[] GroundLevels;
+                if(Random.NextDouble() >= .5d)
+                    GroundLevels = BasicCircuitCreators.CreateGroundLevels(Grid);
+                else
+                    GroundLevels = BasicCircuitCreators.CreateMinimalGroundLevels(Grid);
 
                 //if all entrances have ground level
                 var allPortals = new List<Point>();
@@ -105,56 +109,99 @@ namespace PuzzleBuilder.Process
                 {
                     BasicCircuitCreators.CreateVerticalExitPath(Grid, exit.X, exit.Y);
                 }
-                //Grid.Commit();
+
                 BasicCircuitCreators.CreateToggleExitDoor(Grid);
-                //Grid.Commit();
+
                 BasicCircuitCreators.CreateToggleExitDoorButton(Grid, Random);
-                //Grid.Commit();
-                BasicCircuitCreators.CreateBoxButtonSection(Grid, Random);
 
-                BasicCircuitCreators.CreateRopeCube(Grid, Random);
-
-                BasicCircuitCreators.CreateShooterSection(Grid, Random);
-
-                BasicCircuitCreators.CreateEnemy(Grid, Random);
-
-                //box Impede door
-                var boxImpedePoint = BasicCircuitCreators.CreateBoxPathImpedingExtraDoor(Grid, Random);
-                if (boxImpedePoint != null)
+                //conveyor jump
+                if (Random.NextDouble() < .666f)
                 {
-                    var buttonResult = BasicCircuitCreators.CreateExtraDoorButton(Grid, Random, boxImpedePoint.Value);
-                    if (buttonResult == false)
-                    {
-                        //undo last door creation if needed
-                        Grid.Positions[boxImpedePoint.Value.X, boxImpedePoint.Value.Y].Intentions = Grid.Positions[boxImpedePoint.Value.X, boxImpedePoint.Value.Y].Intentions.Where(x => x.Meaning != Meaning.ToggleDoor).ToList();
-                    }
+                    BasicCircuitCreators.AddConveyorJumpToHiddenPlace(Grid, Random);
+                    if (Random.NextDouble() >= .5d)
+                        BasicCircuitCreators.LengthenExistingConveyor(Grid, Random);
                 }
 
-                //create extra door
-                var doorloopsuccess = true;
-                var maxAmount = 1;
-                while (doorloopsuccess && maxAmount > 0)
+                //rope cube
+                if (Random.NextDouble() < .666f)
+                    BasicCircuitCreators.CreateRopeCube(Grid, Random);
+
+                //conveyor jump to nothing maybe
+                if (Random.NextDouble() < .666f)
                 {
-                    var resultingPoint = BasicCircuitCreators.CreateExtraDoor(Grid, Random);
-                    if (resultingPoint != null)
+                    BasicCircuitCreators.AddConveyorJump(Grid, Random);
+                    if (Random.NextDouble() >= .5d)
+                        BasicCircuitCreators.LengthenExistingConveyor(Grid, Random);
+                }
+
+                //box push to button
+                if (Random.NextDouble() < .666f)
+                    BasicCircuitCreators.CreateBoxButtonSection(Grid, Random);
+
+                //shooters
+                if (Random.NextDouble() < .333f)
+                    BasicCircuitCreators.CreateShooterSection(Grid, Random);
+                if(Random.NextDouble() < .333f)
+                    BasicCircuitCreators.CreateShooterSection(Grid, Random);
+
+                //add random conveyor
+                if (Random.NextDouble() < .666f)
+                {
+                    BasicCircuitCreators.AddConveyor(Grid, Random);
+                    if (Random.NextDouble() >= .5d)
+                        BasicCircuitCreators.LengthenExistingConveyor(Grid, Random);
+                }
+
+                
+                //enemy
+                if (Random.NextDouble() < .5f)
+                    BasicCircuitCreators.CreateEnemy(Grid, Random);
+
+                //impede box door
+                if (Random.NextDouble() < .666f)
+                {
+                    //box Impede door
+                    var boxImpedePoint = BasicCircuitCreators.CreateBoxPathImpedingExtraDoor(Grid, Random);
+                    if (boxImpedePoint != null)
                     {
-                        var buttonResult = BasicCircuitCreators.CreateExtraDoorButton(Grid, Random, resultingPoint.Value);
+                        var buttonResult = BasicCircuitCreators.CreateExtraDoorButton(Grid, Random, boxImpedePoint.Value);
                         if (buttonResult == false)
                         {
                             //undo last door creation if needed
-                            Grid.Positions[resultingPoint.Value.X, resultingPoint.Value.Y].Intentions = Grid.Positions[resultingPoint.Value.X, resultingPoint.Value.Y].Intentions.Where(x => x.Meaning != Meaning.ToggleDoor).ToList();
-                            doorloopsuccess = false;
+                            Grid.Positions[boxImpedePoint.Value.X, boxImpedePoint.Value.Y].Intentions = Grid.Positions[boxImpedePoint.Value.X, boxImpedePoint.Value.Y].Intentions.Where(x => x.Meaning != Meaning.ToggleDoor).ToList();
                         }
                     }
-                    else
+                }
+
+                //random extra door
+                if (Random.NextDouble() < .666f)
+                {
+                    //create extra door
+                    var doorloopsuccess = true;
+                    var maxAmount = 1;
+                    while (doorloopsuccess && maxAmount > 0)
                     {
-                        doorloopsuccess = false;
+                        var resultingPoint = BasicCircuitCreators.CreateExtraDoor(Grid, Random);
+                        if (resultingPoint != null)
+                        {
+                            var buttonResult = BasicCircuitCreators.CreateExtraDoorButton(Grid, Random, resultingPoint.Value);
+                            if (buttonResult == false)
+                            {
+                                //undo last door creation if needed
+                                Grid.Positions[resultingPoint.Value.X, resultingPoint.Value.Y].Intentions = Grid.Positions[resultingPoint.Value.X, resultingPoint.Value.Y].Intentions.Where(x => x.Meaning != Meaning.ToggleDoor).ToList();
+                                doorloopsuccess = false;
+                            }
+                        }
+                        else
+                        {
+                            doorloopsuccess = false;
+                        }
+                        maxAmount -= 1;
                     }
-                    maxAmount -= 1;
                 }
 
                 BasicCircuitCreators.CreateBorder(Grid, Random);
-
+                BasicCircuitCreators.AddSolidToSidesOfCircuit(Grid, Random);
                 BasicCircuitCreators.BlanketNonDynamic(Grid, Random);
 
                 var result = Helpers.ApplyIntentionToGrid(Grid, WcfGrid, TilesConfig, Converter);

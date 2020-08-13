@@ -1,0 +1,11 @@
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\bin\Debug\Test.OpenProcess.exe.config
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\bin\Debug\Test.OpenProcess.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\bin\Debug\Test.OpenProcess.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\bin\Debug\PuzzleBuilder.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\bin\Debug\ProcGenTools.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\bin\Debug\PuzzleBuilder.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\bin\Debug\ProcGenTools.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\obj\Debug\Test.OpenProcess.csprojResolveAssemblyReference.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\obj\Debug\Test.OpenProcess.csproj.CoreCompileInputs.cache
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\obj\Debug\Test.OpenProcess.exe
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess\obj\Debug\Test.OpenProcess.pdb

@@ -63,6 +63,16 @@ namespace PuzzleBuilder.Properties {
         /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Bitmap.
         /// </summary>
+        internal static System.Drawing.Bitmap all {
+            get {
+                object obj = ResourceManager.GetObject("all", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
         internal static System.Drawing.Bitmap box {
             get {
                 object obj = ResourceManager.GetObject("box", resourceCulture);
@@ -246,6 +256,16 @@ namespace PuzzleBuilder.Properties {
         internal static System.Drawing.Bitmap notMiniPlatform {
             get {
                 object obj = ResourceManager.GetObject("notMiniPlatform", resourceCulture);
+                return ((System.Drawing.Bitmap)(obj));
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized resource of type System.Drawing.Bitmap.
+        /// </summary>
+        internal static System.Drawing.Bitmap passThrough {
+            get {
+                object obj = ResourceManager.GetObject("passThrough", resourceCulture);
                 return ((System.Drawing.Bitmap)(obj));
             }
         }

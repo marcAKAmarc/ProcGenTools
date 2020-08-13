@@ -61,7 +61,7 @@ namespace Test.World.Circuit
             {
                 for (var x = 0; x < mastermap.GetLength(0); x++)
                 {
-                    roomSeed = roomSeed + 10;
+                    roomSeed = Random.Next();
                     var roomLevelMap = mastermap[x, y].FirstOrDefault(mm => mm.flatZones.Count == 0 && mm.contents == null);
                     if (roomLevelMap != null)
                     {
@@ -76,7 +76,7 @@ namespace Test.World.Circuit
                         try
                         {
                             roomResult = factory.GetPuzzle(
-                                seed,
+                                roomSeed,
                                 room.portals.Where(p => p.IsEntrance()).Select(p => p.point).ToList(),
                                 room.portals.Where(p => !p.IsEntrance()).Select(p => p.point).ToList()
                             );

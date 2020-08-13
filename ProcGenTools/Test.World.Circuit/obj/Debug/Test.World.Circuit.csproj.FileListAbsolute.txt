@@ -1,9 +1,11 @@
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\Test.World.Circuit.exe.config
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\Test.World.Circuit.exe
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\Test.World.Circuit.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\Construction.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\ProcGenTools.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\PuzzleBuilder.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\RoomEditor.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\Construction.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\ProcGenTools.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\PuzzleBuilder.pdb
 D:\_Projects\ProcGenTools\ProcGenTools\Test.World.Circuit\bin\Debug\RoomEditor.pdb

@@ -140,6 +140,12 @@ namespace PuzzleBuilder.Process
                 var result = new List<OpinionatedItem<Bitmap>>();
                 switch (meaning)
                 {
+                    case Meaning.PassThrough:
+                        result.AddRange(config.PassThrough);
+                        break;
+                    case Meaning.HiddenPosition:
+                        result.AddRange(config.AllTiles);
+                        break;
                     case Meaning.Box:
                         result.AddRange(config.BoxTiles);
                         break;

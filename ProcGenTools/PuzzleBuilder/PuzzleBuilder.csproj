@@ -45,12 +45,14 @@
   <ItemGroup>
     <Compile Include="Core\iDisplayer.cs" />
     <Compile Include="ProcessFactory.cs" />
+    <Compile Include="Process\AlteredCircuit.cs" />
     <Compile Include="Process\AndvancedCircuit.cs" />
     <Compile Include="Creators\BasicCircuit.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Process\BasicProcess.cs" />
     <Compile Include="Process\Core.cs" />
+    <Compile Include="Process\OpenProcess.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -145,6 +147,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\ledges.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\all.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\passThrough.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

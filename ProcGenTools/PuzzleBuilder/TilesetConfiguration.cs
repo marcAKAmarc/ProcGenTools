@@ -32,6 +32,8 @@ namespace PuzzleBuilder
         public List<OpinionatedItem<Bitmap>> Walkable;
         public List<OpinionatedItem<Bitmap>> FallTiles;
         public List<OpinionatedItem<Bitmap>> LedgeTiles;
+        public List<OpinionatedItem<Bitmap>> AllTiles;
+        public List<OpinionatedItem<Bitmap>> PassThrough;
         public Bitmap CautionTile;
         public Bitmap ErrorTile;
 
@@ -63,6 +65,8 @@ namespace PuzzleBuilder
             Walkable = GetMatchesInMain(ChopUpTiles(Resources.walkable));
             FallTiles = GetMatchesInMain(ChopUpTiles(Resources.fall));
             LedgeTiles = GetMatchesInMain(ChopUpTiles(Resources.ledges));
+            AllTiles = GetMatchesInMain(ChopUpTiles(Resources.all));
+            PassThrough = GetMatchesInMain(ChopUpTiles(Resources.passThrough));
             ErrorTile = Resources.error;
             CautionTile = Resources.caution;
             WFCdebugFolderPath = wfcDebugFolderPath;

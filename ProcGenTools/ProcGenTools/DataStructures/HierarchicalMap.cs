@@ -19,7 +19,7 @@ namespace ProcGenTools.DataStructures
             newIdCounter = 0;
         }
     }
-    public enum CreationMethod { Cluster, PathCover};
+    public enum CreationMethod { Cluster, PathCover };
     public class Zone
     {
         public Guid id;
@@ -56,16 +56,22 @@ namespace ProcGenTools.DataStructures
                 scale = HierarchicalMap.RelativeScales[Level];
             SubMap = new HierarchicalMap((int)Math.Round(Width * scale), (int)(Height * scale), random, SubMapMaxSize, SubMapMinSize, Level + 1);
             SubMap.fromZone = this;
+            var ultimateParent = SubMap;
+            while(ultimateParent.fromZone != null)
+            {
+                ultimateParent = ultimateParent.fromZone.FromMap;
+            }
+            SubMap.TopLevelParent = ultimateParent;
             SubMap.CreationMethod = CreationMethod;
             SubMap.SequentialId = SequentialId;
-           
+
 
             foreach (var portal in ZonePortals)
             {
                 var newX = (int)Math.Round(portal.ZoneRelativePosition.X * scale);
                 var newY = (int)Math.Round(portal.ZoneRelativePosition.Y * scale);
-                if(portal.direction.X == 1)
-                    newX = (int)Math.Round((Width * scale)) -1;
+                if (portal.direction.X == 1)
+                    newX = (int)Math.Round((Width * scale)) - 1;
                 if (portal.direction.X == -1)
                     newX = 0;
                 if (portal.direction.Y == 1)
@@ -87,7 +93,7 @@ namespace ProcGenTools.DataStructures
 
                 portal.SubPortal = subportal;
 
-                if(portal.DestinationPortal != null && portal.DestinationPortal.SubPortal != null)
+                if (portal.DestinationPortal != null && portal.DestinationPortal.SubPortal != null)
                 {
                     subportal.DestinationPortal = portal.DestinationPortal.SubPortal;
                     subportal.destination = ((HierarchicalMapPortal)portal.DestinationPortal.SubPortal).Map;
@@ -96,7 +102,7 @@ namespace ProcGenTools.DataStructures
                     portal.DestinationPortal.SubPortal.DestinationPortal = subportal;
                     ((HierarchicalMapPortal)portal.DestinationPortal.SubPortal).destination = SubMap;
                 }
-                
+
                 SubMap.AddPortal(subportal);
             }
 
@@ -116,12 +122,12 @@ namespace ProcGenTools.DataStructures
 
             SubMap.CreatePaths();
             var result = SubMap.CoverPathsWithZones(SubMapMaxSize, SubMapMinSize);
-            if(result == false)
+            if (result == false)
                 throw new Exception("failed to create path");
             if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
                 throw new Exception("failed - zone does not touch another zone");
             var randomZone = SubMap.flatZones[random.Next(SubMap.flatZones.Count)];
-           // SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
+            // SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
             if (SubMap.flatZones.Any(x => !x.touchesAnotherZone()) && SubMap.flatZones.Count() > 1)
                 throw new Exception("failed - zone does not touch another zone");
             //SubMap.SpawnZoneAtSearchPosition(3, 2, new Point(randomZone.X, randomZone.Y), true);
@@ -225,8 +231,8 @@ namespace ProcGenTools.DataStructures
         public NestedPortal DestinationPortal { get; set; }
         public Zone zone;
     }
-    public enum ZonePortalDirection { In, Out, Bidirectional};
-    public class HierarchicalMapPortal:NestedPortal
+    public enum ZonePortalDirection { In, Out, Bidirectional };
+    public class HierarchicalMapPortal : NestedPortal
     {
         public Guid id;
         public Point point;
@@ -243,8 +249,15 @@ namespace ProcGenTools.DataStructures
             id = Guid.NewGuid();
         }
     }
+
+    public class LockInfo{
+        public int LockId;
+        public List<ClutchRoomRelation> Relations;
+    }
+
     public class ClutchRoomRelation
     {
+        public LockInfo LockInfo;
         public HierarchicalMap ItemRoom;
         public HierarchicalMap LockedRoom;
     }
@@ -271,8 +284,10 @@ namespace ProcGenTools.DataStructures
         public CreationMethod CreationMethod;
         public Bitmap contents = null;
         public static double[] RelativeScales;
+        public HierarchicalMap TopLevelParent;
 
         public List<ClutchRoomRelation> ClutchRelations;
+        public List<LockInfo> LockRelations;
         public bool IsSkippable;
         public bool IsItemRoom;
         public bool IsLockedRoom;
@@ -348,6 +363,28 @@ namespace ProcGenTools.DataStructures
 
                 rel.LockedRoom.RelationsAsLockedRoom.Add(rel);
                 rel.ItemRoom.RelationsAsItemRoom.Add(rel);
+            }
+
+            //assign lockid to each group
+            foreach(var relgroup in ClutchRelations.GroupBy(cr => cr.ItemRoom.SequentialId).OrderBy(crg => crg.First().ItemRoom.SequentialId))
+            {
+                int lockId = 0;
+                var lockGroup = relgroup.ToList();
+
+                if (LockRelations == null)
+                    LockRelations = new List<LockInfo>();
+                LockRelations.Add(new LockInfo()
+                {
+                    LockId = lockId,
+                    Relations = new List<ClutchRoomRelation>()
+                });
+
+                foreach(var clutchrel in relgroup)
+                {
+                    clutchrel.LockInfo = LockRelations.Last();
+                    LockRelations.Last().Relations.Add(clutchrel);
+                }
+                lockId += 1;
             }
         }
 

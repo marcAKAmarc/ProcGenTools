@@ -42,7 +42,9 @@ namespace PuzzleBuilder
         SolidOrEmpty,
         Enemy,
         Walkable,
-        Ledge
+        Ledge,
+        HiddenPosition,
+        PassThrough
     }
 
     public interface iMeaningConverter
@@ -57,6 +59,14 @@ namespace PuzzleBuilder
         public Point RelatedTilePosition;
         public string Info;
 
+
+        public static Intention PassThrough()
+        {
+            return new Intention()
+            {
+                Meaning = Meaning.PassThrough
+            };
+        }
         public static Intention LedgeIntention()
         {
             return new Intention()
@@ -70,6 +80,14 @@ namespace PuzzleBuilder
             return new Intention()
             {
                 Meaning = Meaning.Enemy
+            };
+        }
+
+        public static Intention HiddenIntention()
+        {
+            return new Intention()
+            {
+                Meaning = Meaning.HiddenPosition
             };
         }
 
@@ -174,11 +192,12 @@ namespace PuzzleBuilder
             };
         }
 
-        public static Intention ConveyorIntention()
+        public static Intention ConveyorIntention(string dir = "right")
         {
             return new Intention()
             {
-                Meaning = Meaning.Conveyor
+                Meaning = Meaning.Conveyor,
+                Info = dir
             };
         }
 
@@ -346,9 +365,12 @@ namespace PuzzleBuilder
             return result;
         }
 
-        public IEnumerable<IntentionTiles> GetByMeaning(Meaning meaning)
+        public IEnumerable<IntentionTiles> GetByMeaning(Meaning? meaning)
         {
-            return listed().Where(x => x.Intentions.Any(i => i.Meaning == meaning));
+            if (meaning != null)
+                return listed().Where(x => x.Intentions.Any(i => i.Meaning == meaning.Value));
+            else
+                return listed().Where(x => x.Intentions.Count == 0);
         }
     }
 

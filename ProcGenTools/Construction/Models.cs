@@ -47,7 +47,9 @@ namespace Construction.Models
 
     public class Shooter : GameElement { }
     public class Ladder : GameElement { }
-    public class Conveyor : GameElement { }
+    public class Conveyor : GameElement {
+        public string direction;
+    }
     public class Button : GameElement {
         public bool Momentary;
         public GameElement ControlledElement;
@@ -204,6 +206,8 @@ namespace ConstructionProcessing {
             GetButtonElements();
 
             GetEnemyElements();
+
+            GetConveyorElements();
         }
 
         private void GetButtonElements()
@@ -450,6 +454,35 @@ namespace ConstructionProcessing {
             }
         }
 
+
+        private void GetConveyorElements()
+        {
+            for(var y = 0; y < TypeGrid.GetLength(1); y++)
+            {
+                for (var x = 0; x < TypeGrid.GetLength(0); x++)
+                {
+                    if(TypeGrid[x,y] == TileType.Conveyor)
+                    {
+                        var xStart = x;
+                        while(TypeGrid[x,y] == TileType.Conveyor)
+                        {
+                            x++;
+                        }
+                        GameElements.Add(
+                            new Conveyor()
+                            {
+                                direction = IntentionGrid.Positions[xStart, y].Intentions.Where(i=>i.Meaning == Meaning.Conveyor).First().Info,
+                                Points = new List<Point>()
+                                {
+                                    new Point(xStart, y),
+                                    new Point(x, y)
+                                }
+                            }
+                        );
+                    }
+                }
+            }
+        }
         private void GetTypeGrid()
         {
             for (var x = 0; x < TileGrid.Count; x++)
