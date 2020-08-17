@@ -45,14 +45,12 @@
   <ItemGroup>
     <Compile Include="Core\iDisplayer.cs" />
     <Compile Include="ProcessFactory.cs" />
-    <Compile Include="Process\AlteredCircuit.cs" />
     <Compile Include="Process\AndvancedCircuit.cs" />
     <Compile Include="Creators\BasicCircuit.cs" />
     <Compile Include="Helpers.cs" />
     <Compile Include="Models.cs" />
     <Compile Include="Process\BasicProcess.cs" />
     <Compile Include="Process\Core.cs" />
-    <Compile Include="Process\OpenProcess.cs" />
     <Compile Include="Properties\Resources.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -65,6 +63,10 @@
     <ProjectReference Include="..\ProcGenTools\ProcGenTools.csproj">
       <Project>{82a6d710-2dc8-447a-9ef6-b1cb7a78d18b}</Project>
       <Name>ProcGenTools</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\RoomEditor\RoomEditor.csproj">
+      <Project>{1EB1E729-B6C3-490B-A271-A7AEE69A6D6F}</Project>
+      <Name>RoomEditor</Name>
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>

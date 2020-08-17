@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using ProcGenTools.Helper;
 using System.Drawing;
-
+using RoomEditor.Models;
 
 namespace PuzzleBuilder.Creators
 {
@@ -426,7 +426,7 @@ namespace PuzzleBuilder.Creators
                 }
             }
 
-            DebugPrintMeaning(grid, Meaning.VerticalExit);
+            DebugPrintMeaning(grid, Meaning.VerticalExitWay);
         }
 
         public static void CreateVerticalEntrancePath(IntentionGrid grid, int exitX, int exitY)
@@ -462,17 +462,30 @@ namespace PuzzleBuilder.Creators
             DebugPrintMeaning(grid, Meaning.ExitPath);
         }
 
-        public static void CreateToggleExitDoor(IntentionGrid grid)
+        public static void CreateToggleExitDoor(IntentionGrid grid, List<Portal> exits)
         {
-            var tile = grid.GetByMeaning(Meaning.ExitPath).Where(t => !t.Intentions.Any(i=>
-                i.Meaning == Meaning.VerticalExit) 
+            /*
+            var tile = grid.GetByMeaning(Meaning.ExitPath).Where(t => 
+                !t.Intentions.Any(i=>
+                    i.Meaning == Meaning.VerticalExit
+                ) 
                 &&( t.X == grid.Width - 1 || t.X == 0 || t.Y == 0 || t.Y == grid.Height - 1)
             ).FirstOrDefault();
-
+            
             if (tile == null)
                 return;
 
             grid.Positions[tile.X, tile.Y].Intentions.Add(Intention.ToggleDoorIntention());
+            */
+
+            foreach (var exit in exits)
+            {
+
+                grid.Positions[exit.point.X, exit.point.Y].Intentions.Add(Intention.ToggleDoorIntention(exit.GetLockId()));
+                grid.Positions[exit.point.X, exit.point.Y].Intentions = 
+                    grid.Positions[exit.point.X, exit.point.Y].Intentions.Where(x => x.Meaning != Meaning.VerticalExitWay).ToList();
+            }
+            
 
             DebugPrintMeaning(grid, Meaning.ToggleDoor);
         }
@@ -505,7 +518,7 @@ namespace PuzzleBuilder.Creators
                 /*x.Intentions.Count() == 1
                 ||(x.Intentions.Count() == 2 && x.Intentions.Any(i => i.Meaning == Meaning.BoxPath))*/
                 x.Intentions.Count() == 4 && x.Intentions.Any(i => i.Meaning == Meaning.BoxPath) && x.Intentions.Any(i => i.Meaning == Meaning.NonDynamnic) && !x.Intentions.Any(i => i.Meaning == Meaning.BoxPathVertical)
-                && !grid.Positions[x.X, x.Y - 1].Intentions.Any(i=> i.Meaning == Meaning.BoxPathVertical || i.Meaning == Meaning.VerticalExit || i.Meaning == Meaning.VTraversable || i.Meaning == Meaning.Ladder || i.Meaning == Meaning.Empty)
+                && !grid.Positions[x.X, x.Y - 1].Intentions.Any(i=> i.Meaning == Meaning.BoxPathVertical || i.Meaning == Meaning.VerticalExitWay || i.Meaning == Meaning.VTraversable || i.Meaning == Meaning.Ladder || i.Meaning == Meaning.Empty)
             ).ToList().GetRandomOrDefault(random);
 
             if (tile == null)
@@ -527,7 +540,7 @@ namespace PuzzleBuilder.Creators
             var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(x =>
                 (x.Intentions.Count() == 1
                 ||(x.Intentions.Count() == 2 && x.Intentions.Any(i => i.Meaning == Meaning.Circuit)))
-                && !grid.Positions[x.X, x.Y - 1].Intentions.Any(i => i.Meaning == Meaning.BoxPathVertical || i.Meaning == Meaning.VerticalExit || i.Meaning == Meaning.VTraversable || i.Meaning == Meaning.Ladder)
+                && !grid.Positions[x.X, x.Y - 1].Intentions.Any(i => i.Meaning == Meaning.BoxPathVertical || i.Meaning == Meaning.VerticalExitWay || i.Meaning == Meaning.VTraversable || i.Meaning == Meaning.Ladder)
             ).ToList().GetRandomOrDefault(random);
 
             if (tile == null)
@@ -550,25 +563,38 @@ namespace PuzzleBuilder.Creators
         public static void CreateToggleExitDoorButton(IntentionGrid grid, Random random)
         {
             //get a humble GroundLevel Tile
-            var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(t => grid.Positions[t.X, t.Y].Intentions.Count == 1).GetRandomOrDefault(random);
-            if (tile == null)
-                return;
-            var buttonIntention = Intention.ButtonIntention();
-            buttonIntention.Info = "toggle";
-            var exitTile = grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).FirstOrDefault();
-            if (exitTile == null)
-                return;
-            var exit = exitTile.Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).FirstOrDefault();
-            
-            buttonIntention.RelatedTileMeaning = exit;
-            buttonIntention.RelatedTilePosition = new Point(
-                    grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().X,
-                    grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().Y
-                );
-            exit.RelatedTileMeaning = buttonIntention;
-            exit.RelatedTilePosition = new Point(tile.X, tile.Y);
-            grid.Positions[tile.X, tile.Y].Intentions.Add(buttonIntention);
+            var exitTiles = grid.GetByMeaning(Meaning.ExitPath).Where(t => 
+                grid.Positions[t.X, t.Y].Intentions.Any(i => 
+                    i.Meaning == Meaning.ToggleDoor 
+                    && (
+                        i.Info == null 
+                        || 
+                        !i.Info.Contains("LockId")
+                    )
+                )
+            ).ToList();
+            foreach (var exitTile in exitTiles)
+            {
 
+                var tile = grid.GetByMeaning(Meaning.GroundLevel).Where(t => grid.Positions[t.X, t.Y].Intentions.Count == 1).GetRandomOrDefault(random);
+                if (tile == null)
+                    return;
+                var buttonIntention = Intention.ButtonIntention();
+                buttonIntention.Info = "toggle";
+
+                var exit = exitTile.Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).FirstOrDefault();
+
+                buttonIntention.RelatedTileMeaning = exit;
+                buttonIntention.RelatedTilePosition = new Point(
+                    exitTile.X,
+                    exitTile.Y
+                    //grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[exitTile.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().X,
+                    //grid.GetByMeaning(Meaning.ExitPath).Where(t => grid.Positions[t.X, t.Y].Intentions.Any(i => i.Meaning == Meaning.ToggleDoor)).First().Y
+                );
+                exit.RelatedTileMeaning = buttonIntention;
+                exit.RelatedTilePosition = new Point(tile.X, tile.Y);
+                grid.Positions[tile.X, tile.Y].Intentions.Add(buttonIntention);
+            }
             DebugPrintMeaning(grid, Meaning.Button);
         }
 
@@ -938,9 +964,16 @@ namespace PuzzleBuilder.Creators
             {
                 return;
             }
+            if(cangoleft && cangoright)
+            {
+                if (random.NextDouble() < .5f)
+                    cangoleft = false;
+                else
+                    cangoright = false;
+            }
 
             IntentionTiles theTile = null;
-            if(!cangoleft || (random.NextDouble() < .5f && cangoright) )
+            if(cangoright)
             {
                 theTile = tile.Where(t =>
                     OnlyContainsCircuitAndGround(grid.Positions[t.X + 1, t.Y].Intentions)
@@ -989,7 +1022,7 @@ namespace PuzzleBuilder.Creators
                  && grid.Positions[t.X + 2, t.Y-1].Intentions.Count == 0
                  && OnlyContainsCircuitAndGround(grid.Positions[t.X + 4, t.Y].Intentions)
                  && grid.Positions[t.X + 3, t.Y-1].Intentions.Count == 0
-                 && !grid.Positions[t.X + 4, t.Y + 1].Intentions.Any(m=>m.Meaning == Meaning.VerticalExit || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
+                 && !grid.Positions[t.X + 4, t.Y + 1].Intentions.Any(m=>m.Meaning == Meaning.VerticalExitWay || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
                  && !grid.Positions[t.X + 3, t.Y - 2].Intentions.Any(m => m.Meaning == Meaning.Ledge)
             ))
             {
@@ -1003,7 +1036,7 @@ namespace PuzzleBuilder.Creators
                  && grid.Positions[t.X - 2, t.Y - 1].Intentions.Count == 0
                  && OnlyContainsCircuitAndGround(grid.Positions[t.X - 4, t.Y].Intentions)
                  && grid.Positions[t.X - 3, t.Y - 1].Intentions.Count == 0
-                 && !grid.Positions[t.X - 4, t.Y + 1].Intentions.Any(m => m.Meaning == Meaning.VerticalExit || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
+                 && !grid.Positions[t.X - 4, t.Y + 1].Intentions.Any(m => m.Meaning == Meaning.VerticalExitWay || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
                  && !grid.Positions[t.X - 3, t.Y - 2].Intentions.Any(m => m.Meaning == Meaning.Ledge)
             ))
             {
@@ -1014,10 +1047,17 @@ namespace PuzzleBuilder.Creators
             {
                 return;
             }
+            if (cangoleft && cangoright)
+            {
+                if (random.NextDouble() < .5f)
+                    cangoleft = false;
+                else
+                    cangoright = false;
+            }
 
             IntentionTiles theTile = null;
             
-            if (!cangoleft || (random.NextDouble() < .5f && cangoright))
+            if (cangoright)
             {
                 theTile = tile.Where(t =>
                     OnlyContainsCircuitAndGround(grid.Positions[t.X + 1, t.Y].Intentions)
@@ -1027,7 +1067,7 @@ namespace PuzzleBuilder.Creators
                     && grid.Positions[t.X + 2, t.Y - 1].Intentions.Count == 0
                     && OnlyContainsCircuitAndGround(grid.Positions[t.X + 4, t.Y].Intentions)
                     && grid.Positions[t.X + 3, t.Y - 1].Intentions.Count == 0
-                    && !grid.Positions[t.X + 4, t.Y + 1].Intentions.Any(m => m.Meaning == Meaning.VerticalExit || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
+                    && !grid.Positions[t.X + 4, t.Y + 1].Intentions.Any(m => m.Meaning == Meaning.VerticalExitWay || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
                     && !grid.Positions[t.X + 3, t.Y - 2].Intentions.Any(m => m.Meaning == Meaning.Ledge)
                ).GetRandomOrDefault(random);
 
@@ -1054,7 +1094,7 @@ namespace PuzzleBuilder.Creators
                     && grid.Positions[t.X - 2, t.Y - 1].Intentions.Count == 0
                     && OnlyContainsCircuitAndGround(grid.Positions[t.X - 4, t.Y].Intentions)
                     && grid.Positions[t.X - 3, t.Y - 1].Intentions.Count == 0
-                    && !grid.Positions[t.X - 4, t.Y + 1].Intentions.Any(m => m.Meaning == Meaning.VerticalExit || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
+                    && !grid.Positions[t.X - 4, t.Y + 1].Intentions.Any(m => m.Meaning == Meaning.VerticalExitWay || m.Meaning == Meaning.VTraversable || m.Meaning == Meaning.Ladder)
                     && !grid.Positions[t.X - 3, t.Y - 2].Intentions.Any(m => m.Meaning == Meaning.Ledge)
                 ).GetRandomOrDefault(random);
 
@@ -1116,6 +1156,62 @@ namespace PuzzleBuilder.Creators
             else
                 dir = grid.Positions[tile.X - 1, tile.Y].Intentions.Where(i => i.Meaning == Meaning.Conveyor).First().Info;
             tile.Intentions.Add(Intention.ConveyorIntention(dir));
+        }
+
+        public static void PlaceKey(IntentionGrid grid, Random random, int keyId)
+        {
+            IntentionTiles itemTile = GetFreeDeadEndRoom(grid, random);
+            if(itemTile == null)
+            {
+                //anywhere
+                itemTile = grid.GetByMeaning(Meaning.GroundLevel).Where(x => OnlyContainsCircuitAndGround(x.Intentions)).GetRandomOrDefault(random);
+            }
+            itemTile.Intentions.Add(Intention.KeyIntention(keyId));
+        }
+
+        public static void PlaceLoot(IntentionGrid grid, Random random)
+        {
+            IntentionTiles itemTile = GetFreeDeadEndRoom(grid, random);
+            if (itemTile == null)
+            {
+                //anywhere
+                itemTile = grid.GetByMeaning(Meaning.GroundLevel).Where(x => OnlyContainsCircuitAndGround(x.Intentions)).GetRandomOrDefault(random);
+            }
+            itemTile.Intentions.Add(Intention.LootIntention());
+        }
+
+        public static void PlaceAbility(IntentionGrid grid, Random random)
+        {
+            IntentionTiles itemTile = GetFreeDeadEndRoom(grid, random);
+            if (itemTile == null)
+            {
+                //anywhere
+                itemTile = grid.GetByMeaning(Meaning.GroundLevel).Where(x => OnlyContainsCircuitAndGround(x.Intentions)).GetRandomOrDefault(random);
+            }
+            itemTile.Intentions.Add(Intention.AbilityIntention());
+        }
+
+        private static IntentionTiles GetFreeDeadEndRoom(IntentionGrid grid, Random random)
+        {
+            int mincircX = grid.GetByMeaning(Meaning.Circuit).Min(i => i.X);
+            int maxcircX = grid.GetByMeaning(Meaning.Circuit).Max(i => i.X);
+            IEnumerable<IntentionTiles> xtraDoorTile = grid.GetByMeaning(Meaning.ToggleDoor).Where(x => x.X < mincircX && x.X > maxcircX && !x.Intentions.Any(i => i.Meaning == Meaning.ExitPath || i.Meaning == Meaning.EntrancePath));
+            IntentionTiles itemTile = null;
+            //annoying extra door deadends
+            if (xtraDoorTile.Count() != 0)
+            {
+                IntentionTiles xtradoor = xtraDoorTile.GetRandomOrDefault(random);
+                if (xtradoor.X > maxcircX)
+                {
+                    itemTile = grid.GetByMeaning(Meaning.GroundLevel).Where(x => (x.Y == xtradoor.Y) && (x.X > xtradoor.X) && x.Intentions.Count == 1).FirstOrDefault();
+                }
+                else
+                {
+                    //must be less than
+                    itemTile = grid.GetByMeaning(Meaning.GroundLevel).Where(x => (x.Y == xtradoor.Y) && (x.X < xtradoor.X) && x.Intentions.Count == 1).FirstOrDefault();
+                }
+            }
+            return itemTile;
         }
 
         public static void BlanketNonDynamic(IntentionGrid grid, Random random)
@@ -1183,7 +1279,7 @@ namespace PuzzleBuilder.Creators
                 ||
                 intent.Meaning == Meaning.Enemy
                 ||
-                intent.Meaning == Meaning.VerticalExit
+                intent.Meaning == Meaning.VerticalExitWay
                 
                 );
         }
@@ -1193,14 +1289,14 @@ namespace PuzzleBuilder.Creators
             if (y - 1 >= 0 && (
                     grid.Positions[x, y - 1].Intentions.Any(i => i.Meaning == Meaning.Ladder)
                     ||
-                    grid.Positions[x, y - 1].Intentions.Any(i => i.Meaning == Meaning.VerticalExit)
+                    grid.Positions[x, y - 1].Intentions.Any(i => i.Meaning == Meaning.VerticalExitWay)
                 )
             )
                 return false;
             if (y + 1 < grid.Height && (
                     grid.Positions[x, y + 1].Intentions.Any(i => i.Meaning == Meaning.Ladder)
                     ||
-                    grid.Positions[x, y + 1].Intentions.Any(i => i.Meaning == Meaning.VerticalExit)
+                    grid.Positions[x, y + 1].Intentions.Any(i => i.Meaning == Meaning.VerticalExitWay)
                 )
             )
                 return false;
@@ -1208,7 +1304,7 @@ namespace PuzzleBuilder.Creators
             if (y + 2 < grid.Height && (
                     /*grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.Ladder)
                     ||*/
-                    grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.VerticalExit)
+                    grid.Positions[x, y + 2].Intentions.Any(i => i.Meaning == Meaning.VerticalExitWay)
                 )
             )
                 return false;

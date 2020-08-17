@@ -366,9 +366,10 @@ namespace ProcGenTools.DataStructures
             }
 
             //assign lockid to each group
-            foreach(var relgroup in ClutchRelations.GroupBy(cr => cr.ItemRoom.SequentialId).OrderBy(crg => crg.First().ItemRoom.SequentialId))
+            int lockId = 0;
+            foreach (var relgroup in ClutchRelations.GroupBy(cr => cr.ItemRoom.SequentialId).OrderBy(crg => crg.First().ItemRoom.SequentialId))
             {
-                int lockId = 0;
+               
                 var lockGroup = relgroup.ToList();
 
                 if (LockRelations == null)
@@ -394,7 +395,7 @@ namespace ProcGenTools.DataStructures
             {
                 if (!child.IsLockedRoom && child._AllSubChildren.Count == 0)
                 {
-                    var minSequentialId = child._Portals.Where(p => p.destination.SequentialId < child.SequentialId - 1).Select(p => p.destination.SequentialId).OrderBy(x => x).FirstOrDefault();
+                    var minSequentialId = child._Portals.Where(p => p.destination != null && p.destination.SequentialId < child.SequentialId - 1).Select(p => p.destination.SequentialId).OrderBy(x => x).FirstOrDefault();
                     if (minSequentialId == 0)
                         continue;
                     foreach(var skippableRm in _AllSubChildren.Where(skip=>skip.SequentialId > minSequentialId && skip.SequentialId < child.SequentialId && skip._Level == child._Level))

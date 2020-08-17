@@ -3,6 +3,7 @@ using ProcGenTools.DataStructures;
 using ProcGenTools.Test;
 using PuzzleBuilder;
 using PuzzleBuilder.Process;
+using RoomEditor.Models;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
@@ -24,7 +25,7 @@ namespace Test.Puzzle._01
             var failures = 0;
             foreach (var i in seeds)
             {
-                var result = factory.GetPuzzle(i, new List<Point>() { new Point(0, 6) }, new List<Point>() { new Point(10, 4) });
+                var result = factory.GetPuzzle(i, Portal.GetTestPortals(11, 9));
                 factory.SaveResult(
                     ConfigurationManager.AppSettings["Output"].ToString()
                 );

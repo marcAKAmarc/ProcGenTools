@@ -132,8 +132,7 @@ namespace Test.WcfDisplay
                         {
                             roomResult = factory.GetPuzzle(
                                 seed,
-                                room.portals.Where(p => p.IsEntrance()).Select(p => p.point).ToList(),
-                                room.portals.Where(p => !p.IsEntrance()).Select(p => p.point).ToList()
+                                room.portals
                             );
                         }
                         catch (Exception ex)

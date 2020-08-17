@@ -16,7 +16,7 @@ namespace Test.openprocesstest
         static void Main(string[] args)
         {
             List<int> seeds = new List<int>() { 11 };
-            var factory = new ProcessFactory<OpenProcess.PuzzleProcess>(11, 9, "..//..//WfcDebug//Current//", "..//..//TilesetsDebug//Current//");
+            var factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(11, 9, "..//..//WfcDebug//Current//", "..//..//TilesetsDebug//Current//");
             var failures = 0;
             foreach (var i in seeds)
             {

@@ -1,6 +1,7 @@
 ﻿using ProcGenTools.DataStructures;
 using PuzzleBuilder.Core;
 using PuzzleBuilder.Creators;
+using RoomEditor.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -46,15 +47,12 @@ namespace PuzzleBuilder.Process
                 WcfGrid.SetRandom(random);
             }
 
-            public override PuzzleInfo CreateIt(List<Point> Entrances, List<Point> Exits)
+            public override PuzzleInfo CreateIt(List<Portal> Portals, int? keyLockId = null, bool isSkippable = false)
             {
                 GroundLevels = BasicCircuitCreators.CreateGroundLevels(Grid);
 
-                //if all entrances have ground level
-                var allPortals = new List<Point>();
-                allPortals.AddRange(Entrances);
-                allPortals.AddRange(Exits);
-                if (PointsOnGroundLevels(GetHorizontalPortals(allPortals, Grid), Grid))
+
+                if (PortalsOnGroundLevels(GetHorizontalPortals(Portals, Grid), Grid))
                 {
                     BasicCircuitCreators.CreateCircuitFractured(Grid, Random);
                 }
@@ -63,31 +61,31 @@ namespace PuzzleBuilder.Process
                     BasicCircuitCreators.CreateCircuit(Grid, Random);
                 }
 
-                var hEntrances = GetHorizontalPortals(Entrances, Grid);
-                var vEntrances = GetVerticalPortals(Entrances, Grid);
-                var vExits = GetVerticalPortals(Exits, Grid);
-                var hExits = GetHorizontalPortals(Exits, Grid);
+                var hEntrances = GetHorizontalPortals(Portals.Where(x=>x.IsEntrance()).ToList(), Grid);
+                var vEntrances = GetVerticalPortals(Portals.Where(x => x.IsEntrance()).ToList(), Grid);
+                var vExits = GetVerticalPortals(Portals.Where(x => !x.IsEntrance()).ToList(), Grid);
+                var hExits = GetHorizontalPortals(Portals.Where(x => !x.IsEntrance()).ToList(), Grid);
 
                 foreach (var entrance in hEntrances)
                 {
-                    BasicCircuitCreators.CreateHorizontalEntrancePath(Grid, entrance.X, entrance.Y);
+                    BasicCircuitCreators.CreateHorizontalEntrancePath(Grid, entrance.point.X, entrance.point.Y);
                 }
                 //Grid.Commit();
                 foreach (var entrance in hExits)
                 {
-                    BasicCircuitCreators.CreateHorizontalExitPath(Grid, entrance.X, entrance.Y);
+                    BasicCircuitCreators.CreateHorizontalExitPath(Grid, entrance.point.X, entrance.point.Y);
                 }
                 //Creators.CreateHorizontalExitPath(Grid, Exits.X, Exits.Y);
                 foreach (var entrance in vEntrances)
                 {
-                    BasicCircuitCreators.CreateVerticalEntrancePath(Grid, entrance.X, entrance.Y);
+                    BasicCircuitCreators.CreateVerticalEntrancePath(Grid, entrance.point.X, entrance.point.Y);
                 }
                 foreach (var exit in vExits)
                 {
-                    BasicCircuitCreators.CreateVerticalExitPath(Grid, exit.X, exit.Y);
+                    BasicCircuitCreators.CreateVerticalExitPath(Grid, exit.point.X, exit.point.Y);
                 }
                 //Grid.Commit();
-                BasicCircuitCreators.CreateToggleExitDoor(Grid);
+                BasicCircuitCreators.CreateToggleExitDoor(Grid, Portals.Where(x => !x.IsEntrance() && !x.IsDestinationSkippable()).ToList());
                 //Grid.Commit();
                 BasicCircuitCreators.CreateToggleExitDoorButton(Grid, Random);
                 //Grid.Commit();
@@ -113,18 +111,18 @@ namespace PuzzleBuilder.Process
                 };
 
             }
-            private List<Point> GetHorizontalPortals(List<Point> points, IntentionGrid grid)
+            private List<Portal> GetHorizontalPortals(List<Portal> Portals, IntentionGrid grid)
             {
-                return points.Where(p => p.X == 0 || p.X == grid.Width - 1).ToList();
+                return Portals.Where(p => p.point.X == 0 || p.point.X == grid.Width - 1).ToList();
             }
-            private List<Point> GetVerticalPortals(List<Point> points, IntentionGrid grid)
+            private List<Portal> GetVerticalPortals(List<Portal> Portals, IntentionGrid grid)
             {
-                return points.Where(p => p.Y == 0 || p.Y == grid.Height - 1).ToList();
+                return Portals.Where(p => p.point.Y == 0 || p.point.Y == grid.Height - 1).ToList();
             }
-            private bool PointsOnGroundLevels(List<Point> points, IntentionGrid grid)
+            private bool PortalsOnGroundLevels(List<Portal> Portals, IntentionGrid grid)
             {
                 var groundlevels = grid.GetByMeaning(Meaning.GroundLevel);
-                return !points.Any(p => !groundlevels.Any(gl => gl.Y == p.Y));
+                return !Portals.Any(p => !groundlevels.Any(gl => gl.Y == p.point.Y));
             }
 
             public override void SetDisplayer(iDisplayer displayer)
@@ -176,7 +174,7 @@ namespace PuzzleBuilder.Process
                     case Meaning.Ladder:
                         result.AddRange(config.LadderTiles);
                         break;
-                    case Meaning.VerticalExit:
+                    case Meaning.VerticalExitWay:
                         result.AddRange(config.VerticalExitTiles);
                         break;
                     case Meaning.ToggleDoor:
@@ -227,6 +225,11 @@ namespace PuzzleBuilder.Process
                         break;
                     case Meaning.Ledge:
                         result.AddRange(config.LedgeTiles);
+                        break;
+                    case Meaning.Loot:
+                    case Meaning.Key:
+                    case Meaning.Ability:
+                        result.AddRange(config.AllTiles);
                         break;
                 }
                 return result;

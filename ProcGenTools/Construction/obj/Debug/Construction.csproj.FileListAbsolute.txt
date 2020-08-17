@@ -10,3 +10,5 @@ D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.cspro
 D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.csproj.CoreCompileInputs.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.dll
 D:\_Projects\ProcGenTools\ProcGenTools\Construction\obj\Debug\Construction.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\RoomEditor.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Construction\bin\Debug\RoomEditor.pdb

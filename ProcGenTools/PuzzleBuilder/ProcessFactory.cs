@@ -1,5 +1,6 @@
 ﻿using ProcGenTools.DataProcessing;
 using PuzzleBuilder.Core;
+using RoomEditor.Models;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -47,7 +48,7 @@ namespace PuzzleBuilder
             myProcess.ClearForReuse(random);
         }
 
-        public PuzzleInfo GetPuzzle(int seed, List<Point> Entrances, List<Point> Exits)
+        public PuzzleInfo GetPuzzle(int seed, List<Portal> roomPortals, int? keyLockId = null, bool isSkippable = false)
         {
             PuzzleInfo result = null;
 
@@ -60,7 +61,7 @@ namespace PuzzleBuilder
             {
                 random = new marcRandom(effectiveSeed);
                 myProcess.ClearForReuse(random);
-                result = myProcess.CreateIt(Entrances, Exits);
+                result = myProcess.CreateIt(roomPortals, keyLockId, isSkippable);
                 if(result == null || result.Success == false)
                 {
                     effectiveSeed += attemptOffset;

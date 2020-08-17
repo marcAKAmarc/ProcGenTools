@@ -24,6 +24,9 @@ namespace PuzzleBuilder
         Elevator,
         Rope,
         ToggleDoor,
+        Key,
+        Loot,
+        Ability,
         Button,
         Box,
         BoxPath,
@@ -34,7 +37,7 @@ namespace PuzzleBuilder
         GroundLevel,
         EntrancePath,
         ExitPath,
-        VerticalExit,
+        VerticalExitWay,
         Solid,
         NonDynamnic,
         NonDynamicStrict,
@@ -59,6 +62,37 @@ namespace PuzzleBuilder
         public Point RelatedTilePosition;
         public string Info;
 
+
+        public static Intention KeyIntention(int? LockId = null)
+        {
+            if (LockId == null)
+                return new Intention()
+                {
+                    Meaning = Meaning.Key
+                };
+            else
+                return new Intention()
+                {
+                    Meaning = Meaning.Key,
+                    Info = "LockId:" + LockId.Value.ToString()
+                };
+        }
+
+        public static Intention LootIntention()
+        {
+            return new Intention()
+            {
+                Meaning = Meaning.Loot
+            };
+        }
+
+        public static Intention AbilityIntention()
+        {
+            return new Intention()
+            {
+                Meaning = Meaning.Ability
+            };
+        }
 
         public static Intention PassThrough()
         {
@@ -149,7 +183,7 @@ namespace PuzzleBuilder
         {
             return new Intention()
             {
-                Meaning = Meaning.VerticalExit
+                Meaning = Meaning.VerticalExitWay
             };
         }
         public static Intention GroundLevelIntention()
@@ -217,12 +251,19 @@ namespace PuzzleBuilder
             };
         }
 
-        public static Intention ToggleDoorIntention()
+        public static Intention ToggleDoorIntention(int? LockId = null)
         {
-            return new Intention()
-            {
-                Meaning = Meaning.ToggleDoor
-            };
+            if (LockId == null)
+                return new Intention()
+                {
+                    Meaning = Meaning.ToggleDoor,
+                };
+            else
+                return new Intention()
+                {
+                    Meaning = Meaning.ToggleDoor,
+                    Info = "LockId:" + LockId.Value.ToString()
+                };
         }
 
         public static Intention ButtonIntention()

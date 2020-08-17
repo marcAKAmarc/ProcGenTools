@@ -7,6 +7,7 @@ using Construction.Models;
 using System.Configuration;
 using PuzzleBuilder;
 using PuzzleBuilder.Process;
+using RoomEditor.Models;
 
 namespace Test.ConstructionInstructions
 {
@@ -49,7 +50,7 @@ namespace Test.ConstructionInstructions
             time = DateTime.Now;
 
             var factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(10,9, "..//..//PuzzleBuilder//WfcDebug//Current//", "..//..//PuzzleBuilder//TilesetsDebug//Current//");
-            var puzzleResult = factory.GetPuzzle(seed, new List<Point>() { new Point(0, 6) }, new List<Point>() { new Point(9, 2), new Point(5,0) });
+            var puzzleResult = factory.GetPuzzle(seed, Portal.GetTestPortals(10,9));
             factory.SaveResult(
                 ConfigurationManager.AppSettings["Output"].ToString()
                         .Replace("output.bmp", "")
@@ -61,7 +62,7 @@ namespace Test.ConstructionInstructions
             Console.WriteLine("Total result time:  " + TimeSpan.FromTicks(endtime.Ticks - time.Ticks).ToString());
 
             time = DateTime.Now;
-            var puzzleReseult2 = factory.GetPuzzle(seed + 1, new List<Point>() { new Point(0, 5) }, new List<Point>() { new Point(10, 5) });
+            var puzzleReseult2 = factory.GetPuzzle(seed + 1, Portal.GetTestPortals(10,9));
             var result2 = conFactory.GetGameElements(puzzleReseult2.TileMap, puzzleResult.Grid);
             endtime = DateTime.Now;
             Console.WriteLine("Total result2 time:  " + TimeSpan.FromTicks(endtime.Ticks - time.Ticks).ToString());

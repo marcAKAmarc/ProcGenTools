@@ -100,6 +100,10 @@
       <Project>{FC8BD633-1DBE-4232-85E8-CDA4CEC964EC}</Project>
       <Name>PuzzleBuilder</Name>
     </ProjectReference>
+    <ProjectReference Include="..\RoomEditor\RoomEditor.csproj">
+      <Project>{1EB1E729-B6C3-490B-A271-A7AEE69A6D6F}</Project>
+      <Name>RoomEditor</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

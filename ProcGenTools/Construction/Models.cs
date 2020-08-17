@@ -32,7 +32,8 @@ namespace Construction.Models
         Box = 14,
         HangingRope = 15,
         HangingRopeBottom = 16,
-        Enemy = 17
+        Enemy = 17,
+        DoorH = 18
     }
 
     public class GameElement {
@@ -54,12 +55,20 @@ namespace Construction.Models
         public bool Momentary;
         public GameElement ControlledElement;
     }
-    public class Door : GameElement { }
+    public class Door : GameElement {
+        public int? LockId;
+        public bool Horizontal; 
+    }
     public class Box : GameElement { }
     public class Enemy : GameElement { }
     public class Rope : GameElement { }
     public class Ground : GameElement {
         
+    }
+    public class Loot : GameElement { }
+    public class Key : GameElement
+    {
+        public int LockId;
     }
 
 }
@@ -83,6 +92,7 @@ namespace ConstructionProcessing {
         public Bitmap ConveyorTile;
         public Bitmap ButtonTile;
         public Bitmap DoorTile;
+        public Bitmap DoorHTile;
         public Bitmap BoxTile;
         public Bitmap HangingRopeTile;
         public Bitmap HangingRopeBottomTile;
@@ -106,6 +116,7 @@ namespace ConstructionProcessing {
             ConveyorTile = Resources.conveyor;
             ButtonTile = Resources.button;
             DoorTile = Resources.door;
+            DoorHTile = Resources.doorH;
             BoxTile = Resources.box;
             HangingRopeTile = Resources.rope;
             HangingRopeBottomTile = Resources.ropeBottom;
@@ -160,6 +171,8 @@ namespace ConstructionProcessing {
             //file cleanup
             if (Config != null && Config.DebugTypeGridFolder != null)
             {
+                if (!Directory.Exists(Config.DebugTypeGridFolder))
+                    Directory.CreateDirectory(Config.DebugTypeGridFolder);
                 string[] filePaths = Directory.GetFiles(Config.DebugTypeGridFolder);
                 foreach (string filePath in filePaths)
                     File.Delete(filePath);
@@ -208,6 +221,10 @@ namespace ConstructionProcessing {
             GetEnemyElements();
 
             GetConveyorElements();
+
+            GetKeyGameElements();
+
+            GetLootGameElements();
         }
 
         private void GetButtonElements()
@@ -218,7 +235,9 @@ namespace ConstructionProcessing {
                 {
                     if (TypeGrid[x, y] == TileType.Button)
                     {
-                        var buttonIntention = IntentionGrid.Positions[x, y].Intentions.Where(i => i.Meaning == Meaning.Button).First();
+                        var buttonIntention = IntentionGrid.Positions[x, y].Intentions.Where(i => i.Meaning == Meaning.Button).FirstOrDefault();
+                        if (buttonIntention == null)
+                            return;
                         GameElements.Add(
                             new Button()
                             {
@@ -240,6 +259,11 @@ namespace ConstructionProcessing {
                                 ).First()
                             }
                         );
+
+                        if(((Button)GameElements.Last()).ControlledElement is Door && ((Door)((Button)GameElements.Last()).ControlledElement).LockId != null)
+                        {
+                            var breaka = "here";
+                        }
                     }
                 }
             }
@@ -325,7 +349,7 @@ namespace ConstructionProcessing {
             {
                 for (var y = 0; y < TypeGrid.GetLength(1); y++)
                 {
-                    if (TypeGrid[x, y] == TileType.Door)
+                    if (TypeGrid[x, y] == TileType.Door || TypeGrid[x, y] == TileType.DoorH)
                     {
                         GameElements.Add(
                             new Door()
@@ -336,6 +360,14 @@ namespace ConstructionProcessing {
                                 }
                             }
                         );
+                        Intention intention = IntentionGrid.Positions[x, y].Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).First();
+                        if (intention.Info != null && intention.Info.Contains("LockId:"))
+                        {
+                            ((Door)GameElements.Last()).LockId = int.Parse(intention.Info.Replace("LockId:", ""));
+                        }
+
+                        if (TypeGrid[x, y] == TileType.DoorH)
+                            ((Door)GameElements.Last()).Horizontal = true;
                     }
                 }
             }
@@ -351,6 +383,8 @@ namespace ConstructionProcessing {
                     if (
                         TypeGrid[x, y] == TileType.LadderTop || (
                             y == 0 && (
+                                TypeGrid[x, y] == TileType.DoorH
+                                ||
                                 TypeGrid[x, y] == TileType.LadderMid
                                 ||
                                 TypeGrid[x, y] == TileType.LadderBottom
@@ -483,6 +517,40 @@ namespace ConstructionProcessing {
                 }
             }
         }
+
+        private void GetKeyGameElements()
+        {
+            foreach(IntentionTiles i in IntentionGrid.GetByMeaning(Meaning.Key))
+            {
+                GameElements.Add(
+                    new Key()
+                    {
+                        LockId = int.Parse(i.Intentions.First(f => f.Meaning == Meaning.Key).Info.Replace("LockId:", "")),
+                        Points = new List<Point>()
+                        {
+                            new Point(i.X, i.Y)
+                        }
+                    }
+                );
+            }
+        }
+
+        private void GetLootGameElements()
+        {
+            foreach(IntentionTiles i in IntentionGrid.GetByMeaning(Meaning.Loot))
+            {
+                GameElements.Add(
+                    new Loot()
+                    {
+                        Points = new List<Point>()
+                        {
+                            new Point(i.X, i.Y)
+                        }
+                    }
+                );
+            }
+        }
+
         private void GetTypeGrid()
         {
             for (var x = 0; x < TileGrid.Count; x++)
@@ -545,6 +613,9 @@ namespace ConstructionProcessing {
                         break;
                     case TileType.Door:
                         tilesetImg = config.DoorTile as Bitmap;
+                        break;
+                    case TileType.DoorH:
+                        tilesetImg = config.DoorHTile as Bitmap;
                         break;
                     case TileType.Empty:
                         tilesetImg = config.EmptyTile as Bitmap;

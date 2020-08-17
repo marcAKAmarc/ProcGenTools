@@ -19,6 +19,7 @@ using System.Windows.Shapes;
 using PuzzleBuilder;
 using System.Configuration;
 using System.Drawing.Imaging;
+using RoomEditor.Models;
 
 namespace Test.OpenProcessTesting.Display
 {
@@ -70,8 +71,8 @@ namespace Test.OpenProcessTesting.Display
             foreach (var i in seeds)
             {
                 var result = factory.GetPuzzle(i, 
-                    new List<System.Drawing.Point>() { new System.Drawing.Point(7,11 ) }, 
-                    new List<System.Drawing.Point>() { new System.Drawing.Point(0, 1), new System.Drawing.Point(1, 11) });
+                        Portal.GetTestPortals(9,12)
+                    );
                 factory.SaveResult(
                     "..\\Output\\"
                 );

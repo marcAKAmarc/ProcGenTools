@@ -17,3 +17,5 @@ D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess.Display\obj\Debug\Test.O
 D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess.Display\obj\Debug\Test.OpenProcess.Display.csproj.CoreCompileInputs.cache
 D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess.Display\obj\Debug\Test.OpenProcess.Display.exe
 D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess.Display\obj\Debug\Test.OpenProcess.Display.pdb
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess.Display\bin\Debug\RoomEditor.dll
+D:\_Projects\ProcGenTools\ProcGenTools\Test.OpenProcess.Display\bin\Debug\RoomEditor.pdb

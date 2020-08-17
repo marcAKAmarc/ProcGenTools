@@ -125,5 +125,8 @@
   <ItemGroup>
     <None Include="Resources\ladderTop.bmp" />
   </ItemGroup>
+  <ItemGroup>
+    <Content Include="Resources\doorH.bmp" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

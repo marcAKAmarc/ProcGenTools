@@ -21,9 +21,9 @@ namespace Test.World.Circuit
         static void Main(string[] args)
         {
             //setup hierarchical map
-            var seed = 2;
+            var seed = 3;
 
-            var Random = new Random(seed);
+            var Random = new marcRandom(seed);
             HierarchicalMap.RelativeScales = new double[] {4};
             var map = new HierarchicalMap(16,16, Random, 4, 3);
             map.DefaultSetup();
@@ -57,12 +57,13 @@ namespace Test.World.Circuit
             ProcessFactory<AdvancedCircuitProcess.PuzzleProcess> factory = null;
             int roomSeed = seed;
             PuzzleInfo roomResult;
-            for (var y = 0; y < mastermap.GetLength(1); y++)
+            foreach(var roomLevelMap in terminalmap.OrderBy(x => x.SequentialId)) { 
+            /*for (var y = 0; y < mastermap.GetLength(1); y++)
             {
                 for (var x = 0; x < mastermap.GetLength(0); x++)
-                {
+                {*/
                     roomSeed = Random.Next();
-                    var roomLevelMap = mastermap[x, y].FirstOrDefault(mm => mm.flatZones.Count == 0 && mm.contents == null);
+                    //var roomLevelMap = mastermap[x, y].FirstOrDefault(mm => mm.flatZones.Count == 0 && mm.contents == null);
                     if (roomLevelMap != null)
                     {
 
@@ -73,13 +74,22 @@ namespace Test.World.Circuit
                         else
                             factory.Reset(room.Width, room.Height);
 
+                        int? KeyId = null;
+                        if (roomLevelMap.IsItemRoom)
+                        {
+                            KeyId = roomLevelMap.RelationsAsItemRoom.First().LockInfo.LockId;
+                        }
                         try
                         {
                             roomResult = factory.GetPuzzle(
                                 roomSeed,
-                                room.portals.Where(p => p.IsEntrance()).Select(p => p.point).ToList(),
-                                room.portals.Where(p => !p.IsEntrance()).Select(p => p.point).ToList()
+                                room.portals,
+                                KeyId,
+                                roomLevelMap.IsSkippable
                             );
+
+                            var conFactory = new Construction.Factory("..//..//DebugGetTypeGrid//", 6, 6);
+                            var result = conFactory.GetGameElements(roomResult.TileMap, roomResult.Grid);
                         }
                         catch(Exception ex)
                         {
@@ -99,8 +109,10 @@ namespace Test.World.Circuit
 
                         //draw to larger bitmap
                         Graphics g = Graphics.FromImage(finalBitmap);
+                        var x = roomLevelMap._AbsX;
+                        var y = roomLevelMap._AbsY;
                         g.DrawImage(roomLevelMap.contents, new Point(x * scale * tileSize, y * scale * tileSize));
-
+                        
                         //draw portals
                         var portals = roomLevelMap._Portals;//.Where(p=>/*p.DestinationPortal!= null &&*/ p.id.CompareTo(((HierarchicalMapPortal)p.DestinationPortal).id) == -1).ToList();
                         foreach (var portal in portals)
@@ -147,12 +159,19 @@ namespace Test.World.Circuit
                             }
                         }
 
-
-
-                        //BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "_wcf_" + bmpIndex.ToString() + ".bmp"), roomLevelMap.contents);
-
-                    }
+                    
+                        //draw keys
+                        foreach (var key in roomResult.Grid.GetByMeaning(Meaning.Key))
+                        {
+                            g.DrawString("K", SystemFonts.DefaultFont, Brushes.Red, ((roomLevelMap._AbsX * scale + key.X) * tileSize), (roomLevelMap._AbsY * scale + key.Y) * tileSize);
+                        }
+                        //draw loot
+                        foreach (var key in roomResult.Grid.GetByMeaning(Meaning.Loot))
+                        {
+                            g.DrawString("$", SystemFonts.DefaultFont, Brushes.Red, ((roomLevelMap._AbsX * scale + key.X) * tileSize), (roomLevelMap._AbsY * scale + key.Y) * tileSize);
+                        }
                 }
+                //}
             }
 
             //draw line from clutch rooms
@@ -177,6 +196,8 @@ namespace Test.World.Circuit
                     g.DrawString("  S", SystemFonts.DefaultFont, Brushes.Red, child._AbsX * scale * tileSize, child._AbsY * scale * tileSize);
                 }
             }
+
+            
             //draw portals
             //for (var y = 0; y < masterPortals.GetLength(1); y++)
             //{
