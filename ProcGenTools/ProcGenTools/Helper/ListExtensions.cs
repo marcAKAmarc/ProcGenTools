@@ -7,7 +7,7 @@ namespace ProcGenTools.Helper
 {
     public static class ListExtensions
     {
-        public static void Shuffle<T>(this IList<T> collection, Random random)
+        public static IList<T> Shuffle<T>(this IList<T> collection, Random random)
         {
             int n = collection.Count;
             while (n > 1)
@@ -18,6 +18,8 @@ namespace ProcGenTools.Helper
                 collection[k] = collection[n];
                 collection[n] = value;
             }
+
+            return collection;
         }
 
         public static T GetRandomOrDefault<T>(this IEnumerable<T> collection, Random random)

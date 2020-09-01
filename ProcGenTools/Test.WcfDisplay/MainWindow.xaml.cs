@@ -70,20 +70,13 @@ namespace Test.WcfDisplay
         private void CreateItAll()
         {
             //setup hierarchical map
-            var seed = 1;
+            var seed = 3;
 
-            var Random = new Random(seed);
+            var Random = new marcRandom(seed);
             HierarchicalMap.RelativeScales = new double[] { 4 };
             var map = new HierarchicalMap(16, 16, Random, 4, 3);
-            map.SpawnZoneAtClusterPosition(4, 3, null, false);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.SpawnZoneAtClusterPosition(4, 3, null, true);
-            map.MarkExitOnlyPortals();
-            map.CreateSubMaps();
+            map.DefaultSetup();
 
-            ZoneSequentialId.Reset();
-            map.ReassignSequentialIds();
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["BitmapOutput"]);
             //for (var i = 0; i < map.flatZones.Count(); i++)
             //{
@@ -93,7 +86,7 @@ namespace Test.WcfDisplay
             //}
             var mastermap = map.GetMasterMap();
             var masterPortals = map.GetMasterPortal();
-
+            var terminalMap = map.GetMapTerminals();
 
             //map.PrintMasterOrderingToBitmap(ConfigurationManager.AppSettings["Output"].Replace(".bmp", "main_map.bmp"));
             //map.PrintMasterToBitmap(ConfigurationManager.AppSettings["Output"].Replace(".bmp", "main__map.bmp"));
@@ -112,101 +105,111 @@ namespace Test.WcfDisplay
             ProcessFactory<AdvancedCircuitProcess.PuzzleProcess> factory = null;
             int roomSeed = seed;
             PuzzleInfo roomResult;
-            for (var y = 0; y < mastermap.GetLength(1); y++)
+            foreach (var roomLevelMap in terminalMap.OrderBy(x => x.SequentialId))
             {
-                for (var x = 0; x < mastermap.GetLength(0); x++)
+                /*for (var y = 0; y < mastermap.GetLength(1); y++)
                 {
-                    roomSeed = roomSeed + 10;
-                    var roomLevelMap = mastermap[x, y].FirstOrDefault(mm => mm.flatZones.Count == 0 && mm.contents == null);
-                    if (roomLevelMap != null)
+                    for (var x = 0; x < mastermap.GetLength(0); x++)
+                    {*/
+                roomSeed = Random.Next();
+                //var roomLevelMap = mastermap[x, y].FirstOrDefault(mm => mm.flatZones.Count == 0 && mm.contents == null);
+                if (roomLevelMap != null)
+                {
+
+                    var room = roomLevelMap.ToRoom(scale);
+
+                    if (factory == null)
+                        factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(room.Width, room.Height, "..//..//WfcDebug//Current//", "..//..//TilesetsDebug//Current//");
+                    else
+                        factory.Reset(room.Width, room.Height);
+                    factory.SetProcessDisplayer(this);
+
+                    int? KeyId = null;
+                    if (roomLevelMap.IsItemRoom)
                     {
+                        KeyId = roomLevelMap.RelationsAsItemRoom.First().LockInfo.LockId;
+                    }
+                    try
+                    {
+                        roomResult = factory.GetPuzzle(
+                            roomSeed,
+                            room.portals,
+                            KeyId,
+                            roomLevelMap.IsSkippable
+                        );
+                    }
+                    catch (Exception ex)
+                    {
+                        continue;
+                    }
+                    if (roomResult.Success)
+                    {
+                        roomLevelMap.contents = roomResult.TileMap;
+                    }
+                    else
+                    {
+                        var breaka = "here";
+                    }
+                    //factory.SaveResult(
+                    //    ConfigurationManager.AppSettings["Output"].ToString()
+                    //            .Replace("output.bmp", "")
+                    //);
 
-                        var room = roomLevelMap.ToRoom(scale);
 
-                        if (factory == null)
-                            factory = new ProcessFactory<AdvancedCircuitProcess.PuzzleProcess>(room.Width, room.Height, "..//..//WfcDebug//Current//", "..//..//TilesetsDebug//Current//");
-                        else
-                            factory.Reset(room.Width, room.Height);
-                        factory.SetProcessDisplayer(this);
-                        try
-                        {
-                            roomResult = factory.GetPuzzle(
-                                seed,
-                                room.portals
-                            );
-                        }
-                        catch (Exception ex)
-                        {
-                            continue;
-                        }
-                        if (roomResult.Success)
-                        {
-                            roomLevelMap.contents = roomResult.TileMap;
-                        }
-                        else
+                    //draw to larger bitmap
+                    Graphics g = Graphics.FromImage(finalBitmap);
+                    g.DrawImage(roomLevelMap.contents, new System.Drawing.Point(roomLevelMap._AbsX * scale * tileSize, roomLevelMap._AbsY * scale * tileSize));
+
+                    //draw portals
+                    var portals = roomLevelMap._Portals;//.Where(p=>/*p.DestinationPortal!= null &&*/ p.id.CompareTo(((HierarchicalMapPortal)p.DestinationPortal).id) == -1).ToList();
+                    foreach (var portal in portals)
+                    {
+                        if (portal.direction == new System.Drawing.Point())
                         {
                             var breaka = "here";
                         }
-                        //factory.SaveResult(
-                        //    ConfigurationManager.AppSettings["Output"].ToString()
-                        //            .Replace("output.bmp", "")
-                        //);
-
-
-                        //draw to larger bitmap
-                        Graphics g = Graphics.FromImage(finalBitmap);
-                        g.DrawImage(roomLevelMap.contents, new System.Drawing.Point(x * scale * tileSize, y * scale * tileSize));
-
-                        //draw portals
-                        var portals = roomLevelMap._Portals;//.Where(p=>/*p.DestinationPortal!= null &&*/ p.id.CompareTo(((HierarchicalMapPortal)p.DestinationPortal).id) == -1).ToList();
-                        foreach (var portal in portals)
+                        var startPos = new System.Drawing.Point(
+                                (roomLevelMap._AbsX * scale * tileSize) + (portal.portalOffsetFromRoom.X * tileSize),
+                                (roomLevelMap._AbsY * scale * tileSize) + (portal.portalOffsetFromRoom.Y * tileSize)
+                            );
+                        var endPos = new System.Drawing.Point(
+                                startPos.X + portal.direction.X * tileSize / 2,
+                                startPos.Y + portal.direction.Y * tileSize / 2
+                            );
+                        var xDir = Math.Sign(endPos.X - startPos.X);
+                        var yDir = Math.Sign(endPos.Y - startPos.Y);
+                        var drawPos = startPos;
+                        if (drawPos == endPos)
                         {
-                            if (portal.direction == new System.Drawing.Point())
-                            {
-                                var breaka = "here";
-                            }
-                            var startPos = new System.Drawing.Point(
-                                    (x * scale * tileSize) + (portal.portalOffsetFromRoom.X * tileSize),
-                                    (y * scale * tileSize) + (portal.portalOffsetFromRoom.Y * tileSize)
-                                );
-                            var endPos = new System.Drawing.Point(
-                                    startPos.X + portal.direction.X * tileSize / 2,
-                                    startPos.Y + portal.direction.Y * tileSize / 2
-                                );
-                            var xDir = Math.Sign(endPos.X - startPos.X);
-                            var yDir = Math.Sign(endPos.Y - startPos.Y);
-                            var drawPos = startPos;
-                            if (drawPos == endPos)
-                            {
-                                var breka = "here";
-                            }
-                            while (true)
-                            {
-                                var color = finalBitmap.GetPixel(drawPos.X, drawPos.Y);
-                                color = System.Drawing.Color.FromArgb(255 - (int)color.R, 255 - (int)color.G, 255 - (int)color.B);
-
-                                if (portal.directionOfPassage == ZonePortalDirection.In)
-                                    color = System.Drawing.Color.Red;
-                                else if (portal.directionOfPassage == ZonePortalDirection.Out)
-                                    color = System.Drawing.Color.Green;
-
-                                finalBitmap.SetPixel(drawPos.X, drawPos.Y, color);
-
-                                if (drawPos == endPos)
-                                    break;
-
-
-
-                                //getNewPos
-                                drawPos.X += xDir;
-                                drawPos.Y += yDir;
-                            }
+                            var breka = "here";
                         }
+                        while (true)
+                        {
+                            var color = finalBitmap.GetPixel(drawPos.X, drawPos.Y);
+                            color = System.Drawing.Color.FromArgb(255 - (int)color.R, 255 - (int)color.G, 255 - (int)color.B);
+
+                            if (portal.directionOfPassage == ZonePortalDirection.In)
+                                color = System.Drawing.Color.Red;
+                            else if (portal.directionOfPassage == ZonePortalDirection.Out)
+                                color = System.Drawing.Color.Green;
+
+                            finalBitmap.SetPixel(drawPos.X, drawPos.Y, color);
+
+                            if (drawPos == endPos)
+                                break;
+
+
+
+                            //getNewPos
+                            drawPos.X += xDir;
+                            drawPos.Y += yDir;
+                        }
+                    }
 
                         //BitmapOperations.SaveBitmapToFile(ConfigurationManager.AppSettings["BitmapOutput"].Replace(".bmp", "_wcf_" + bmpIndex.ToString() + ".bmp"), roomLevelMap.contents);
 
-                    }
                 }
+                
             }
 
             //draw portals

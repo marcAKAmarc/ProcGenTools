@@ -148,9 +148,10 @@ namespace PuzzleBuilder.Process
                         result.AddRange(config.BoxTiles);
                         break;
                     case Meaning.BoxPath:
-                        result.AddRange(config.HorizontalTraversableTiles);
+                        /*result.AddRange(config.HorizontalTraversableTiles);
                         result.AddRange(config.VerticalTraversableTiles);
-                        result.AddRange(config.EmptyTiles);
+                        result.AddRange(config.EmptyTiles);*/
+                        result.AddRange(config.BoxPathTiles);
                         break;
                     case Meaning.BoxPathVertical:
                         result.AddRange(config.FallTiles);

@@ -216,11 +216,11 @@ namespace ConstructionProcessing {
 
             GetRopeElements();
 
+            GetConveyorElements();
+
             GetButtonElements();
 
             GetEnemyElements();
-
-            GetConveyorElements();
 
             GetKeyGameElements();
 
@@ -238,27 +238,37 @@ namespace ConstructionProcessing {
                         var buttonIntention = IntentionGrid.Positions[x, y].Intentions.Where(i => i.Meaning == Meaning.Button).FirstOrDefault();
                         if (buttonIntention == null)
                             return;
-                        GameElements.Add(
-                            new Button()
-                            {
-                                Points = new List<Point>()
+                        if (buttonIntention.RelatedTileMeaning == null)
+                            throw new Exception("Button Construction failed - button is not hooked up to anything!");
+
+                        try
+                        {
+                            GameElements.Add(
+                                new Button()
                                 {
-                                    new Point(x,y)
-                                },
-                                Momentary = buttonIntention.Info == "momentary",
-                                ControlledElement = GameElements.Where(ge => 
-                                    (
-                                        (buttonIntention.RelatedTileMeaning.Meaning == Meaning.ToggleDoor && ge is Door)
-                                        ||
-                                        (buttonIntention.RelatedTileMeaning.Meaning == Meaning.Conveyor && ge is Conveyor)
-                                        ||
-                                        (buttonIntention.RelatedTileMeaning.Meaning == Meaning.Shooter && ge is Shooter)
-                                    )
-                                    && ge.Points.First().X == buttonIntention.RelatedTilePosition.X && 
-                                    ge.Points.First().Y == buttonIntention.RelatedTilePosition.Y
-                                ).First()
-                            }
-                        );
+                                    Points = new List<Point>()
+                                    {
+                                        new Point(x,y)
+                                    },
+                                    Momentary = buttonIntention.Info == "momentary",
+                                    ControlledElement = GameElements.Where(ge =>
+                                        (
+                                            (buttonIntention.RelatedTileMeaning.Meaning == Meaning.ToggleDoor && ge is Door)
+                                            ||
+                                            (buttonIntention.RelatedTileMeaning.Meaning == Meaning.Conveyor && ge is Conveyor)
+                                            ||
+                                            (buttonIntention.RelatedTileMeaning.Meaning == Meaning.Shooter && ge is Shooter)
+                                        )
+                                        && ge.Points.First().X == buttonIntention.RelatedTilePosition.X &&
+                                        ge.Points.First().Y == buttonIntention.RelatedTilePosition.Y
+                                    ).First()
+                                }
+                            );
+                        } 
+                        catch(Exception ex)
+                        {
+                            var breaka = "here";
+                        }
 
                         if(((Button)GameElements.Last()).ControlledElement is Door && ((Door)((Button)GameElements.Last()).ControlledElement).LockId != null)
                         {
@@ -360,7 +370,12 @@ namespace ConstructionProcessing {
                                 }
                             }
                         );
-                        Intention intention = IntentionGrid.Positions[x, y].Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).First();
+                        Intention intention = IntentionGrid.Positions[x, y].Intentions.Where(i => i.Meaning == Meaning.ToggleDoor).FirstOrDefault();
+                        if(intention == null)
+                        {
+                            var breaka = "here";
+                        }
+
                         if (intention.Info != null && intention.Info.Contains("LockId:"))
                         {
                             ((Door)GameElements.Last()).LockId = int.Parse(intention.Info.Replace("LockId:", ""));
@@ -491,14 +506,20 @@ namespace ConstructionProcessing {
 
         private void GetConveyorElements()
         {
+            string dir = "";
             for(var y = 0; y < TypeGrid.GetLength(1); y++)
             {
                 for (var x = 0; x < TypeGrid.GetLength(0); x++)
                 {
-                    if(TypeGrid[x,y] == TileType.Conveyor)
+                    if(TypeGrid[x,y] == TileType.Conveyor || TypeGrid[x,y] == TileType.LadderBottomWithConveyor)
                     {
                         var xStart = x;
-                        while(TypeGrid[x,y] == TileType.Conveyor)
+                        dir = IntentionGrid.Positions[xStart, y].Intentions.Where(i => i.Meaning == Meaning.Conveyor).First().Info;
+                        while (
+                            x < TypeGrid.GetLength(0)
+                            && (TypeGrid[x,y] == TileType.Conveyor || TypeGrid[x, y] == TileType.LadderBottomWithConveyor)
+                            && IntentionGrid.Positions[x, y].Intentions.Where(i => i.Meaning == Meaning.Conveyor).First().Info == dir
+                        )
                         {
                             x++;
                         }

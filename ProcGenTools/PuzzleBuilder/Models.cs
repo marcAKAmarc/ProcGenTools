@@ -290,11 +290,12 @@ namespace PuzzleBuilder
             };
         }
 
-        public static Intention BoxPathIntention()
+        public static Intention BoxPathIntention(string dir)
         {
             return new Intention()
             {
-                Meaning = Meaning.BoxPath
+                Meaning = Meaning.BoxPath,
+                Info = dir
             };
         }
 

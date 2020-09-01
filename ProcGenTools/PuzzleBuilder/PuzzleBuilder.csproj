@@ -44,6 +44,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Core\iDisplayer.cs" />
+    <Compile Include="Core\Internal\CreatorAbstractor.cs" />
     <Compile Include="ProcessFactory.cs" />
     <Compile Include="Process\AndvancedCircuit.cs" />
     <Compile Include="Creators\BasicCircuit.cs" />
@@ -73,6 +74,7 @@
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
+      <SubType>Designer</SubType>
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
@@ -155,6 +157,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\passThrough.bmp" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boxpath.bmp" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

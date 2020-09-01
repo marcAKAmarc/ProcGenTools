@@ -34,6 +34,7 @@ namespace PuzzleBuilder
         public List<OpinionatedItem<Bitmap>> LedgeTiles;
         public List<OpinionatedItem<Bitmap>> AllTiles;
         public List<OpinionatedItem<Bitmap>> PassThrough;
+        public List<OpinionatedItem<Bitmap>> BoxPathTiles;
         public Bitmap CautionTile;
         public Bitmap ErrorTile;
 
@@ -67,6 +68,7 @@ namespace PuzzleBuilder
             LedgeTiles = GetMatchesInMain(ChopUpTiles(Resources.ledges));
             AllTiles = GetMatchesInMain(ChopUpTiles(Resources.all));
             PassThrough = GetMatchesInMain(ChopUpTiles(Resources.passThrough));
+            BoxPathTiles = GetMatchesInMain(ChopUpTiles(Resources.boxpath));
             ErrorTile = Resources.error;
             CautionTile = Resources.caution;
             WFCdebugFolderPath = wfcDebugFolderPath;
