@@ -269,7 +269,10 @@ namespace ProcGenTools.DataStructures
                        (resultx < 0 || resultx >= width)
                     || (resulty < 0 || resulty >= height)
                     || (resultz < 0 || resultz >= depth)
-                    || (_x == 0 && _y == 0 && _z == 0)
+                    //the next line used to be ||(_x == 0 && _y == 0 && _z == 0), 
+                    //but I think it should be ||(shapeNode.x == 0 && shapeNode.y == 0 && shapeNode.z == 0)
+                    //which protects us from getting a superposition as it's own neighbor
+                    || (shapeNode.x == 0 && shapeNode.y == 0 && shapeNode.z == 0)
                 )
                     continue;
                 neighbors.Add(SuperPositions[resultx, resulty, resultz]);

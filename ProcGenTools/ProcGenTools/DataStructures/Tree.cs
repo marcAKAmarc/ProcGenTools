@@ -98,38 +98,6 @@ namespace ProcGenTools.DataStructures
             children = new List<TreeNode<T>>();
         }
 
-        List<TreeNode<T>> NewNodes = new List<TreeNode<T>>();
-        List<TreeNode<T>> OldNodes = new List<TreeNode<T>>();
-        Tree<T> NewTree;
-        //public TreeNode<T> Clone()
-        //{
-        //    NewNodes.Clear();
-        //    OldNodes.Clear();
-        //    NewTree = new Tree<T>();
-        //    Traverse_PreOrder(this, cloneDataAndAssign);
-        //    return NewTree.Root;
-        //}
-        //private void cloneDataAndAssign(TreeNode<T> node)
-        //{
-        //    TreeNode<T> newParent = null;
-        //    int? parentIndex = OldNodes.FindIndex(x => x.id == node.parent.id);
-        //    if (parentIndex == -1)
-        //        parentIndex = null;
-        //    if(parentIndex != null)
-        //    {
-        //        newParent = NewNodes[parentIndex.Value];
-        //    }
-        //    NewNodes.Add(
-        //        new TreeNode<T>(
-        //            (T)((ICloneable)(node.GetData())).Clone(),
-        //            newParent,
-        //            NewTree
-        //        )    
-        //    );
-        //    OldNodes.Add(node);
-        //}
-
-
         public TreeNode<T> AddChild(T data)
         {
             var newChild = new TreeNode<T>(data, this, this.tree);
@@ -164,7 +132,8 @@ namespace ProcGenTools.DataStructures
             }
             return Address;
         }
-        int _ucciChildIndex;
+
+        internal int _ucciChildIndex;
         internal void UpdateChildrenChildIndexes()
         {
             //only call this after removal or reordering of child
