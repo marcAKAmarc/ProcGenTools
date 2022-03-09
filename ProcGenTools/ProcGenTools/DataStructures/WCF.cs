@@ -860,6 +860,15 @@ namespace ProcGenTools.DataStructures
         {
             acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ].Add(item);
         }
+
+        public void AddMutualAcceptionInDirection(List<IOpinionatedItem> items, int x, int y, int z)
+        {
+            foreach(IOpinionatedItem item in items)
+            {
+                acceptableItemsArray[x + offsetX, y + offsetY, z + offsetZ].Add(item);
+                item.acceptableItemsArray[(x * -1) + offsetX, (y * -1) + offsetY, (z * -1) + offsetZ].Add(this);
+            }
+        }
         public void RemoveMutualAcceptionInDirection(IOpinionatedItem item, int x, int y, int z)
         {
             acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ] = acceptableItemsArray[x + offsetX,y + offsetY,z + offsetZ].Where(_x => _x.Id != item.Id).ToList();
